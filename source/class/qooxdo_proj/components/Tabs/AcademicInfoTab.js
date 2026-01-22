@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Class.define("qooxdo_proj.pages.AcademicInfoTab",
+qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
 {
   extend : qx.ui.tabview.Page,
 

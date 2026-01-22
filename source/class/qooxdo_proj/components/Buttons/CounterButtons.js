@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Class.define("qooxdo_proj.components.CounterButtons",
+qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons",
 {
   extend : qx.ui.container.Composite,
 

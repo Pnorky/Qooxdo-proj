@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Class.define("qooxdo_proj.pages.ContactInfoTab",
+qx.Class.define("qooxdo_proj.components.Tabs.ContactInfoTab",
 {
   extend : qx.ui.tabview.Page,
 

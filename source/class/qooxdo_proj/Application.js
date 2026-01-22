@@ -4,51 +4,101 @@ qx.Class.define("qooxdo_proj.Application",
 
     members:
     {
+      _windowManager: null,
+      _personalInfoWindow: null,
+      _contactInfoWindow: null,
+      _academicInfoWindow: null,
+      _studentInfoTableWindow: null,
+      _statusLabel: null,
+      _loginPage: null,
+      _mainContainer: null,
+
       main() {
         super.main();
 
         const root = this.getRoot();
-        const rootContainer = new qx.ui.container.Composite();
-        rootContainer.setLayout(new qx.ui.layout.Canvas());
-        root.add(rootContainer, { edge: 0 });
+        
+        // Create login page (visible initially)
+        this._loginPage = new qooxdo_proj.pages.Login();
+        root.add(this._loginPage, { edge: 0 });
+        
+        // Listen for successful login
+        this._loginPage.addListener("loginSuccess", (e) => {
+          const data = e.getData();
+          this._handleLoginSuccess(data.username);
+        }, this);
+        
+        // Create main container (hidden initially) - add it first so login page is on top
+        this._mainContainer = new qx.ui.container.Composite();
+        this._mainContainer.setLayout(new qx.ui.layout.Canvas());
+        this._mainContainer.setVisibility("hidden");
+        root.add(this._mainContainer, { edge: 0 });
+        
+        // Initialize main application (but it will be hidden until login)
+        this._initializeMainApplication();
+      },
 
-        // Create Menu Bar component
+      _initializeMainApplication() {
+        const rootContainer = this._mainContainer;
+        const root = this.getRoot();
+        
+        // Initialize Window Manager
+        this._windowManager = new qooxdo_proj.components.WindowManager();
+        this._windowManager.init(root);
+
+        // Create Menu Bar component and pass window manager reference
         const menuBar = new qooxdo_proj.components.MenuBar();
+        menuBar.setWindowManager(this._windowManager);
         rootContainer.add(menuBar, { left: 0, top: 0, right: 0 });
 
-        const tabView = new qx.ui.tabview.TabView();
-        tabView.setHeight(450);
+        // Create window components
+        this._personalInfoWindow = new qooxdo_proj.components.Windows.PersonalInfoWindow();
+        this._contactInfoWindow = new qooxdo_proj.components.Windows.ContactInfoWindow();
+        this._academicInfoWindow = new qooxdo_proj.components.Windows.AcademicInfoWindow();
+        this._studentInfoTableWindow = new qooxdo_proj.components.Windows.StudentInfoTableWindow();
 
-        // Create component instances
-        const personalInfoTab = new qooxdo_proj.pages.PersonalInfoTab();
-        const contactInfoTab = new qooxdo_proj.pages.ContactInfoTab();
-        const academicInfoTab = new qooxdo_proj.pages.AcademicInfoTab();
-        const studentInfoTable = new qooxdo_proj.pages.StudentInfoTable();
+        // Register windows with WindowManager (but don't open them yet - wait for login)
+        this._windowManager.registerWindow(
+          "personalInfo",
+          this._personalInfoWindow,
+          { left: 50, top: 80, open: false }
+        );
 
-        // Add tabs to TabView
-        tabView.add(personalInfoTab);
-        tabView.add(contactInfoTab);
-        tabView.add(academicInfoTab);
-        tabView.add(studentInfoTable);
+        this._windowManager.registerWindow(
+          "contactInfo",
+          this._contactInfoWindow,
+          { left: 680, top: 80, open: false }
+        );
 
-        // Main container for tabView, buttons, and status
+        this._windowManager.registerWindow(
+          "academicInfo",
+          this._academicInfoWindow,
+          { left: 1310, top: 80, open: false }
+        );
+
+        this._windowManager.registerWindow(
+          "studentTable",
+          this._studentInfoTableWindow,
+          { left: 50, top: 600, open: false }
+        );
+
+        // Main container for buttons and status
         const mainContainer = new qx.ui.container.Composite();
         mainContainer.setLayout(new qx.ui.layout.VBox(10));
         mainContainer.setPadding(20);
+        mainContainer.setBackgroundColor("white");
+        mainContainer.setDecorator("main");
 
         // Header
-        const header = new qx.ui.basic.Label("Student Registration Form");
+        const header = new qx.ui.basic.Label("Student Registration System");
         header.setFont("bold");
         mainContainer.add(header);
 
-        // Add tabView
-        mainContainer.add(tabView, { flex: 1 });
-
         // Create Form Action Buttons component
-        const formActionButtons = new qooxdo_proj.components.FormActionButtons();
+        const formActionButtons = new qooxdo_proj.components.Buttons.FormActionButtons();
 
         // Create Counter Buttons component
-        const counterButtons = new qooxdo_proj.components.CounterButtons();
+        const counterButtons = new qooxdo_proj.components.Buttons.CounterButtons();
 
         // Button container
         const buttonContainer = new qx.ui.container.Composite();
@@ -58,71 +108,119 @@ qx.Class.define("qooxdo_proj.Application",
         mainContainer.add(buttonContainer);
 
         // Status
-        const statusLabel = new qx.ui.basic.Label("");
-        mainContainer.add(statusLabel);
+        this._statusLabel = new qx.ui.basic.Label("Ready");
+        this._statusLabel.setRich(true);
+        mainContainer.add(this._statusLabel);
 
         // Form Action Buttons event handlers
         formActionButtons.addListener("submit", () => {
-          // Validate all tabs
-          const personalValidation = personalInfoTab.validate();
-          if (!personalValidation.valid) {
-            statusLabel.setValue("Error: " + personalValidation.message);
-            return;
-          }
-
-          const contactValidation = contactInfoTab.validate();
-          if (!contactValidation.valid) {
-            statusLabel.setValue("Error: " + contactValidation.message);
-            return;
-          }
-
-          const academicValidation = academicInfoTab.validate();
-          if (!academicValidation.valid) {
-            statusLabel.setValue("Error: " + academicValidation.message);
-            return;
-          }
-
-          // Get data from all tabs
-          const personalData = personalInfoTab.getData();
-          const contactData = contactInfoTab.getData();
-          const academicData = academicInfoTab.getData();
-
-          // Add student to table
-          studentInfoTable.addStudent({
-            studentId: personalData.studentId,
-            firstName: personalData.firstName,
-            lastName: personalData.lastName,
-            program: academicData.program,
-            yearLevel: academicData.yearLevel
-          });
-
-          statusLabel.setValue("Student registered successfully and added to table!");
-
-          console.log("Complete Student Data:", {
-            personalInfo: personalData,
-            contactInfo: contactData,
-            academicInfo: academicData
-          });
+          this._handleSubmit();
         });
 
         formActionButtons.addListener("cancel", () => {
-          personalInfoTab.clear();
-          contactInfoTab.clear();
-          academicInfoTab.clear();
-          statusLabel.setValue("All form fields cleared");
+          this._handleCancel();
         });
 
         // Counter Buttons event handlers
         counterButtons.addListener("pressMe", (e) => {
           const data = e.getData();
-          statusLabel.setValue(data.message);
+          this._statusLabel.setValue(data.message);
         });
 
         counterButtons.addListener("resetCounter", () => {
-          statusLabel.setValue("Counter reset to 0");
+          this._statusLabel.setValue("Counter reset to 0");
         });
 
-        rootContainer.add(mainContainer, { left: 50, top: 80 });
+        mainContainer.setWidth(400);
+        // Position the main container in the bottom right area to avoid overlapping with windows
+        rootContainer.add(mainContainer, { right: 50, top: 80 });
+        
+        // Store reference to main container for later use
+        this._buttonContainer = mainContainer;
+      },
+
+      _handleLoginSuccess(username) {
+        // Hide login page
+        this._loginPage.setVisibility("hidden");
+        
+        // Show main application
+        this._mainContainer.setVisibility("visible");
+        
+        // Don't open windows automatically - let user open them via menu
+        
+        // Raise the button container above all windows to keep it visible
+        if (this._buttonContainer) {
+          this._buttonContainer.raise();
+        }
+        
+        // Optional: Update status to show logged in user
+        if (this._statusLabel) {
+          this._statusLabel.setValue(`<span style='color: green;'>Welcome, ${username}!</span>`);
+        }
+      },
+
+      _handleSubmit() {
+        // Validate all forms
+        const personalValidation = this._personalInfoWindow.validate();
+        if (!personalValidation.valid) {
+          this._statusLabel.setValue("<span style='color: red;'>Error: " + personalValidation.message + "</span>");
+          // Open the personal info window if it's closed
+          this._windowManager.openWindow("personalInfo");
+          return;
+        }
+
+        const contactValidation = this._contactInfoWindow.validate();
+        if (!contactValidation.valid) {
+          this._statusLabel.setValue("<span style='color: red;'>Error: " + contactValidation.message + "</span>");
+          // Open the contact info window if it's closed
+          this._windowManager.openWindow("contactInfo");
+          return;
+        }
+
+        const academicValidation = this._academicInfoWindow.validate();
+        if (!academicValidation.valid) {
+          this._statusLabel.setValue("<span style='color: red;'>Error: " + academicValidation.message + "</span>");
+          // Open the academic info window if it's closed
+          this._windowManager.openWindow("academicInfo");
+          return;
+        }
+
+        // Get data from all forms
+        const personalData = this._personalInfoWindow.getData();
+        const contactData = this._contactInfoWindow.getData();
+        const academicData = this._academicInfoWindow.getData();
+
+        // Add student to table
+        this._studentInfoTableWindow.addStudent({
+          studentId: personalData.studentId,
+          firstName: personalData.firstName,
+          lastName: personalData.lastName,
+          program: academicData.program,
+          yearLevel: academicData.yearLevel
+        });
+
+        this._statusLabel.setValue("<span style='color: green;'>Student registered successfully and added to table!</span>");
+        
+        // Open the student table window to show the new entry
+        this._windowManager.openWindow("studentTable");
+
+        console.log("Complete Student Data:", {
+          personalInfo: personalData,
+          contactInfo: contactData,
+          academicInfo: academicData
+        });
+      },
+
+      _handleCancel() {
+        this._personalInfoWindow.clear();
+        this._contactInfoWindow.clear();
+        this._academicInfoWindow.clear();
+        this._statusLabel.setValue("All form fields cleared");
+      },
+
+      // Public method to get window manager (for menu bar access)
+      getWindowManager() {
+        return this._windowManager;
       }
     }
   });

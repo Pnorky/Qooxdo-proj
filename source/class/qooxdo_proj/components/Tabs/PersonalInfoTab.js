@@ -8,13 +8,13 @@
 
 ************************************************************************ */
 
-qx.Class.define("qooxdo_proj.pages.PersonalInfoTab",
+qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab",
 {
   extend : qx.ui.tabview.Page,
 
   construct : function()
   {
-    this.base(arguments, "Personal Info", "icons/16/apps/internet-web-browser.png");
+    this.base(arguments, "Personal Info");
     this.setLayout(new qx.ui.layout.VBox(10));
     this.setPadding(20);
     

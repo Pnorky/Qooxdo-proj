@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Class.define("qooxdo_proj.components.FormActionButtons",
+qx.Class.define("qooxdo_proj.components.Buttons.FormActionButtons",
 {
   extend : qx.ui.container.Composite,
 
