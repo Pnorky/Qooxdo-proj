@@ -1,4 +1,4 @@
-qx.Class.define("myTasks.components.ui.Button", {
+qx.Class.define("qooxdo_proj.components.ui.Button", {
   extend: qx.ui.core.Widget,
 
   events: {
@@ -6,7 +6,7 @@ qx.Class.define("myTasks.components.ui.Button", {
   },
 
   construct(label, variant = "", size = "") {
-    super();
+    this.base(arguments);
 
     // set a layout so children get measured and laid out
     this._setLayout(new qx.ui.layout.Canvas());
@@ -14,12 +14,14 @@ qx.Class.define("myTasks.components.ui.Button", {
     // generate Basecoat classes
     let classes = ["btn"];
     if (variant) classes.push(`btn-${variant}`);
-          if (size) classes.push(`btn-${size}`);
+    if (size) classes.push(`btn-${size}`);
 
     // embed HTML
+    // Use min-width: 0 to allow flex items to shrink below their content size
+    // Add text overflow handling for long button text
     this._html = new qx.ui.embed.Html(`
-      <div style="margin: 4px;">
-        <button class="${classes.join(" ")}" style="width: 100%;">${label}</button>
+      <div style="margin: 2px; min-width: 0; flex-shrink: 1;">
+        <button class="${classes.join(" ")}" style="width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; min-width: 0;">${label}</button>
       </div>
     `);
 

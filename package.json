@@ -16,9 +16,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:tailwind": "npx @tailwindcss/cli -i ./tailwind-basecoat.css -o ./compiled.css"
+    "build:tailwind": "npx @tailwindcss/cli -i ./tailwind-basecoat.css -o ./source/resource/qooxdo_proj/compiled.css",
+    "compile": "npm run build:tailwind && qx compile",
+    "serve": "npm run build:tailwind && qx serve",
+    "watch": "qx watch"
   },
   "devDependencies": {
+    "@qooxdoo/compiler": "^1.0.5",
     "@qooxdoo/framework": "^6.0.4"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -27,6 +27,15 @@
     <meta name="google" value="notranslate" />
     <meta name="format-detection" content="telephone=no" />
 
+    <!-- Basecoat CSS (load first) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.10/dist/basecoat.cdn.min.css"
+    />
+
+    <!-- TWCSS (load after basecoat so theme can override if needed) -->
+    <link rel="stylesheet" href="${resourcePath}qooxdo_proj/compiled.css" />
+
     <!-- Shortcut icon setup -->
     <link
       rel="shortcut icon"
@@ -34,11 +43,6 @@
       href="${resourcePath}qooxdo_proj/favicon.png"
     />
     <link rel="mask-icon" href="${resourcePath}qooxdo_proj/favicon.png" />
-
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.10/dist/basecoat.cdn.min.css"
-    />
     <script
       src="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.10/dist/js/all.min.js"
       defer

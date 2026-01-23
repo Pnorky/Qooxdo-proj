@@ -1,4 +1,4 @@
-qx.Class.define("myTasks.components.ui.TextField", {
+qx.Class.define("qooxdo_proj.components.ui.TextField", {
   extend: qx.ui.container.Composite,
 
   properties: {

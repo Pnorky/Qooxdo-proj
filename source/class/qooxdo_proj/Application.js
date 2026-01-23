@@ -1,3 +1,6 @@
+/**
+ * @asset(qooxdo_proj/*)
+ */
 qx.Class.define("qooxdo_proj.Application",
   {
     extend: qx.application.Standalone,
@@ -14,7 +17,7 @@ qx.Class.define("qooxdo_proj.Application",
       _mainContainer: null,
 
       main() {
-        super.main();
+        this.base(arguments);
 
         const root = this.getRoot();
         
@@ -147,11 +150,6 @@ qx.Class.define("qooxdo_proj.Application",
         this._mainContainer.setVisibility("visible");
         
         // Don't open windows automatically - let user open them via menu
-        
-        // Raise the button container above all windows to keep it visible
-        if (this._buttonContainer) {
-          this._buttonContainer.raise();
-        }
         
         // Optional: Update status to show logged in user
         if (this._statusLabel) {

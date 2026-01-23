@@ -8,44 +8,49 @@
 
 ************************************************************************ */
 
-qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons",
-{
-  extend : qx.ui.container.Composite,
+qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons", {
+  extend: qx.ui.container.Composite,
 
-  events :
-  {
+  events: {
     /** Fired when press me button is clicked. Data: {count: number} */
-    "pressMe" : "qx.event.type.Data",
-    
+    pressMe: "qx.event.type.Data",
+
     /** Fired when reset counter button is clicked */
-    "resetCounter" : "qx.event.type.Event"
+    resetCounter: "qx.event.type.Event",
   },
 
-  construct : function()
-  {
+  construct: function () {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.HBox(10));
-    
+
     this._clickCount = 0;
     this._createButtons();
   },
 
-  members :
-  {
-    _pressMeButton : null,
-    _resetCounterButton : null,
-    _clickCount : 0,
+  members: {
+    _pressMeButton: null,
+    _resetCounterButton: null,
+    _clickCount: 0,
 
-    _createButtons : function()
-    {
-      this._pressMeButton = new qx.ui.form.Button("Press Me");
-      this._resetCounterButton = new qx.ui.form.Button("Reset Counter");
+    _createButtons: function () {
+      // this._pressMeButton = new qx.ui.form.Button("Press Me");
+      this._pressMeButton = new qooxdo_proj.components.ui.Button(
+        "Press Me",
+        "primary",
+        "sm",
+      );
+      // this._resetCounterButton = new qx.ui.form.Button("Reset Counter");
+      this._resetCounterButton = new qooxdo_proj.components.ui.Button(
+        "Reset",
+        "secondary",
+        "sm",
+      );
 
       this._pressMeButton.addListener("execute", () => {
         this._clickCount++;
         this.fireDataEvent("pressMe", {
           count: this._clickCount,
-          message: `Button clicked ${this._clickCount} time${this._clickCount !== 1 ? 's' : ''}`
+          message: `Button clicked ${this._clickCount} time${this._clickCount !== 1 ? "s" : ""}`,
         });
       });
 
@@ -59,25 +64,21 @@ qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons",
     },
 
     // Public methods
-    getCount : function()
-    {
+    getCount: function () {
       return this._clickCount;
     },
 
-    resetCount : function()
-    {
+    resetCount: function () {
       this._clickCount = 0;
     },
 
     // Get button references if needed
-    getPressMeButton : function()
-    {
+    getPressMeButton: function () {
       return this._pressMeButton;
     },
 
-    getResetCounterButton : function()
-    {
+    getResetCounterButton: function () {
       return this._resetCounterButton;
-    }
-  }
+    },
+  },
 });
