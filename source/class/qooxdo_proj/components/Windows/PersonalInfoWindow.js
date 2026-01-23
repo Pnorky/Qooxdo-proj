@@ -22,7 +22,7 @@ qx.Class.define("qooxdo_proj.components.Windows.PersonalInfoWindow",
     this.setWidth(600);
     this.setHeight(500);
     this.setAllowClose(true);
-    this.setAllowMaximize(true);
+    this.setAllowMaximize(false);
     this.setAllowMinimize(true);
     this.setResizable(true);
     this.setMovable(true);
