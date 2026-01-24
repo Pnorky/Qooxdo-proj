@@ -38,9 +38,13 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
     {
       // If window already exists, just open it
       if (this._windows[windowId]) {
-        this._windows[windowId].open();
-        this._windows[windowId].raise();
-        return this._windows[windowId];
+        const existingWin = this._windows[windowId];
+        existingWin.open();
+        // Use toFront() to bring window to front in Qooxdoo
+        if (existingWin.toFront) {
+          existingWin.toFront();
+        }
+        return existingWin;
       }
 
       // Set default position options
@@ -94,9 +98,13 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
     {
       // If window already exists, just open it
       if (this._windows[windowId]) {
-        this._windows[windowId].open();
-        this._windows[windowId].raise();
-        return this._windows[windowId];
+        const existingWin = this._windows[windowId];
+        existingWin.open();
+        // Use toFront() to bring window to front in Qooxdoo
+        if (existingWin.toFront) {
+          existingWin.toFront();
+        }
+        return existingWin;
       }
 
       // Create new window
@@ -185,7 +193,10 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
       const win = this._windows[windowId];
       if (win) {
         win.open();
-        win.raise();
+        // Use toFront() to bring window to front in Qooxdoo
+        if (win.toFront) {
+          win.toFront();
+        }
       }
     },
 
@@ -227,7 +238,10 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
         const win = this._windows[windowId];
         if (win && win.isVisible()) {
           win.moveTo(left, top);
-          win.raise();
+          // Use toFront() to bring window to front in Qooxdoo
+          if (win.toFront) {
+            win.toFront();
+          }
           left += offset;
           top += offset;
         }

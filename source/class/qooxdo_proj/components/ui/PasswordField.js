@@ -1,4 +1,4 @@
-qx.Class.define("qooxdo_proj.components.ui.TextField", {
+qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
   extend: qx.ui.core.Widget,
 
   properties: {
@@ -13,11 +13,6 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
       init: "",
       apply: "_applyPlaceholder"
     },
-    type: {
-      check: "String",
-      init: "text",
-      apply: "_applyType"
-    },
     enabled: {
       refine: true
     }
@@ -30,14 +25,13 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
     "input": "qx.event.type.Data"
   },
 
-  construct(placeholder = "", type = "text") {
+  construct(placeholder = "") {
     this.base(arguments);
 
     // Set a layout so children get measured and laid out
     this._setLayout(new qx.ui.layout.Canvas());
 
     // Store initial values (don't call setters yet as element isn't ready)
-    this._initialType = type;
     this._initialPlaceholder = placeholder;
 
     // Generate unique name for the input element
@@ -57,7 +51,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
         <input 
           name="${this._inputName}" 
           class="input" 
-          type="${type || "text"}" 
+          type="password" 
           placeholder="${placeholder || ""}"
         >
       </div>
@@ -75,9 +69,6 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
     this._html.addListenerOnce("appear", () => {
       this._setupInputEvents();
       // Now apply properties via property system to sync state
-      if (this._initialType) {
-        this.setType(this._initialType);
-      }
       if (this._initialPlaceholder) {
         this.setPlaceholder(this._initialPlaceholder);
       }
@@ -91,7 +82,6 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
     _inputName: null,
     _inputElement: null,
     _initialPlaceholder: null,
-    _initialType: null,
 
     /**
      * Setup event listeners on the input element
@@ -103,7 +93,6 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
       if (!this._inputElement) {
         return;
       }
-
 
       // Listen to input events (fires on every keystroke)
       this._inputElement.addEventListener("input", (e) => {
@@ -163,17 +152,6 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
       } else {
         // Element not ready yet, store for later
         this._initialPlaceholder = placeholder;
-      }
-    },
-
-    /**
-     * Apply type changes to the DOM input
-     * @param {String} type - The new input type
-     */
-    _applyType(type) {
-      const input = this._getInputElement();
-      if (input) {
-        input.type = type || "text";
       }
     },
 

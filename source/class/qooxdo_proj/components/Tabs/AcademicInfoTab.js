@@ -150,16 +150,16 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
        return { valid: true };
      },
 
-     // Clear form
-     clear : function()
-     {
-       this._programField.setValue("");
-       this._programField.setSelection([]);
-       this._yearLevelField.setValue("");
-       this._yearLevelField.setSelection([]);
-       this._gradeSchoolField.setValue("");
-       this._highSchoolField.setValue("");
-       this._collegeField.setValue("");
-     }
+    // Clear form
+    clear : function()
+    {
+      this._programField.setValue("");
+      this._programField.resetSelection();
+      this._yearLevelField.setValue("");
+      this._yearLevelField.resetSelection();
+      this._gradeSchoolField.setValue("");
+      this._highSchoolField.setValue("");
+      this._collegeField.setValue("");
+    }
   }
 });
