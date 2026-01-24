@@ -37,17 +37,9 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
     // Generate unique name for the input element
     this._inputName = `input-${qx.core.Id.getInstance().toHashCode(this)}`;
 
-    // Create HTML with Basecoat class and minimal custom styling
+    // Create HTML with Basecoat class - let Basecoat handle all styling
     this._html = new qx.ui.embed.Html(`
       <div style="margin: 0; padding: 0; min-width: 0; flex-shrink: 1;">
-        <style>
-          input[name="${this._inputName}"] {
-            box-shadow: none;
-          }
-          input[name="${this._inputName}"]:focus {
-            border-color: #4688d1;
-          }
-        </style>
         <input 
           name="${this._inputName}" 
           class="input" 

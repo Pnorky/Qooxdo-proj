@@ -34,10 +34,10 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
     // Store initial value (don't call setter yet as element isn't ready)
     this._initialValue = value;
 
-    // Create HTML for Basecoat label (value will be set via property)
+    // Create HTML for Basecoat label - let Basecoat handle styling
     this._html = new qx.ui.embed.Html(`
-      <div style="margin: 0; padding: 4px 0; min-width: 0; flex-shrink: 1; display: flex; align-items: center;">
-        <label class="label" style="width: 100%; min-width: 0; color: var(--foreground, #212121); font-weight: 500; line-height: 1.5;"></label>
+      <div style="margin: 0; padding: 0; min-width: 0; flex-shrink: 1; display: flex; align-items: center;">
+        <label class="label" style="width: 100%; min-width: 0;"></label>
       </div>
     `);
 

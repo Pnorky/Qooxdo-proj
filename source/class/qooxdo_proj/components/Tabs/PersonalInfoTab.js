@@ -40,26 +40,26 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       });
       grid.add(this._studentIdField, { row: 0, column: 1 });
 
-      this._firstNameField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("First Name:"), { row: 1, column: 0 });
+      this._firstNameField = new qooxdo_proj.components.ui.TextField();
+      grid.add(new qooxdo_proj.components.ui.Label("First Name:"), { row: 1, column: 0 });
       grid.add(this._firstNameField, { row: 1, column: 1 });
 
-      this._lastNameField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("Last Name:"), { row: 2, column: 0 });
+      this._lastNameField = new qooxdo_proj.components.ui.TextField();
+      grid.add(new qooxdo_proj.components.ui.Label("Last Name:"), { row: 2, column: 0 });
       grid.add(this._lastNameField, { row: 2, column: 1 });
 
       this._dobField = new qx.ui.form.DateField();
-      grid.add(new qx.ui.basic.Label("Date of Birth:"), { row: 3, column: 0 });
+      grid.add(new qooxdo_proj.components.ui.Label("Date of Birth:"), { row: 3, column: 0 });
       grid.add(this._dobField, { row: 3, column: 1 });
 
-      this._genderField = new qx.ui.form.ComboBox();
+      this._genderField = new qooxdo_proj.components.ui.ComboBox();
       this._genderField.add(new qx.ui.form.ListItem("Male"));
       this._genderField.add(new qx.ui.form.ListItem("Female"));
-      grid.add(new qx.ui.basic.Label("Gender:"), { row: 4, column: 0 });
+      grid.add(new qooxdo_proj.components.ui.Label("Gender:"), { row: 4, column: 0 });
       grid.add(this._genderField, { row: 4, column: 1 });
 
       this._addressField = new qx.ui.form.TextArea();
-      grid.add(new qx.ui.basic.Label("Address:"), { row: 5, column: 0 });
+      grid.add(new qooxdo_proj.components.ui.Label("Address:"), { row: 5, column: 0 });
       grid.add(this._addressField, { row: 5, column: 1 });
 
       this.add(grid, { flex: 1 });
