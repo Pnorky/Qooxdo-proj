@@ -58,9 +58,18 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       grid.add(new qooxdo_proj.components.ui.Label("Gender:"), { row: 4, column: 0 });
       grid.add(this._genderField, { row: 4, column: 1 });
 
-      this._addressField = new qx.ui.form.TextArea();
-      grid.add(new qooxdo_proj.components.ui.Label("Address:"), { row: 5, column: 0 });
-      grid.add(this._addressField, { row: 5, column: 1 });
+      // Address field with inline label
+      const addressContainer = new qx.ui.container.Composite();
+      const addressLayout = new qx.ui.layout.HBox(10);
+      addressLayout.setAlignY("top");
+      addressContainer.setLayout(addressLayout);
+      addressContainer.add(new qooxdo_proj.components.ui.Label("Address:"));
+      this._addressField = new qooxdo_proj.components.ui.TextArea();
+      this._addressField.setHeight(100);
+      this._addressField.setMinWidth(400);
+      this._addressField.setWidth(400);
+      addressContainer.add(this._addressField);
+      grid.add(addressContainer, { row: 5, column: 0, colSpan: 2 });
 
       this.add(grid, { flex: 1 });
     },
@@ -74,7 +83,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
         dateOfBirth: this._dobField.getValue(),
         gender:
           this._genderField.getSelection() &&
-          this._genderField.getSelection().length > 0
+            this._genderField.getSelection().length > 0
             ? this._genderField.getSelection()[0].getLabel()
             : "",
         address: this._addressField.getValue() || "",
