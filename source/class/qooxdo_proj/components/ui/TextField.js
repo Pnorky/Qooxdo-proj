@@ -45,12 +45,13 @@ qx.Class.define("qooxdo_proj.components.ui.TextField", {
 
     // Create HTML with Basecoat class - let Basecoat handle all styling
     this._html = new qx.ui.embed.Html(`
-      <div style="margin: 0; padding: 0; min-width: 0; flex-shrink: 1;">
+      <div style="margin: 0; padding: 0; min-width: 0; flex: 1; display: flex; align-items: center; height: 100%;">
         <input 
           name="${this._inputName}" 
           class="input" 
           type="${type || "text"}" 
           placeholder="${placeholder || ""}"
+          style="width: 100%;"
         >
       </div>
     `);

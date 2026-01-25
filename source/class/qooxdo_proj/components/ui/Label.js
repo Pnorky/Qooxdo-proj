@@ -36,8 +36,8 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
 
     // Create HTML for Basecoat label - let Basecoat handle styling
     this._html = new qx.ui.embed.Html(`
-      <div style="margin: 0; padding: 0; min-width: 0; flex-shrink: 1; display: flex; align-items: center;">
-        <label class="label" style="width: 100%; min-width: 0;"></label>
+      <div style="margin: 0; padding: 0; min-width: 0; flex-shrink: 0; display: inline-flex; align-items: center; height: 100%;">
+        <label class="label" style="min-width: 0; white-space: nowrap; display: inline-block;"></label>
       </div>
     `);
 

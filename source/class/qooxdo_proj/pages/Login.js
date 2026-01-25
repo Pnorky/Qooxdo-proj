@@ -51,6 +51,7 @@ qx.Class.define("qooxdo_proj.pages.Login", {
     const usernameContainer = new qx.ui.container.Composite();
     usernameContainer.setLayout(new qx.ui.layout.HBox(10));
     const usernameLabel = new qooxdo_proj.components.ui.Label("Username:");
+    usernameLabel.setWidth(100); // Fixed width for alignment
     this._usernameField = new qooxdo_proj.components.ui.TextField();
     this._usernameField.setPlaceholder("Enter username");
     usernameContainer.add(usernameLabel);
@@ -61,6 +62,7 @@ qx.Class.define("qooxdo_proj.pages.Login", {
     const passwordContainer = new qx.ui.container.Composite();
     passwordContainer.setLayout(new qx.ui.layout.HBox(10));
     const passwordLabel = new qooxdo_proj.components.ui.Label("Password:");
+    passwordLabel.setWidth(100); // Fixed width for alignment
     this._passwordField = new qooxdo_proj.components.ui.PasswordField();
     this._passwordField.setPlaceholder("Enter password");
     passwordContainer.add(passwordLabel);
