@@ -57,7 +57,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.ContactInfoTab",
 
       this._emergencyContactPhoneField = new qooxdo_proj.components.ui.TextField();
       const emergencyContactPhoneLabel = new qooxdo_proj.components.ui.Label("Emergency Contact Phone:");
-      emergencyContactPhoneLabel.setWidth(180);
+      emergencyContactPhoneLabel.setWidth(200);
       grid.add(emergencyContactPhoneLabel, { row: 3, column: 0 });
       grid.add(this._emergencyContactPhoneField, { row: 3, column: 1 });
       this._emergencyContactPhoneField.setWidth(300);

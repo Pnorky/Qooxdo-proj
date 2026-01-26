@@ -17,8 +17,6 @@ qx.Class.define("qooxdo_proj.components.Windows.AcademicInfoWindow",
     this.base(arguments, "Academic Information");
     
     this.setLayout(new qx.ui.layout.VBox(10));
-    this.setShowStatusbar(true);
-    this.setStatus("Ready");
     this.setWidth(600);
     this.setHeight(500);
     this.setAllowClose(true);

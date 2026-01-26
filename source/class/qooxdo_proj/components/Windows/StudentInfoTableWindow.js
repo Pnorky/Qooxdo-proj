@@ -17,8 +17,6 @@ qx.Class.define("qooxdo_proj.components.Windows.StudentInfoTableWindow",
     this.base(arguments, "Student Information Table");
     
     this.setLayout(new qx.ui.layout.VBox(10));
-    this.setShowStatusbar(true);
-    this.setStatus("Ready");
     this.setWidth(800);
     this.setHeight(500);
     this.setAllowClose(true);

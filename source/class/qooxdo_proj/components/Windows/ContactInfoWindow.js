@@ -17,7 +17,6 @@ qx.Class.define("qooxdo_proj.components.Windows.ContactInfoWindow",
     this.base(arguments, "Contact Information");
     
     this.setLayout(new qx.ui.layout.VBox(10));
-    this.setShowStatusbar(true);
     this.setWidth(600);
     this.setHeight(500);
     this.setAllowClose(true);

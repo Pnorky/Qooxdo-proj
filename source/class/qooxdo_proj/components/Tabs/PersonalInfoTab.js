@@ -55,21 +55,40 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       this._genderField = new qooxdo_proj.components.ui.ComboBox();
       this._genderField.add(new qx.ui.form.ListItem("Male"));
       this._genderField.add(new qx.ui.form.ListItem("Female"));
-      grid.add(new qooxdo_proj.components.ui.Label("Gender:"), { row: 4, column: 0 });
-      grid.add(this._genderField, { row: 4, column: 1 });
+      
+      // Wrap label and field in containers with matching height and middle alignment
+      const genderLabelContainer = new qx.ui.container.Composite();
+      genderLabelContainer.setLayout(new qx.ui.layout.HBox());
+      genderLabelContainer.setHeight(41); // Match combobox height
+      genderLabelContainer.setMarginTop(-5); // Move label higher
+      const genderLabel = new qooxdo_proj.components.ui.Label("Gender:");
+      genderLabelContainer.add(genderLabel, { flex: 0 });
+      
+      const genderFieldContainer = new qx.ui.container.Composite();
+      genderFieldContainer.setLayout(new qx.ui.layout.HBox());
+      genderFieldContainer.setHeight(41); // Match combobox height
+      genderFieldContainer.add(this._genderField, { flex: 0 });
+      
+      grid.add(genderLabelContainer, { row: 4, column: 0 });
+      grid.add(genderFieldContainer, { row: 4, column: 1 });
 
-      // Address field with inline label
-      const addressContainer = new qx.ui.container.Composite();
-      const addressLayout = new qx.ui.layout.HBox(10);
-      addressLayout.setAlignY("top");
-      addressContainer.setLayout(addressLayout);
-      addressContainer.add(new qooxdo_proj.components.ui.Label("Address:"));
+      // Address field - label in separate column
+      const addressLabelContainer = new qx.ui.container.Composite();
+      addressLabelContainer.setLayout(new qx.ui.layout.HBox());
+      const addressLabel = new qooxdo_proj.components.ui.Label("Address:");
+      addressLabelContainer.add(addressLabel, { flex: 0 });
+      
+      const addressFieldContainer = new qx.ui.container.Composite();
+      addressFieldContainer.setLayout(new qx.ui.layout.HBox());
+      
       this._addressField = new qooxdo_proj.components.ui.TextArea();
       this._addressField.setHeight(100);
       this._addressField.setMinWidth(400);
       this._addressField.setWidth(400);
-      addressContainer.add(this._addressField);
-      grid.add(addressContainer, { row: 5, column: 0, colSpan: 2 });
+      addressFieldContainer.add(this._addressField);
+      
+      grid.add(addressLabelContainer, { row: 5, column: 0 });
+      grid.add(addressFieldContainer, { row: 5, column: 1 });
 
       this.add(grid, { flex: 1 });
     },

@@ -17,7 +17,6 @@ qx.Class.define("qooxdo_proj.components.Windows.PersonalInfoWindow",
     this.base(arguments, "Personal Information");
     
     this.setLayout(new qx.ui.layout.VBox(10));
-    this.setShowStatusbar(true);
     this.setWidth(600);
     this.setHeight(500);
     this.setAllowClose(true);
