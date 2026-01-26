@@ -103,7 +103,30 @@ qx.Class.define("qooxdo_proj.pages.Login", {
       this,
     );
 
-    centerContainer.add(this._loginButton);
+    // Sign up button
+    this._signUpButton = new qooxdo_proj.components.ui.Button(
+      "Sign up",
+      "secondary",
+      "sm",
+    );
+    // Set negative top margin to reduce space from login button
+    this._signUpButton.setMarginTop(-8);
+
+    // Sign up button handler - opens registration window
+    this._signUpButton.addListener(
+      "execute",
+      () => {
+        this._openRegistrationWindow();
+      },
+      this,
+    );
+
+    // Container for buttons with minimal spacing
+    const buttonContainer = new qx.ui.container.Composite();
+    buttonContainer.setLayout(new qx.ui.layout.VBox(0));
+    buttonContainer.add(this._loginButton);
+    buttonContainer.add(this._signUpButton);
+    centerContainer.add(buttonContainer);
 
     // Center the container using Canvas layout with integer positions
     const self = this;
@@ -178,7 +201,9 @@ qx.Class.define("qooxdo_proj.pages.Login", {
     _usernameField: null,
     _passwordField: null,
     _loginButton: null,
+    _signUpButton: null,
     _errorLabel: null,
+    _registrationWindow: null,
 
     /**
      * Handle login attempt
@@ -218,9 +243,10 @@ qx.Class.define("qooxdo_proj.pages.Login", {
         if (!response.ok) {
           // Try to parse error message from response
           return response.json().then(errorData => {
-            throw new Error(errorData.error || `Server error: ${response.status}`);
+            const errorMessage = errorData.error || this._getUserFriendlyError(response.status);
+            throw new Error(errorMessage);
           }).catch(() => {
-            throw new Error(`Server error: ${response.status}`);
+            throw new Error(this._getUserFriendlyError(response.status));
           });
         }
         return response.json();
@@ -237,18 +263,137 @@ qx.Class.define("qooxdo_proj.pages.Login", {
       })
       .catch(error => {
         console.error("Login error:", error);
-        this._showError(error.message || "Failed to connect to server");
+        const friendlyMessage = this._getUserFriendlyError(error.message);
+        this._showError(friendlyMessage);
         this._loginButton.setEnabled(true);
       });
     },
 
     /**
+     * Open registration window
+     */
+    _openRegistrationWindow: function () {
+      // If window already exists and is open, just bring it to front
+      if (this._registrationWindow && this._registrationWindow.isVisible()) {
+        this._registrationWindow.toFront();
+        return;
+      }
+
+      // Create new registration window
+      this._registrationWindow = new qooxdo_proj.components.Windows.RegistrationWindow();
+      
+      // Get root from application instance
+      const app = qx.core.Init.getApplication();
+      if (app && app.getRoot) {
+        const root = app.getRoot();
+        root.add(this._registrationWindow);
+      } else {
+        // Fallback: find root by traversing up the widget tree
+        let widget = this;
+        while (widget) {
+          const parent = widget.getLayoutParent ? widget.getLayoutParent() : null;
+          if (!parent) {
+            // This is likely the root or a top-level widget
+            break;
+          }
+          widget = parent;
+        }
+        // Try to add to the found widget or use document body as last resort
+        if (widget && widget.add) {
+          widget.add(this._registrationWindow);
+        }
+      }
+      
+      // Center the window
+      this._registrationWindow.center();
+      
+      // Open the window
+      this._registrationWindow.open();
+      
+      // Listen for successful registration
+      this._registrationWindow.addListener("registrationSuccess", (e) => {
+        const data = e.getData();
+        // Clear login form and show success message
+        this.clear();
+        this._showError('<span style="color: green;">Registration successful! Please login with your new account.</span>');
+      }, this);
+      
+      // Clear form when window closes
+      this._registrationWindow.addListener("close", () => {
+        if (this._registrationWindow) {
+          this._registrationWindow.clear();
+        }
+      }, this);
+    },
+
+    /**
+     * Convert technical error messages to user-friendly messages
+     * @param {String|Number} error - Error message or status code
+     * @return {String} User-friendly error message
+     */
+    _getUserFriendlyError: function (error) {
+      // If it's a number, it's likely an HTTP status code
+      if (typeof error === 'number') {
+        const statusMessages = {
+          400: "Invalid request. Please check your input and try again.",
+          401: "Invalid username or password. Please try again.",
+          403: "Access denied. Please contact support if you believe this is an error.",
+          404: "Service not found. Please try again later.",
+          409: "This username is already taken. Please choose a different one.",
+          422: "Invalid information provided. Please check your input.",
+          500: "Server error. Please try again later.",
+          503: "Service temporarily unavailable. Please try again later."
+        };
+        return statusMessages[error] || "An error occurred. Please try again.";
+      }
+
+      // If it's a string error message, check for common technical messages
+      const errorStr = String(error);
+      
+      // Network errors
+      if (errorStr.includes("Failed to fetch") || 
+          errorStr.includes("NetworkError") ||
+          errorStr.includes("Network request failed")) {
+        return "Unable to connect to the server. Please check your internet connection and try again.";
+      }
+
+      // Server error patterns
+      if (errorStr.includes("Server error: 401") || errorStr.includes("401")) {
+        return "Invalid username or password. Please try again.";
+      }
+      if (errorStr.includes("Server error: 400") || errorStr.includes("400")) {
+        return "Invalid request. Please check your input and try again.";
+      }
+      if (errorStr.includes("Server error: 500") || errorStr.includes("500")) {
+        return "Server error. Please try again later.";
+      }
+      if (errorStr.includes("Server error:")) {
+        return "An error occurred. Please try again.";
+      }
+
+      // If the error message is already user-friendly (doesn't contain technical terms), return as-is
+      if (!errorStr.includes("error:") && 
+          !errorStr.includes("status") && 
+          !errorStr.includes("fetch") &&
+          !errorStr.includes("Network")) {
+        return errorStr;
+      }
+
+      // Default fallback
+      return "An unexpected error occurred. Please try again.";
+    },
+
+    /**
      * Show error message
-     * @param {String} message - Error message
+     * @param {String} message - Error message (can contain HTML)
      */
     _showError: function (message) {
-      // Set value with red color styling first
-      this._errorLabel.setValue('<span style="color: red;">' + message + '</span>');
+      // If message already contains HTML styling, use it as-is, otherwise wrap in red
+      if (message.includes('<span')) {
+        this._errorLabel.setValue(message);
+      } else {
+        this._errorLabel.setValue('<span style="color: red;">' + message + '</span>');
+      }
       // Make visible - this will allow the label to size naturally
       this._errorLabel.setVisibility("visible");
     },

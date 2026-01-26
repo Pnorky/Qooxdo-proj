@@ -12,6 +12,11 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
   {
     extend: qx.ui.container.Composite,
 
+    events: {
+      /** Fired when logout is requested */
+      logout: "qx.event.type.Event",
+    },
+
     construct: function () {
       this.base(arguments);
 
@@ -32,6 +37,16 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       // menubar.add(viewMenu);
       menubar.add(windowMenu);
 
+      // Add logout button as a menubar button (right-aligned)
+      this._logoutButton = new qx.ui.menubar.Button("Logout");
+      this._logoutButton.addListener("execute", () => {
+        this._handleLogout();
+      }, this);
+      
+      // Add spacer to push logout to the right
+      menubar.addSpacer();
+      menubar.add(this._logoutButton);
+
       this.add(frame);
     },
 
@@ -42,6 +57,15 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _showContactInfoCheckbox: null,
       _showAcademicInfoCheckbox: null,
       _showStudentTableCheckbox: null,
+      _logoutButton: null,
+
+      /**
+       * Handle logout button click
+       */
+      _handleLogout: function () {
+        // Fire logout event
+        this.fireEvent("logout");
+      },
 
       /**
        * Set the window manager reference

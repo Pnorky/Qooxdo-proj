@@ -52,6 +52,12 @@ qx.Class.define("qooxdo_proj.Application",
         // Create Menu Bar component and pass window manager reference
         const menuBar = new qooxdo_proj.components.MenuBar();
         menuBar.setWindowManager(this._windowManager);
+        
+        // Listen for logout event
+        menuBar.addListener("logout", () => {
+          this._handleLogout();
+        }, this);
+        
         rootContainer.add(menuBar, { left: 0, top: 0, right: 0 });
 
         // Create window components
@@ -159,6 +165,38 @@ qx.Class.define("qooxdo_proj.Application",
         // Optional: Update status to show logged in user
         if (this._statusLabel) {
           this._statusLabel.setValue(`<span style='color: green;'>Welcome, ${username}!</span>`);
+        }
+      },
+
+      _handleLogout() {
+        // Close all windows
+        if (this._windowManager) {
+          this._windowManager.closeAllWindows();
+        }
+        
+        // Hide main application
+        this._mainContainer.setVisibility("hidden");
+        
+        // Show login page
+        this._loginPage.setVisibility("visible");
+        
+        // Clear login form
+        this._loginPage.clear();
+        
+        // Clear all form windows
+        if (this._personalInfoWindow) {
+          this._personalInfoWindow.clear();
+        }
+        if (this._contactInfoWindow) {
+          this._contactInfoWindow.clear();
+        }
+        if (this._academicInfoWindow) {
+          this._academicInfoWindow.clear();
+        }
+        
+        // Reset status label
+        if (this._statusLabel) {
+          this._statusLabel.setValue("Ready");
         }
       },
 
