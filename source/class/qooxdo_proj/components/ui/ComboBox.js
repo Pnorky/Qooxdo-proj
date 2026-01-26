@@ -248,16 +248,35 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       // Get button position before moving popover
       const buttonRect = this._buttonElement.getBoundingClientRect();
       
-      // Move popover to body to escape overflow constraints
+      // Check if we're inside a dialog - native <dialog> elements create a stacking context
+      // The dialog backdrop (::backdrop) has a very high z-index, so we need to append
+      // the popover to the dialog element itself to be in the same stacking context
+      let dialogElement = this._buttonElement.closest("dialog");
+      let targetContainer = document.body;
+      
+      if (dialogElement) {
+        // We're inside a dialog - append to the dialog element itself
+        // This ensures the popover is in the same stacking context as the dialog
+        targetContainer = dialogElement;
+      }
+      
+      // Move popover to body/dialog to escape overflow constraints
       if (!this._popoverContainer) {
         this._popoverContainer = document.createElement("div");
         this._popoverContainer.className = "select"; // Maintain select context for Basecoat CSS
         this._popoverContainer.style.position = "fixed";
         this._popoverContainer.style.pointerEvents = "none";
-        this._popoverContainer.style.zIndex = "10000";
+        // Use very high z-index - dialog backdrop uses max int32, so we use max-1
+        // When inside dialog, this will be relative to dialog's stacking context
+        this._popoverContainer.style.zIndex = "2147483646";
         this._popoverContainer.style.top = "0";
         this._popoverContainer.style.left = "0";
-        document.body.appendChild(this._popoverContainer);
+        targetContainer.appendChild(this._popoverContainer);
+      } else {
+        // If container exists but is in wrong place, move it
+        if (this._popoverContainer.parentNode !== targetContainer) {
+          targetContainer.appendChild(this._popoverContainer);
+        }
       }
       
       // Move popover to container
@@ -271,7 +290,9 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       
       // Position popover using fixed positioning relative to viewport
       this._popoverElement.style.position = "fixed";
-      this._popoverElement.style.zIndex = "10001";
+      // Use very high z-index - when inside dialog, this is relative to dialog's stacking context
+      // When not in dialog, this ensures it's above most other elements
+      this._popoverElement.style.zIndex = "2147483647";
       
       // Disable all transitions and transforms to prevent swooping animation
       this._popoverElement.style.setProperty("transition", "none", "important");

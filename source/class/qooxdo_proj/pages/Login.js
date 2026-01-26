@@ -205,27 +205,41 @@ qx.Class.define("qooxdo_proj.pages.Login", {
       // Disable login button during validation
       this._loginButton.setEnabled(false);
 
-      // Simulate login
-      setTimeout(() => {
-        if (this._validateLogin(username, password)) {
+      // Send login request to API using fetch
+      fetch("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username: username, password: password })
+      })
+      .then(response => {
+        // Check if response is ok (status 200-299)
+        if (!response.ok) {
+          // Try to parse error message from response
+          return response.json().then(errorData => {
+            throw new Error(errorData.error || `Server error: ${response.status}`);
+          }).catch(() => {
+            throw new Error(`Server error: ${response.status}`);
+          });
+        }
+        return response.json();
+      })
+      .then(result => {
+        if (result && result.success) {
           // Login successful
-          this.fireDataEvent("loginSuccess", { username: username });
+          this.fireDataEvent("loginSuccess", { username: result.username });
         } else {
           // Login failed
-          this._showError("Invalid username or password");
+          this._showError(result.error || "Invalid username or password");
           this._loginButton.setEnabled(true);
         }
-      }, 500);
-    },
-
-    /**
-     * Validate login credentials
-     * @param {String} username - Username
-     * @param {String} password - Password
-     * @return {Boolean} True if valid
-     */
-    _validateLogin: function (username, password) {
-      return username.trim().length > 0 && password.trim().length > 0;
+      })
+      .catch(error => {
+        console.error("Login error:", error);
+        this._showError(error.message || "Failed to connect to server");
+        this._loginButton.setEnabled(true);
+      });
     },
 
     /**

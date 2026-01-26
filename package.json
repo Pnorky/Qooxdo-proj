@@ -19,7 +19,9 @@
     "build:tailwind": "npx @tailwindcss/cli -i ./tailwind-basecoat.css -o ./source/resource/qooxdo_proj/compiled.css",
     "compile": "npm run build:tailwind && qx compile",
     "serve": "npm run build:tailwind && qx serve",
-    "watch": "qx watch"
+    "watch": "qx watch",
+    "server": "node backend/server.js",
+    "dev": "node backend/server.js"
   },
   "devDependencies": {
     "@qooxdoo/compiler": "^1.0.5",
@@ -28,6 +30,9 @@
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "basecoat-css": "^0.3.10",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "sqlite3": "^5.0.2",
     "tailwindcss": "^4.1.18"
   }
 }

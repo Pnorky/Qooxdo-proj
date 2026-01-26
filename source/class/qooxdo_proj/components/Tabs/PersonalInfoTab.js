@@ -48,7 +48,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       grid.add(this._lastNameField, { row: 2, column: 1 });
 
       this._dobField = new qooxdo_proj.components.ui.DateField();
-      this._dobField.setWidth(200);
+      this._dobField.setMaxWidth(180);
       grid.add(new qooxdo_proj.components.ui.Label("Date of Birth:"), { row: 3, column: 0 });
       grid.add(this._dobField, { row: 3, column: 1 });
 

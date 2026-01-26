@@ -64,6 +64,16 @@ qx.Class.define("qooxdo_proj.components.Windows.StudentInfoTableWindow",
       if (this._studentInfoTable) {
         this._studentInfoTable.clear();
       }
+    },
+
+    /**
+     * Load students from API
+     */
+    loadStudents : function()
+    {
+      if (this._studentInfoTable) {
+        this._studentInfoTable.loadStudents();
+      }
     }
   }
 });

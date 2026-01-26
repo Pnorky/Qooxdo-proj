@@ -82,8 +82,13 @@ qx.Class.define("qooxdo_proj.Application",
         this._windowManager.registerWindow(
           "studentTable",
           this._studentInfoTableWindow,
-          { left: 50, top: 600, open: false }
+          { left: 50, top: 600, open: false, }
         );
+
+        // Load students when table window is opened
+        this._studentInfoTableWindow.addListener("appear", () => {
+          this._studentInfoTableWindow.loadStudents();
+        }, this);
 
         // Main container for buttons and status
         const mainContainer = new qx.ui.container.Composite();
@@ -188,24 +193,67 @@ qx.Class.define("qooxdo_proj.Application",
         const contactData = this._contactInfoWindow.getData();
         const academicData = this._academicInfoWindow.getData();
 
-        // Add student to table
-        this._studentInfoTableWindow.addStudent({
+        // Combine all data
+        const studentData = {
           studentId: personalData.studentId,
           firstName: personalData.firstName,
           lastName: personalData.lastName,
+          dateOfBirth: personalData.dateOfBirth ? personalData.dateOfBirth.toISOString() : null,
+          gender: personalData.gender,
+          address: personalData.address,
+          email: contactData.email,
+          personalPhone: contactData.personalPhone,
+          emergencyContact: contactData.emergencyContact,
+          emergencyContactPhone: contactData.emergencyContactPhone,
+          relationship: contactData.relationship,
           program: academicData.program,
-          yearLevel: academicData.yearLevel
-        });
+          yearLevel: academicData.yearLevel,
+          gradeSchool: academicData.previousSchools.gradeSchool,
+          highSchool: academicData.previousSchools.highSchool,
+          college: academicData.previousSchools.college
+        };
 
-        this._statusLabel.setValue("<span style='color: green;'>Student registered successfully and added to table!</span>");
+        // Send to API
+        this._statusLabel.setValue("<span style='color: blue;'>Saving student...</span>");
         
-        // Open the student table window to show the new entry
-        this._windowManager.openWindow("studentTable");
+        fetch("http://localhost:3000/api/students", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(studentData)
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(errorData => {
+              throw new Error(errorData.error || `Server error: ${response.status}`);
+            }).catch(() => {
+              throw new Error(`Server error: ${response.status}`);
+            });
+          }
+          return response.json();
+        })
+        .then(savedStudent => {
+          // Add student to table
+          this._studentInfoTableWindow.addStudent({
+            studentId: savedStudent.studentId,
+            firstName: savedStudent.firstName,
+            lastName: savedStudent.lastName,
+            program: savedStudent.program,
+            yearLevel: savedStudent.yearLevel
+          });
 
-        console.log("Complete Student Data:", {
-          personalInfo: personalData,
-          contactInfo: contactData,
-          academicInfo: academicData
+          this._statusLabel.setValue("<span style='color: green;'>Student registered successfully!</span>");
+          this._windowManager.openWindow("studentTable");
+          
+          // Clear forms
+          this._personalInfoWindow.clear();
+          this._contactInfoWindow.clear();
+          this._academicInfoWindow.clear();
+        })
+        .catch(error => {
+          console.error("Save student error:", error);
+          this._statusLabel.setValue("<span style='color: red;'>Error: " + error.message + "</span>");
         });
       },
 

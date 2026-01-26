@@ -10,6 +10,11 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     }
   },
 
+  events: {
+    /** Fired when a table row is clicked. Data: {rowIndex: number, rowData: object} */
+    "rowClick": "qx.event.type.Data"
+  },
+
   construct(caption = "") {
     this.base(arguments);
 
@@ -68,6 +73,9 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       
       // Setup column resizing
       this._setupColumnResizing();
+      
+      // Setup row click events after table is rendered
+      this._setupRowClickEvents();
     });
   },
 
@@ -88,6 +96,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     _resizeColumnIndex: null,
     _resizeStartX: null,
     _resizeStartWidth: null,
+    _rowClickHandler: null,
 
     /**
      * Escape HTML to prevent XSS attacks
@@ -126,8 +135,9 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
      * Add a row to the table body
      * @param {Array} rowData - Array of cell data (strings or objects with {text, classes, align})
      * @param {Number} index - Optional index to insert at (defaults to end)
+     * @param {Object} rowDataObj - Optional data object to store with the row (for click events)
      */
-    addRow(rowData, index = null) {
+    addRow(rowData, index = null, rowDataObj = null) {
       if (!rowData || !Array.isArray(rowData)) {
         return;
       }
@@ -144,7 +154,8 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             };
           }
           return { text: "", classes: "", align: "" };
-        })
+        }),
+        data: rowDataObj || null
       };
 
       if (index === null || index === undefined) {
@@ -316,8 +327,19 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       // Render body rows
       if (this._tbodyElement) {
         this._tbodyElement.innerHTML = "";
-        this._rows.forEach(row => {
+        this._rows.forEach((row, rowIndex) => {
           const tr = document.createElement("tr");
+          // Store row index and data for click events
+          tr.setAttribute("data-row-index", rowIndex);
+          // Add hover effect for clickable rows
+          tr.style.cursor = "pointer";
+          tr.addEventListener("mouseenter", () => {
+            tr.style.backgroundColor = "rgba(0, 0, 0, 0.05)";
+          });
+          tr.addEventListener("mouseleave", () => {
+            tr.style.backgroundColor = "";
+          });
+          
           row.cells.forEach((cell, index) => {
             const td = document.createElement("td");
             td.textContent = this._escapeHtml(cell.text);
@@ -351,6 +373,11 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
           });
           this._tbodyElement.appendChild(tr);
         });
+        
+        // Setup row click events (only if tbody element exists and is in DOM)
+        if (this._tbodyElement && this._tbodyElement.parentNode) {
+          this._setupRowClickEvents();
+        }
       }
 
       // Render footer rows
@@ -402,6 +429,41 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         // Show/hide tfoot
         this._tfootElement.style.display = this._footerRows.length > 0 ? "" : "none";
       }
+    },
+
+    /**
+     * Setup row click events
+     */
+    _setupRowClickEvents() {
+      if (!this._tbodyElement) {
+        return;
+      }
+
+      // Remove existing listener if any (to avoid duplicates)
+      if (this._rowClickHandler) {
+        this._tbodyElement.removeEventListener("click", this._rowClickHandler);
+      }
+
+      // Use event delegation for row clicks
+      this._rowClickHandler = (e) => {
+        const tr = e.target.closest("tr");
+        if (!tr) {
+          return;
+        }
+        
+        const rowIndex = parseInt(tr.getAttribute("data-row-index"));
+        if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= this._rows.length) {
+          return;
+        }
+
+        const row = this._rows[rowIndex];
+        this.fireDataEvent("rowClick", {
+          rowIndex: rowIndex,
+          rowData: row.data || null
+        });
+      };
+
+      this._tbodyElement.addEventListener("click", this._rowClickHandler);
     },
 
     /**
