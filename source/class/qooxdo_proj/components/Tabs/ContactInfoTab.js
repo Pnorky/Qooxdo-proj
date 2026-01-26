@@ -6,7 +6,7 @@
 
    Authors: 
 
-************************************************************************ */
+****************************************************** ****************** */
 
 qx.Class.define("qooxdo_proj.components.Tabs.ContactInfoTab",
 {
@@ -32,29 +32,42 @@ qx.Class.define("qooxdo_proj.components.Tabs.ContactInfoTab",
     _createForm : function()
     {
       const grid = new qx.ui.container.Composite();
-      grid.setLayout(new qx.ui.layout.Grid(5, 5));
+      grid.setLayout(new qx.ui.layout.Grid(15, 5));
 
       // Contact Info Fields
-      this._emailField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("Email:"), { row: 0, column: 0 });
+      this._emailField = new qooxdo_proj.components.ui.TextField();
+      const emailLabel = new qooxdo_proj.components.ui.Label("Email:");
+      emailLabel.setWidth(180); // Fixed width to prevent truncation
+      grid.add(emailLabel, { row: 0, column: 0 });
       grid.add(this._emailField, { row: 0, column: 1 });
 
-      this._personalPhoneField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("Personal Phone:"), { row: 1, column: 0 });
+      this._personalPhoneField = new qooxdo_proj.components.ui.TextField();
+      const personalPhoneLabel = new qooxdo_proj.components.ui.Label("Personal Phone:");
+      personalPhoneLabel.setWidth(180);
+      grid.add(personalPhoneLabel, { row: 1, column: 0 });
       grid.add(this._personalPhoneField, { row: 1, column: 1 });
+      this._personalPhoneField.setWidth(300);
 
-      this._emergencyContactField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("Emergency Contact:"), { row: 2, column: 0 });
+      this._emergencyContactField = new qooxdo_proj.components.ui.TextField();
+      const emergencyContactLabel = new qooxdo_proj.components.ui.Label("Emergency Contact:");
+      emergencyContactLabel.setWidth(180);
+      grid.add(emergencyContactLabel, { row: 2, column: 0 });
       grid.add(this._emergencyContactField, { row: 2, column: 1 });
+      this._emergencyContactField.setWidth(300);
 
-      this._emergencyContactPhoneField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("Emergency Contact Phone:"), { row: 3, column: 0 });
+      this._emergencyContactPhoneField = new qooxdo_proj.components.ui.TextField();
+      const emergencyContactPhoneLabel = new qooxdo_proj.components.ui.Label("Emergency Contact Phone:");
+      emergencyContactPhoneLabel.setWidth(180);
+      grid.add(emergencyContactPhoneLabel, { row: 3, column: 0 });
       grid.add(this._emergencyContactPhoneField, { row: 3, column: 1 });
-
-      this._relationshipField = new qx.ui.form.TextField();
-      grid.add(new qx.ui.basic.Label("Relationship:"), { row: 4, column: 0 });
+      this._emergencyContactPhoneField.setWidth(300);
+      
+      this._relationshipField = new qooxdo_proj.components.ui.TextField();
+      const relationshipLabel = new qooxdo_proj.components.ui.Label("Relationship:");
+      relationshipLabel.setWidth(180);
+      grid.add(relationshipLabel, { row: 4, column: 0 });
       grid.add(this._relationshipField, { row: 4, column: 1 });
-
+      this._relationshipField.setWidth(300);
       this.add(grid, { flex: 1 });
     },
 

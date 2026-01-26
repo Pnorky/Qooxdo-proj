@@ -36,7 +36,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       academicInfoGrid.setLayout(new qx.ui.layout.Grid(5, 5));
 
       // Academic Info Fields
-      this._programField = new qx.ui.form.ComboBox();
+      this._programField = new qooxdo_proj.components.ui.ComboBox();
       this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Computer Science"));
       this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Information Technology"));
       this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Information Systems"));

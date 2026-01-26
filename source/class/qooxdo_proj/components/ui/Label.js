@@ -119,7 +119,17 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
      */
     _applyRich(rich) {
       // Re-apply value to update HTML rendering
-      const currentValue = this.getProperty("value");
+      // Get current text content from DOM (always read as textContent to get visible text)
+      const label = this._getLabelElement();
+      let currentValue = "";
+      if (label) {
+        // Always read as textContent to get the actual displayed text
+        currentValue = label.textContent || "";
+      } else {
+        // DOM not ready yet, use initial value
+        currentValue = this._initialValue || "";
+      }
+      // Re-apply with new rich setting
       this._applyValue(currentValue);
     },
 
@@ -164,7 +174,8 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
       if (label) {
         return this.getRich() ? label.innerHTML : label.textContent;
       }
-      return this.getProperty("value") || "";
+      // Return initial value if DOM element not ready yet
+      return this._initialValue || "";
     }
   }
 });

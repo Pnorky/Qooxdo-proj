@@ -71,8 +71,8 @@ qx.Class.define("qooxdo_proj.pages.Login", {
 
     // Error message label
     this._errorLabel = new qooxdo_proj.components.ui.Label("");
-    this._errorLabel.setVisibility("hidden"); 
-    this._errorLabel.setHeight(0); // Don't take up space when hidden
+    this._errorLabel.setRich(true); // Enable rich text for color styling
+    this._errorLabel.setVisibility("hidden");
     centerContainer.add(this._errorLabel);
 
     // Login button
@@ -190,7 +190,6 @@ qx.Class.define("qooxdo_proj.pages.Login", {
       // Clear previous error
       this._errorLabel.setVisibility("hidden");
       this._errorLabel.setValue("");
-      this._errorLabel.setHeight(0); // Don't take up space when hidden
 
       // Validate inputs
       if (!username.trim()) {
@@ -234,9 +233,10 @@ qx.Class.define("qooxdo_proj.pages.Login", {
      * @param {String} message - Error message
      */
     _showError: function (message) {
-      this._errorLabel.setValue(message);
+      // Set value with red color styling first
+      this._errorLabel.setValue('<span style="color: red;">' + message + '</span>');
+      // Make visible - this will allow the label to size naturally
       this._errorLabel.setVisibility("visible");
-      this._errorLabel.setHeight(null); // Restore default height when visible
     },
 
     /**

@@ -32,7 +32,6 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       grid.setLayout(new qx.ui.layout.Grid(5, 5));
 
       // Personal Info Fields
-      //this._studentIdField = new qx.ui.form.TextField();
       this._studentIdField = new qooxdo_proj.components.ui.TextField();
       grid.add(new qooxdo_proj.components.ui.Label("Student ID:"), {
         row: 0,
