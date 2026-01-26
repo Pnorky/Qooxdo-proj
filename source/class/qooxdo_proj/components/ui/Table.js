@@ -55,11 +55,12 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       this._tbodyElement = this._tableElement ? this._tableElement.querySelector("tbody") : null;
       this._tfootElement = this._tableElement ? this._tableElement.querySelector("tfoot") : null;
 
-      // Ensure table has visible border and fixed layout for column resizing
+      // Ensure table has visible border and auto layout for automatic column width adjustment
       if (this._tableElement) {
         this._tableElement.style.border = "1px solid rgba(0, 0, 0, 0.15)";
         this._tableElement.style.borderCollapse = "collapse";
-        this._tableElement.style.tableLayout = "fixed";
+        // Use auto layout to allow columns to adjust based on content
+        this._tableElement.style.tableLayout = "auto";
         this._tableElement.style.width = "100%";
       }
 
@@ -70,6 +71,13 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
 
       // Render initial data if any
       this._renderTable();
+      
+      // Auto-adjust column widths after initial render if no explicit widths are set
+      if (this._rows.length > 0 && !this._hasExplicitColumnWidths()) {
+        qx.event.Timer.once(() => {
+          this._autoAdjustColumnWidths();
+        }, this, 100);
+      }
       
       // Setup column resizing
       this._setupColumnResizing();
@@ -165,6 +173,13 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       }
 
       this._renderTable();
+      
+      // Auto-adjust column widths after adding row if table is visible
+      if (this._tableElement && !this._hasExplicitColumnWidths()) {
+        qx.event.Timer.once(() => {
+          this._autoAdjustColumnWidths();
+        }, this, 100);
+      }
     },
 
     /**
@@ -257,16 +272,22 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       if (this._theadElement && this._headers.length > 0) {
         this._theadElement.innerHTML = "";
         const headerRow = document.createElement("tr");
-        // Ensure header row has visible border
+        // Ensure header row has visible border and proper height
         headerRow.style.borderBottom = "1px solid rgba(0, 0, 0, 0.1)";
+        headerRow.style.minHeight = "44px"; // Consistent header height
+        headerRow.style.height = "auto"; // Allow height to adjust
         this._headers.forEach((headerText, index) => {
           const th = document.createElement("th");
           
-          // Apply column width if set
+          // Apply column width if explicitly set, otherwise let it auto-adjust
           if (this._columnWidths[index]) {
             th.style.width = this._columnWidths[index] + "px";
             th.style.minWidth = this._columnWidths[index] + "px";
             th.style.maxWidth = this._columnWidths[index] + "px";
+          } else {
+            // Allow auto-sizing but set minimum width
+            th.style.minWidth = "80px"; // Minimum width to prevent too narrow columns
+            th.style.width = "auto";
           }
           
           // Add cell borders
@@ -276,10 +297,18 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
           
           // Set content directly
           th.textContent = this._escapeHtml(headerText);
-          th.style.paddingRight = index < this._headers.length - 1 ? "8px" : "";
-          th.style.overflow = "hidden";
+          
+          // Add auto-adjusting padding for proper spacing
+          th.style.padding = "12px 16px";
+          th.style.paddingRight = index < this._headers.length - 1 ? "16px" : "12px";
+          th.style.paddingLeft = index === 0 ? "16px" : "16px";
+          th.style.verticalAlign = "middle";
+          
+          // Allow text to wrap if needed, but prefer single line
+          th.style.overflow = "visible";
           th.style.textOverflow = "ellipsis";
-          th.style.whiteSpace = "nowrap";
+          th.style.whiteSpace = "normal"; // Allow wrapping for long headers
+          th.style.wordWrap = "break-word";
           
           // Create resize handle on the border (only if not last column)
           if (index < this._headers.length - 1) {
@@ -331,6 +360,11 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
           const tr = document.createElement("tr");
           // Store row index and data for click events
           tr.setAttribute("data-row-index", rowIndex);
+          
+          // Auto-adjust row height based on content
+          tr.style.minHeight = "44px"; // Minimum row height for consistent spacing
+          tr.style.height = "auto"; // Allow height to adjust based on content
+          
           // Add hover effect for clickable rows
           tr.style.cursor = "pointer";
           tr.addEventListener("mouseenter", () => {
@@ -344,11 +378,15 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             const td = document.createElement("td");
             td.textContent = this._escapeHtml(cell.text);
             
-            // Apply column width if set
+            // Apply column width if explicitly set, otherwise let it auto-adjust
             if (this._columnWidths[index]) {
               td.style.width = this._columnWidths[index] + "px";
               td.style.minWidth = this._columnWidths[index] + "px";
               td.style.maxWidth = this._columnWidths[index] + "px";
+            } else {
+              // Allow auto-sizing but set minimum width
+              td.style.minWidth = "80px"; // Minimum width to prevent too narrow columns
+              td.style.width = "auto";
             }
             
             // Add cell borders
@@ -358,6 +396,19 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             if (index === row.cells.length - 1) {
               td.style.borderRight = "none";
             }
+            
+            // Add auto-adjusting padding for proper spacing
+            td.style.padding = "12px 16px";
+            td.style.paddingRight = index < row.cells.length - 1 ? "16px" : "12px";
+            td.style.paddingLeft = index === 0 ? "16px" : "16px";
+            td.style.verticalAlign = "middle";
+            td.style.lineHeight = "1.5";
+            
+            // Allow text wrapping for long content
+            td.style.wordWrap = "break-word";
+            td.style.overflowWrap = "break-word";
+            td.style.whiteSpace = "normal"; // Allow wrapping
+            td.style.overflow = "visible"; // Show full content
             
             // Apply classes
             if (cell.classes) {
@@ -378,6 +429,13 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         if (this._tbodyElement && this._tbodyElement.parentNode) {
           this._setupRowClickEvents();
         }
+        
+        // Auto-adjust column widths after rendering if no explicit widths are set
+        if (this._rows.length > 0 && !this._hasExplicitColumnWidths()) {
+          qx.event.Timer.once(() => {
+            this._autoAdjustColumnWidths();
+          }, this, 50);
+        }
       }
 
       // Render footer rows
@@ -385,6 +443,10 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         this._tfootElement.innerHTML = "";
         this._footerRows.forEach(row => {
           const tr = document.createElement("tr");
+          // Auto-adjust footer row height based on content
+          tr.style.minHeight = "44px";
+          tr.style.height = "auto";
+          
           row.cells.forEach((cell, index) => {
             const td = document.createElement("td");
             td.textContent = this._escapeHtml(cell.text);
@@ -395,6 +457,10 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
                 td.style.width = this._columnWidths[index] + "px";
                 td.style.minWidth = this._columnWidths[index] + "px";
                 td.style.maxWidth = this._columnWidths[index] + "px";
+              } else {
+                // Allow auto-sizing but set minimum width
+                td.style.minWidth = "80px";
+                td.style.width = "auto";
               }
             }
             
@@ -405,6 +471,13 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             if (index === row.cells.length - 1 && (!cell.colspan || cell.colspan === 1)) {
               td.style.borderRight = "none";
             }
+            
+            // Add auto-adjusting padding for proper spacing (consistent with body rows)
+            td.style.padding = "12px 16px";
+            td.style.paddingRight = index < row.cells.length - 1 ? "16px" : "12px";
+            td.style.paddingLeft = index === 0 ? "16px" : "16px";
+            td.style.verticalAlign = "middle";
+            td.style.lineHeight = "1.5";
             
             // Apply colspan
             if (cell.colspan && cell.colspan > 1) {
@@ -547,6 +620,62 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         document.addEventListener("mousemove", mouseMoveHandler);
         document.addEventListener("mouseup", mouseUpHandler);
       });
+    },
+
+    /**
+     * Check if any explicit column widths are set
+     * @return {Boolean} True if any column widths are explicitly set
+     */
+    _hasExplicitColumnWidths() {
+      return this._columnWidths && this._columnWidths.some(width => width !== null && width !== undefined);
+    },
+
+    /**
+     * Auto-adjust column widths based on content
+     * With tableLayout: auto, the browser should handle this, but we ensure
+     * cells can expand to fit their content
+     */
+    _autoAdjustColumnWidths() {
+      if (!this._tableElement || !this._tbodyElement || this._rows.length === 0) {
+        return;
+      }
+
+      const numColumns = this._headers.length;
+      if (numColumns === 0) {
+        return;
+      }
+
+      // For columns without explicit widths, ensure they can auto-expand
+      const headerRow = this._theadElement ? this._theadElement.querySelector("tr") : null;
+      const rows = this._tbodyElement.querySelectorAll("tr");
+      
+      for (let i = 0; i < numColumns; i++) {
+        // Only adjust if no explicit width is set
+        if (!this._columnWidths[i]) {
+          // Remove any width constraints to allow natural sizing
+          if (headerRow && headerRow.children[i]) {
+            const th = headerRow.children[i];
+            th.style.width = "";
+            th.style.minWidth = "80px"; // Keep minimum
+            th.style.maxWidth = ""; // Remove max constraint
+          }
+          
+          // Update all body cells in this column
+          rows.forEach(tr => {
+            if (tr.children[i]) {
+              const td = tr.children[i];
+              td.style.width = "";
+              td.style.minWidth = "80px"; // Keep minimum
+              td.style.maxWidth = ""; // Remove max constraint
+            }
+          });
+        }
+      }
+      
+      // Force a reflow to let the browser recalculate with auto layout
+      if (this._tableElement) {
+        this._tableElement.offsetHeight; // Force reflow
+      }
     },
 
     /**

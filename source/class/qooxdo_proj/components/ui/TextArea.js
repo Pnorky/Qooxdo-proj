@@ -122,6 +122,21 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
             this._applyEnabled(this.getEnabled());
             // Apply initial wrap state
             this._applyWrap(this.getWrap());
+            
+            // Make widget content element delegate focus to textarea
+            const contentElement = this.getContentElement();
+            if (contentElement) {
+                const domElement = contentElement.getDomElement();
+                if (domElement) {
+                    // When widget receives focus, delegate to textarea
+                    domElement.addEventListener("focusin", (e) => {
+                        const textarea = this._getTextAreaElement();
+                        if (textarea && e.target === domElement) {
+                            textarea.focus();
+                        }
+                    });
+                }
+            }
         });
     },
 
@@ -141,6 +156,38 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
             if (!this._textareaElement) {
                 return;
             }
+
+            // Exclude qooxdoo widget content element from tab order
+            const contentElement = this.getContentElement();
+            if (contentElement) {
+                const domElement = contentElement.getDomElement();
+                if (domElement) {
+                    domElement.setAttribute("tabindex", "-1");
+                }
+            }
+            
+            // Exclude wrapper div from tab order so tabbing goes directly to textarea
+            const wrapperDiv = container.querySelector("div");
+            if (wrapperDiv) {
+                wrapperDiv.setAttribute("tabindex", "-1");
+            }
+            
+            // Ensure textarea is focusable - remove any tabindex that might prevent tab navigation
+            if (this._textareaElement.hasAttribute("tabindex") && this._textareaElement.getAttribute("tabindex") === "-1") {
+                this._textareaElement.removeAttribute("tabindex");
+            }
+            // Ensure textarea is explicitly in tab order
+            this._textareaElement.removeAttribute("tabindex"); // Remove any existing tabindex
+            // Native textareas are focusable by default - no tabindex needed
+
+            // Handle Tab key to prevent widget wrapper from interfering
+            this._textareaElement.addEventListener("keydown", (e) => {
+                if (e.key === "Tab") {
+                    // Allow Tab to work normally - don't prevent default
+                    // This ensures tab navigation works properly
+                    e.stopPropagation(); // Prevent widget wrapper from handling it
+                }
+            });
 
             // Listen to input events (fires on every keystroke)
             this._textareaElement.addEventListener("input", (e) => {

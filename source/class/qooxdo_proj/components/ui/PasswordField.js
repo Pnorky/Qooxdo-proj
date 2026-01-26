@@ -67,6 +67,21 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
       }
       // Apply initial enabled state
       this._applyEnabled(this.getEnabled());
+      
+      // Make widget content element delegate focus to input
+      const contentElement = this.getContentElement();
+      if (contentElement) {
+        const domElement = contentElement.getDomElement();
+        if (domElement) {
+          // When widget receives focus, delegate to input
+          domElement.addEventListener("focusin", (e) => {
+            const input = this._getInputElement();
+            if (input && e.target === domElement) {
+              input.focus();
+            }
+          });
+        }
+      }
     });
   },
 
@@ -86,6 +101,38 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
       if (!this._inputElement) {
         return;
       }
+
+      // Exclude qooxdoo widget content element from tab order
+      const contentElement = this.getContentElement();
+      if (contentElement) {
+        const domElement = contentElement.getDomElement();
+        if (domElement) {
+          domElement.setAttribute("tabindex", "-1");
+        }
+      }
+      
+      // Exclude wrapper div from tab order so tabbing goes directly to input
+      const wrapperDiv = container.querySelector("div");
+      if (wrapperDiv) {
+        wrapperDiv.setAttribute("tabindex", "-1");
+      }
+      
+      // Ensure input is focusable - remove any tabindex that might prevent tab navigation
+      if (this._inputElement.hasAttribute("tabindex") && this._inputElement.getAttribute("tabindex") === "-1") {
+        this._inputElement.removeAttribute("tabindex");
+      }
+      // Ensure input is explicitly in tab order
+      this._inputElement.removeAttribute("tabindex"); // Remove any existing tabindex
+      // Native inputs are focusable by default - no tabindex needed
+
+      // Handle Tab key to prevent widget wrapper from interfering
+      this._inputElement.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+          // Allow Tab to work normally - don't prevent default
+          // This ensures tab navigation works properly
+          e.stopPropagation(); // Prevent widget wrapper from handling it
+        }
+      });
 
       // Listen to input events (fires on every keystroke)
       this._inputElement.addEventListener("input", (e) => {

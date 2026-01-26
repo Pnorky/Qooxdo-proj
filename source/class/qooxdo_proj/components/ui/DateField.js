@@ -124,6 +124,20 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             if (initialValue) {
                 this._applyValue(initialValue);
             }
+            
+            // Make widget content element delegate focus to input
+            if (widgetElement) {
+                const domElement = widgetElement.getDomElement();
+                if (domElement) {
+                    // When widget receives focus, delegate to input
+                    domElement.addEventListener("focusin", (e) => {
+                        const input = this._inputElement;
+                        if (input && e.target === domElement) {
+                            input.focus();
+                        }
+                    });
+                }
+            }
         });
     },
 
@@ -158,6 +172,38 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             if (!this._inputElement || !this._popoverElement || !this._calendarElement) {
                 return;
             }
+
+            // Exclude qooxdoo widget content element from tab order
+            const widgetElement = this.getContentElement();
+            if (widgetElement) {
+                const domElement = widgetElement.getDomElement();
+                if (domElement) {   
+                    domElement.setAttribute("tabindex", "-1");
+                }
+            }
+            
+            // Exclude wrapper div from tab order so tabbing goes directly to input
+            const wrapperDiv = container.querySelector("div");
+            if (wrapperDiv) {
+                wrapperDiv.setAttribute("tabindex", "-1");
+            }
+            
+            // Ensure input is focusable - remove any tabindex that might prevent tab navigation
+            if (this._inputElement.hasAttribute("tabindex") && this._inputElement.getAttribute("tabindex") === "-1") {
+                this._inputElement.removeAttribute("tabindex");
+            }
+            // Ensure input is explicitly in tab order
+            this._inputElement.removeAttribute("tabindex"); // Remove any existing tabindex
+            // Native inputs are focusable by default - no tabindex needed
+
+            // Handle Tab key to prevent widget wrapper from interfering
+            this._inputElement.addEventListener("keydown", (e) => {
+                if (e.key === "Tab") {
+                    // Allow Tab to work normally - don't prevent default
+                    // This ensures tab navigation works properly
+                    e.stopPropagation(); // Prevent widget wrapper from handling it
+                }
+            });
 
             // Input click - allow direct typing, don't open calendar
             // The calendar icon button will handle opening the calendar

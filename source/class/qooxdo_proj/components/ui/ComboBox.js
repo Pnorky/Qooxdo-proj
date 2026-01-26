@@ -92,6 +92,20 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       if (initialValue) {
         this._applyValue(initialValue);
       }
+      
+      // Make widget content element delegate focus to button
+      if (widgetElement) {
+        const domElement = widgetElement.getDomElement();
+        if (domElement) {
+          // When widget receives focus, delegate to button
+          domElement.addEventListener("focusin", (e) => {
+            const button = this._buttonElement;
+            if (button && e.target === domElement) {
+              button.focus();
+            }
+          });
+        }
+      }
     });
   },
 
@@ -123,6 +137,29 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
         return;
       }
 
+      // Exclude qooxdoo widget content element from tab order
+      const widgetElement = this.getContentElement();
+      if (widgetElement) {
+        const domElement = widgetElement.getDomElement();
+        if (domElement) {
+          domElement.setAttribute("tabindex", "-1");
+        }
+      }
+      
+      // Exclude wrapper div from tab order so tabbing goes directly to button
+      const wrapperDiv = container.querySelector("div.select");
+      if (wrapperDiv) {
+        wrapperDiv.setAttribute("tabindex", "-1");
+      }
+      
+      // Ensure button is focusable - remove any tabindex that might prevent tab navigation
+      if (this._buttonElement.hasAttribute("tabindex") && this._buttonElement.getAttribute("tabindex") === "-1") {
+        this._buttonElement.removeAttribute("tabindex");
+      }
+      // Ensure button is explicitly in tab order
+      this._buttonElement.removeAttribute("tabindex"); // Remove any existing tabindex
+      // Native buttons are focusable by default - no tabindex needed
+
       // Toggle dropdown on button click
       this._buttonElement.addEventListener("click", (e) => {
         e.preventDefault();
@@ -143,7 +180,12 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
 
       // Handle keyboard navigation on button
       this._buttonElement.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        if (e.key === "Tab") {
+          // Allow Tab to work normally - don't prevent default
+          // This ensures tab navigation works properly
+          e.stopPropagation(); // Prevent widget wrapper from handling it
+          return; // Don't process Tab as a dropdown toggle
+        } else if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
           e.preventDefault();
           if (!this._isOpen) {
             this._openDropdown();
