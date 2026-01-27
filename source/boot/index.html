@@ -49,6 +49,12 @@
     ></script>
 
     <style>
+      html {
+        /* Ensure theme variables are available on html element */
+        background-color: var(--background);
+        color: var(--foreground);
+      }
+      
       body {
         padding: 0px;
         margin: 0px;
@@ -57,6 +63,8 @@
         position: fixed;
         -webkit-touch-callout: none !important;
         overflow: hidden;
+        background-color: var(--background);
+        color: var(--foreground);
       }
     </style>
 

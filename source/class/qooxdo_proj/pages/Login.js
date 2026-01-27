@@ -22,13 +22,20 @@ qx.Class.define("qooxdo_proj.pages.Login", {
     // Use Canvas layout for precise centering
     this.setLayout(new qx.ui.layout.Canvas());
     this.setPadding(0);
-    this.setBackgroundColor("#f5f5f5");
+    // Apply theme background color via DOM (Qooxdoo doesn't accept CSS variables)
+    qooxdo_proj.util.Theme.applyBackground(this, "background");
 
     // Center container
     const centerContainer = new qx.ui.container.Composite();
     centerContainer.setLayout(new qx.ui.layout.VBox(15));
     centerContainer.setPadding(30);
-    centerContainer.setBackgroundColor("white");
+    // Apply theme card colors
+    qooxdo_proj.util.Theme.styleContainer(centerContainer, {
+      background: "card",
+      foreground: "card-foreground",
+      border: true,
+      padding: 30
+    });
     centerContainer.setDecorator("main");
     centerContainer.setWidth(500);
     centerContainer.setMinWidth(500);
@@ -315,7 +322,8 @@ qx.Class.define("qooxdo_proj.pages.Login", {
         const data = e.getData();
         // Clear login form and show success message
         this.clear();
-        this._showError('<span style="color: green;">Registration successful! Please login with your new account.</span>');
+        const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
+        this._showError(`<span style="color: ${primaryColor};">Registration successful! Please login with your new account.</span>`);
       }, this);
       
       // Clear form when window closes
@@ -388,11 +396,12 @@ qx.Class.define("qooxdo_proj.pages.Login", {
      * @param {String} message - Error message (can contain HTML)
      */
     _showError: function (message) {
-      // If message already contains HTML styling, use it as-is, otherwise wrap in red
+      // If message already contains HTML styling, use it as-is, otherwise wrap in theme destructive color
       if (message.includes('<span')) {
         this._errorLabel.setValue(message);
       } else {
-        this._errorLabel.setValue('<span style="color: red;">' + message + '</span>');
+        const destructiveColor = qooxdo_proj.util.Theme.getCSSVariable("destructive");
+        this._errorLabel.setValue(`<span style="color: ${destructiveColor};">` + message + '</span>');
       }
       // Make visible - this will allow the label to size naturally
       this._errorLabel.setVisibility("visible");

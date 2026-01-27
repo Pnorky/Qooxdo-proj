@@ -27,6 +27,24 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
 
       var menubar = new qx.ui.menubar.MenuBar();
       menubar.setAllowGrowX(true);
+      
+      // Apply theme colors to menubar
+      menubar.addListenerOnce("appear", () => {
+        const domElement = menubar.getContentElement();
+        if (domElement) {
+          const element = domElement.getDomElement();
+          if (element) {
+            qooxdo_proj.util.Theme.styleDOMElement(element, {
+              background: "background",
+              foreground: "foreground",
+              border: false
+            });
+            // Add bottom border for menubar
+            element.style.borderBottom = "1px solid var(--border)";
+          }
+        }
+      }, this);
+      
       frame.add(menubar);
 
       var windowsMenu = new qx.ui.menubar.Button("Students", null, this._getWindowsMenu());
@@ -122,11 +140,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         var cascadeWindowsButton = new qx.ui.menu.Button("Cascade Windows");
         var tileWindowsButton = new qx.ui.menu.Button("Tile Windows");
         var closeAllButton = new qx.ui.menu.Button("Close All Windows");
+        var toggleThemeButton = new qx.ui.menu.Button("Toggle Dark Mode");
 
         menu.add(cascadeWindowsButton);
         menu.add(tileWindowsButton);
         menu.addSeparator();
         menu.add(closeAllButton);
+        menu.addSeparator();
+        menu.add(toggleThemeButton);
 
         // Event handlers
         cascadeWindowsButton.addListener("execute", () => {
@@ -157,6 +178,13 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             // if (this._showStudentTableCheckbox) {
             //   this._showStudentTableCheckbox.setValue(false);
             // }
+          }
+        }, this);
+
+        toggleThemeButton.addListener("execute", () => {
+          const app = qx.core.Init.getApplication();
+          if (app && app.toggleTheme) {
+            app.toggleTheme();
           }
         }, this);
 

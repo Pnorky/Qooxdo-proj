@@ -100,7 +100,13 @@ qx.Class.define("qooxdo_proj.Application",
         const mainContainer = new qx.ui.container.Composite();
         mainContainer.setLayout(new qx.ui.layout.VBox(10));
         mainContainer.setPadding(20);
-        mainContainer.setBackgroundColor("white");
+        // Apply theme card colors
+        qooxdo_proj.util.Theme.styleContainer(mainContainer, {
+          background: "card",
+          foreground: "card-foreground",
+          border: true,
+          padding: 20
+        });
         mainContainer.setDecorator("main");
 
         // Header
@@ -164,7 +170,8 @@ qx.Class.define("qooxdo_proj.Application",
         
         // Optional: Update status to show logged in user
         if (this._statusLabel) {
-          this._statusLabel.setValue(`<span style='color: green;'>Welcome, ${username}!</span>`);
+          const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
+          this._statusLabel.setValue(`<span style='color: ${primaryColor};'>Welcome, ${username}!</span>`);
         }
       },
 
@@ -202,9 +209,10 @@ qx.Class.define("qooxdo_proj.Application",
 
       _handleSubmit() {
         // Validate all forms
+        const destructiveColor = qooxdo_proj.util.Theme.getCSSVariable("destructive");
         const personalValidation = this._personalInfoWindow.validate();
         if (!personalValidation.valid) {
-          this._statusLabel.setValue("<span style='color: red;'>Error: " + personalValidation.message + "</span>");
+          this._statusLabel.setValue(`<span style='color: ${destructiveColor};'>Error: ` + personalValidation.message + "</span>");
           // Open the personal info window if it's closed
           this._windowManager.openWindow("personalInfo");
           return;
@@ -212,7 +220,7 @@ qx.Class.define("qooxdo_proj.Application",
 
         const contactValidation = this._contactInfoWindow.validate();
         if (!contactValidation.valid) {
-          this._statusLabel.setValue("<span style='color: red;'>Error: " + contactValidation.message + "</span>");
+          this._statusLabel.setValue(`<span style='color: ${destructiveColor};'>Error: ` + contactValidation.message + "</span>");
           // Open the contact info window if it's closed
           this._windowManager.openWindow("contactInfo");
           return;
@@ -220,7 +228,7 @@ qx.Class.define("qooxdo_proj.Application",
 
         const academicValidation = this._academicInfoWindow.validate();
         if (!academicValidation.valid) {
-          this._statusLabel.setValue("<span style='color: red;'>Error: " + academicValidation.message + "</span>");
+          this._statusLabel.setValue(`<span style='color: ${destructiveColor};'>Error: ` + academicValidation.message + "</span>");
           // Open the academic info window if it's closed
           this._windowManager.openWindow("academicInfo");
           return;
@@ -252,7 +260,8 @@ qx.Class.define("qooxdo_proj.Application",
         };
 
         // Send to API
-        this._statusLabel.setValue("<span style='color: blue;'>Saving student...</span>");
+        const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
+        this._statusLabel.setValue(`<span style='color: ${primaryColor};'>Saving student...</span>`);
         
         fetch("http://localhost:3000/api/students", {
           method: "POST",
@@ -281,7 +290,8 @@ qx.Class.define("qooxdo_proj.Application",
             yearLevel: savedStudent.yearLevel
           });
 
-          this._statusLabel.setValue("<span style='color: green;'>Student registered successfully!</span>");
+          const successColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
+          this._statusLabel.setValue(`<span style='color: ${successColor};'>Student registered successfully!</span>`);
           this._windowManager.openWindow("studentTable");
           
           // Clear forms
@@ -291,7 +301,8 @@ qx.Class.define("qooxdo_proj.Application",
         })
         .catch(error => {
           console.error("Save student error:", error);
-          this._statusLabel.setValue("<span style='color: red;'>Error: " + error.message + "</span>");
+          const destructiveColor = qooxdo_proj.util.Theme.getCSSVariable("destructive");
+          this._statusLabel.setValue(`<span style='color: ${destructiveColor};'>Error: ` + error.message + "</span>");
         });
       },
 
@@ -305,6 +316,11 @@ qx.Class.define("qooxdo_proj.Application",
       // Public method to get window manager (for menu bar access)
       getWindowManager() {
         return this._windowManager;
+      },
+
+      // Toggle dark mode theme
+      toggleTheme() {
+        document.documentElement.classList.toggle("dark");
       }
     }
   });
