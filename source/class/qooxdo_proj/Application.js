@@ -239,6 +239,20 @@ qx.Class.define("qooxdo_proj.Application",
         const contactData = this._contactInfoWindow.getData();
         const academicData = this._academicInfoWindow.getData();
 
+        // Helper function to normalize yearLevel
+        const normalizeYearLevel = (yearLevel) => {
+          if (!yearLevel) return "";
+          if (typeof yearLevel === 'number') return String(yearLevel);
+          const str = String(yearLevel).trim();
+          if (!str) return "";
+          const match = str.match(/(\d+)/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num >= 1 && num <= 4) return String(num);
+          }
+          return str;
+        };
+
         // Combine all data
         const studentData = {
           studentId: personalData.studentId,
@@ -253,7 +267,7 @@ qx.Class.define("qooxdo_proj.Application",
           emergencyContactPhone: contactData.emergencyContactPhone,
           relationship: contactData.relationship,
           program: academicData.program,
-          yearLevel: academicData.yearLevel,
+          yearLevel: normalizeYearLevel(academicData.yearLevel),
           gradeSchool: academicData.previousSchools.gradeSchool,
           highSchool: academicData.previousSchools.highSchool,
           college: academicData.previousSchools.college

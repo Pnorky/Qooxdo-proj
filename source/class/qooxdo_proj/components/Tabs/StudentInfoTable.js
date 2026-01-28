@@ -29,6 +29,53 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _deleteWindow: null,
       _currentStudent: null,
 
+      /**
+       * Extract numeric part from yearLevel string
+       * Handles formats like "p4", "rr3", "r2", "4", "1st Year", "2nd Year", etc.
+       * @param {String|Number} yearLevel - Year level value
+       * @return {String} Numeric year level (1-4) or empty string
+       */
+      _normalizeYearLevel: function (yearLevel) {
+        if (!yearLevel) return "";
+        
+        // If it's already a number, convert to string
+        if (typeof yearLevel === 'number') {
+          return String(yearLevel);
+        }
+        
+        const str = String(yearLevel).trim();
+        if (!str) return "";
+        
+        // Extract the last digit from the string
+        const match = str.match(/(\d+)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          // Ensure it's between 1-4 (valid year levels)
+          if (num >= 1 && num <= 4) {
+            return String(num);
+          }
+        }
+        
+        return str; // Return original if no valid number found
+      },
+
+      /**
+       * Convert numeric yearLevel to ComboBox format ("1st Year", "2nd Year", etc.)
+       * @param {String|Number} yearLevel - Numeric year level (1-4)
+       * @return {String} Formatted year level or empty string
+       */
+      _formatYearLevelForComboBox: function (yearLevel) {
+        const normalized = this._normalizeYearLevel(yearLevel);
+        if (!normalized) return "";
+        
+        const num = parseInt(normalized, 10);
+        if (num >= 1 && num <= 4) {
+          const suffixes = ["", "st", "nd", "rd", "th"];
+          return num + suffixes[num] + " Year";
+        }
+        return normalized;
+      },
+
       _createTable: function () {
         // Create custom Table component with Basecoat UI styling
         this._table = new qooxdo_proj.components.ui.Table("");
@@ -298,7 +345,11 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         yearLevelField.add(new qx.ui.form.ListItem("3rd Year"));
         yearLevelField.add(new qx.ui.form.ListItem("4th Year"));
         if (student.yearLevel) {
-          yearLevelField.setValue(student.yearLevel);
+          // Normalize and format yearLevel for ComboBox
+          const formattedYearLevel = this._formatYearLevelForComboBox(student.yearLevel);
+          if (formattedYearLevel) {
+            yearLevelField.setValue(formattedYearLevel);
+          }
         }
         formGrid.add(yearLevelLabel, { row: currentRow, column: 0 });
         formGrid.add(yearLevelField, { row: currentRow++, column: 1 });
@@ -420,8 +471,12 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           
           // Year Level
           if (student.yearLevel) {
-            yearLevelField.setValue(student.yearLevel);
-            console.log("[DEBUG] Set yearLevel:", student.yearLevel);
+            // Normalize and format yearLevel for ComboBox
+            const formattedYearLevel = this._formatYearLevelForComboBox(student.yearLevel);
+            if (formattedYearLevel) {
+              yearLevelField.setValue(formattedYearLevel);
+              console.log("[DEBUG] Set yearLevel:", formattedYearLevel, "(from:", student.yearLevel + ")");
+            }
           }
           
           if (student.gradeSchool) {
@@ -484,7 +539,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
             emergencyContactPhone: emergencyContactPhoneField.getValue() || "",
             relationship: relationshipField.getValue() || "",
             program: programField.getValue() || "",
-            yearLevel: yearLevelField.getValue() || "",
+            yearLevel: this._normalizeYearLevel(yearLevelField.getValue()) || "",
             gradeSchool: gradeSchoolField.getValue() || "",
             highSchool: highSchoolField.getValue() || "",
             college: collegeField.getValue() || ""
@@ -561,7 +616,13 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           if (s.emergencyContactPhone) f.emergencyContactPhone.setValue(s.emergencyContactPhone);
           if (s.relationship) f.relationship.setValue(s.relationship);
           if (s.program) f.program.setValue(s.program);
-          if (s.yearLevel) f.yearLevel.setValue(s.yearLevel);
+          if (s.yearLevel) {
+            // Normalize and format yearLevel for ComboBox
+            const formattedYearLevel = this._formatYearLevelForComboBox(s.yearLevel);
+            if (formattedYearLevel) {
+              f.yearLevel.setValue(formattedYearLevel);
+            }
+          }
           if (s.gradeSchool) f.gradeSchool.setValue(s.gradeSchool);
           if (s.highSchool) f.highSchool.setValue(s.highSchool);
           if (s.college) f.college.setValue(s.college);
@@ -708,7 +769,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           { text: studentData.firstName || "", classes: "font-medium" },
           { text: studentData.lastName || "", classes: "font-medium" },
           studentData.program || "",
-          studentData.yearLevel || ""
+          this._normalizeYearLevel(studentData.yearLevel) || ""
         ];
 
         // Store full student data with the row

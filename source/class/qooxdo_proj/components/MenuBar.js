@@ -544,7 +544,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
        */
       _getPDFConfig: function () {
         return {
-          orientation: "landscape", // "portrait" or "landscape"
+          orientation: "portrait", // "portrait" or "landscape"
           pageSize: "A4",
           margins: [40, 60, 40, 60],
           reportType: "full" // "basic", "academic", "contact", or "full"
@@ -569,12 +569,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         reportType = reportType || "full";
         
         // Default columns matching the Student Information Table display
+        // Widths optimized for portrait A4 (page width: 595pt, margins: 40pt each = 80pt, usable: ~510pt)
+        // Total: 20 + 60 + 70 + 70 + 220 + 40 = 480pt (leaves buffer for padding/borders)
         const defaultColumns = [
-          { key: "studentId", label: "Student Id", width: "auto", align: "left", category: "basic" },
-          { key: "firstName", label: "First Name", width: "*", align: "left", category: "basic" },
-          { key: "lastName", label: "Last Name", width: "*", align: "left", category: "basic" },
-          { key: "program", label: "Program", width: "*", align: "left", category: "academic" },
-          { key: "yearLevel", label: "Year Level", width: "auto", align: "center", category: "academic" }
+          { key: "studentId", label: "Student Id", width: 60, align: "left", category: "basic" },
+          { key: "firstName", label: "First Name", width: 70, align: "left", category: "basic" },
+          { key: "lastName", label: "Last Name", width: 70, align: "left", category: "basic" },
+          { key: "program", label: "Program", width: 220, align: "left", category: "academic" },
+          { key: "yearLevel", label: "Year Level", width: 40, align: "center", category: "academic" }
         ];
         
         // Extended column configurations for other report types
@@ -637,6 +639,36 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       },
 
       /**
+       * Extract numeric part from yearLevel string
+       * Handles formats like "p4", "rr3", "r2", "4", "1st Year", "2nd Year", etc.
+       * @param {String|Number} yearLevel - Year level value
+       * @return {String} Numeric year level (1-4) or empty string
+       */
+      _normalizeYearLevel: function (yearLevel) {
+        if (!yearLevel) return "";
+        
+        // If it's already a number, convert to string
+        if (typeof yearLevel === 'number') {
+          return String(yearLevel);
+        }
+        
+        const str = String(yearLevel).trim();
+        if (!str) return "";
+        
+        // Extract the last digit from the string
+        const match = str.match(/(\d+)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          // Ensure it's between 1-4 (valid year levels)
+          if (num >= 1 && num <= 4) {
+            return String(num);
+          }
+        }
+        
+        return str; // Return original if no valid number found
+      },
+
+      /**
        * Format a value for PDF display
        * @param {*} value - Value to format
        * @param {String} key - Field key
@@ -645,6 +677,11 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _formatPDFValue: function (value, key) {
         if (value === null || value === undefined || value === "") {
           return "-";
+        }
+        
+        // Normalize yearLevel to numeric string
+        if (key === "yearLevel" && value) {
+          return this._normalizeYearLevel(value);
         }
         
         // Format dates
@@ -684,10 +721,15 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             { text: (index + 1).toString(), alignment: "center" },
             ...columnConfig.map(col => {
               const value = this._formatPDFValue(student[col.key], col.key);
-              return {
+              const cellConfig = {
                 text: value,
                 alignment: col.align || "left"
               };
+              // Prevent wrapping for Program column to keep it on one line
+              if (col.key === "program") {
+                cellConfig.noWrap = true;
+              }
+              return cellConfig;
             })
           ];
         });
@@ -788,16 +830,16 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
                   return i === 0 || i === node.table.widths.length ? "#000000" : "#cccccc";
                 },
                 paddingLeft: function (i, node) {
-                  return i === 0 ? 8 : 5;
+                  return i === 0 ? 6 : 4;
                 },
                 paddingRight: function (i, node) {
-                  return i === node.table.widths.length - 1 ? 8 : 5;
+                  return i === node.table.widths.length - 1 ? 6 : 4;
                 },
                 paddingTop: function (i, node) {
-                  return i === 0 ? 8 : 5;
+                  return i === 0 ? 6 : 4;
                 },
                 paddingBottom: function (i, node) {
-                  return i === node.table.body.length - 1 ? 8 : 5;
+                  return i === node.table.body.length - 1 ? 6 : 4;
                 }
               }
             }
@@ -955,7 +997,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             { header: "First Name", key: "firstName", width: 20 },
             { header: "Last Name", key: "lastName", width: 20 },
             { header: "Program", key: "program", width: 25 },
-            { header: "Year Level", key: "yearLevel", width: 15 }
+            { header: "Year Level", key: "yearLevel", width: 15, style: { numFmt: '0' } }
           ];
 
           // Style the header row
@@ -968,14 +1010,25 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
 
           // Add student data
           students.forEach((student, index) => {
-            worksheet.addRow({
+            const normalizedYearLevel = this._normalizeYearLevel(student.yearLevel);
+            // Convert yearLevel to number for Excel (not text)
+            const yearLevelNumber = normalizedYearLevel ? parseInt(normalizedYearLevel, 10) : null;
+            
+            const row = worksheet.addRow({
               number: index + 1,
               studentId: student.studentId || "",
               firstName: student.firstName || "",
               lastName: student.lastName || "",
               program: student.program || "",
-              yearLevel: student.yearLevel || ""
+              yearLevel: yearLevelNumber !== null && !isNaN(yearLevelNumber) ? yearLevelNumber : ""
             });
+            
+            // Ensure yearLevel cell is formatted as number
+            if (yearLevelNumber !== null && !isNaN(yearLevelNumber)) {
+              const yearLevelCell = row.getCell('yearLevel');
+              yearLevelCell.numFmt = '0';
+              yearLevelCell.value = yearLevelNumber;
+            }
           });
 
           // Generate and download Excel file
