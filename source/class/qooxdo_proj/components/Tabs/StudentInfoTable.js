@@ -768,6 +768,11 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         .catch(error => {
           console.error("Failed to load students from API:", error);
         });
+      },
+
+      // Get all student data for export
+      getStudentsData: function () {
+        return this._studentsData || [];
       }
     }
   });
