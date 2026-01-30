@@ -19,6 +19,7 @@ builder.Services
     .AddType<StudentType>()
     .AddType<UserType>()
     .AddType<LoginResultType>()
+    .AddType<RegisterResultType>()
     .AddProjections()
     .AddFiltering()
     .AddSorting();
@@ -47,8 +48,11 @@ using (var scope = app.Services.CreateScope())
 app.UseCors();
 app.UseRouting();
 
-// Map GraphQL endpoint
-app.MapGraphQL();
+// Map GraphQL endpoint. In Development, open /graphql in a browser for Banana Cake Pop (GraphQL IDE, like Swagger).
+app.MapGraphQL().WithOptions(new HotChocolate.AspNetCore.GraphQLServerOptions
+{
+    Tool = { Enable = app.Environment.IsDevelopment() }
+});
 
 // Health check endpoint
 app.MapGet("/api/health", () => new { status = "OK", message = "Server is running" });

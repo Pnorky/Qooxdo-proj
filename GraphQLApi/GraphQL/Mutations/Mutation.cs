@@ -8,6 +8,17 @@ namespace GraphQLApi.GraphQL.Mutations;
 
 public class Mutation
 {
+    /// <summary>Get a single student by database id (for display). Prefer using the Query type for reads.</summary>
+    public async Task<Student?> GetStudent(int id, [Service] AppDbContext context)
+    {
+        var student = await context.Students.FirstOrDefaultAsync(s => s.Id == id);
+        if (student != null)
+        {
+            student.YearLevel = NormalizeYearLevel(student.YearLevel);
+        }
+        return student;
+    }
+
     public async Task<Student> AddStudent(
         AddStudentInput input,
         [Service] AppDbContext context)
