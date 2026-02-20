@@ -383,3 +383,15 @@ C:\Users\carlo\Downloads\qooxdoo_proj\GraphQLApi\obj\Debug\net10.0\refint\GraphQ
 C:\Users\carlo\Downloads\qooxdoo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.pdb
 C:\Users\carlo\Downloads\qooxdoo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.genruntimeconfig.cache
 C:\Users\carlo\Downloads\qooxdoo_proj\GraphQLApi\obj\Debug\net10.0\ref\GraphQLApi.dll
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.csproj.AssemblyReference.cache
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.AssemblyInfoInputs.cache
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.AssemblyInfo.cs
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.csproj.CoreCompileInputs.cache
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.sourcelink.json
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.dll
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\refint\GraphQLApi.dll
+C:\Users\USER\Documents\CAPSTONE SOFTWARE\qooxdo_proj\GraphQLApi\obj\Debug\net10.0\GraphQLApi.pdb
