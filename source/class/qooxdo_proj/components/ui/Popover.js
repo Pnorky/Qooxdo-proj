@@ -9,43 +9,36 @@
 ************************************************************************ */
 
 /**
- * Basecoat-style Popover component.
- * Structure: div.popover > button (trigger) + div[data-popover] (panel with header + section content).
- * Trigger toggles panel visibility; aria-expanded and aria-hidden are kept in sync.
- * Use setTriggerLabel, setTitle/setDescription, setSectionContent or getSectionElement(), show()/hide()/toggle().
+ * Basecoat-style Popover component using qooxdoo Popup behavior.
+ * Trigger click (pointerdown) toggles popup reliably inside qx windows.
  */
 qx.Class.define("qooxdo_proj.components.ui.Popover", {
   extend: qx.ui.core.Widget,
 
   properties: {
-    /** Trigger button label */
     triggerLabel: {
       check: "String",
       init: "Open popover",
       apply: "_applyTriggerLabel",
       event: "changeTriggerLabel"
     },
-    /** Popover panel title (header h4) */
     title: {
       check: "String",
       init: "",
       apply: "_applyTitle",
       event: "changeTitle"
     },
-    /** Popover description (header p, text-muted) */
     description: {
       check: "String",
       init: "",
       apply: "_applyDescription",
       event: "changeDescription"
     },
-    /** Width class for the panel (e.g. "w-80", "w-96"). Applied to the [data-popover] div. */
     popoverWidth: {
       check: "String",
       init: "w-80",
       apply: "_applyPopoverWidth"
     },
-    /** If true, setSectionContent accepts HTML; otherwise content is escaped */
     richSectionContent: {
       check: "Boolean",
       init: false
@@ -53,66 +46,104 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
   },
 
   events: {
-    /** Fired when the popover is shown */
-    "open": "qx.event.type.Event",
-    /** Fired when the popover is closed */
-    "close": "qx.event.type.Event"
+    open: "qx.event.type.Event",
+    close: "qx.event.type.Event"
   },
 
   construct(triggerLabel = "Open popover", title = "", description = "") {
     this.base(arguments);
-
     this._setLayout(new qx.ui.layout.Canvas());
 
     this._popoverId = "popover-" + qx.core.Id.getInstance().toHashCode(this);
     this._triggerId = this._popoverId + "-trigger";
-    this._panelId = this._popoverId + "-popover";
+    this._panelId = this._popoverId + "-panel";
+    this._pendingSectionContent = "";
 
-    const triggerEsc = this._escapeHtml(triggerLabel || "Open popover");
-    const titleEsc = this._escapeHtml(title || "");
-    const descEsc = this._escapeHtml(description || "");
+    const triggerEsc = this._escapeHtml(triggerLabel);
+    const titleEsc = this._escapeHtml(title);
+    const descEsc = this._escapeHtml(description);
 
-    this._html = new qx.ui.embed.Html(`
-      <div id="${this._popoverId}" class="popover" style="position: relative; display: inline-block;">
-        <button id="${this._triggerId}" type="button" aria-expanded="false" aria-controls="${this._panelId}" class="btn-outline" style="width:100%; display:block;">${triggerEsc}</button>
-        <div id="${this._panelId}" data-popover aria-hidden="true" class="w-80" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1000; background: var(--background); border: 1px solid var(--border); padding: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-          <div class="grid gap-4">
-            <header class="grid gap-1.5 popover-header">
-              <h4 class="leading-none font-medium popover-title">${titleEsc}</h4>
-              <p class="text-muted-foreground text-sm popover-description">${descEsc}</p>
-            </header>
-            <div class="popover-section-content"></div>
-          </div>
+    this._triggerHtml = new qx.ui.embed.Html(`
+      <div class="qx-popover-trigger" style="display:inline-block;">
+        <button id="${this._triggerId}" type="button" class="btn-outline" aria-expanded="false">
+          ${triggerEsc}
+        </button>
+      </div>
+    `);
+    this._add(this._triggerHtml, { edge: 0 });
+
+    this._panelHtml = new qx.ui.embed.Html(`
+      <div id="${this._panelId}" aria-hidden="true" class="w-80 qx-popover-panel"
+        style="background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem; box-shadow: var(--shadow-lg); width:20rem; max-width:24rem; box-sizing:border-box;">
+        <div class="grid gap-4">
+          <header class="grid gap-1.5">
+            <h4 class="leading-none font-medium popover-title">${titleEsc}</h4>
+            <p class="text-muted-foreground text-sm popover-description">${descEsc}</p>
+          </header>
+          <div class="popover-section-content" style="display:block; width:100%; max-width:none; white-space:normal; word-break:break-word; overflow-wrap:anywhere; line-height:1.35;"></div>
         </div>
       </div>
     `);
+    this._panelHtml.setAllowGrowX(true);
 
-    this._add(this._html, { edge: 0 });
+    this._popup = new qx.ui.popup.Popup(new qx.ui.layout.Grow()).set({
+      autoHide: true,
+      keepActive: true,
+      offset: 8,
+      position: "bottom-left"
+    });
+    this._popup.add(this._panelHtml);
 
-    this._html.addListenerOnce("appear", () => {
+    this._popup.addListener("appear", () => {
+      this._syncAria(true);
+      this.fireEvent("open");
+    }, this);
+    this._popup.addListener("disappear", () => {
+      this._syncAria(false);
+      this.fireEvent("close");
+    }, this);
+
+    // Toggle once on pointerdown (matching qooxdoo popup demo behavior).
+    // Do NOT also bind click, otherwise one pointer interaction can toggle twice.
+    this._triggerHtml.addListener("pointerdown", (e) => {
+      if (e.stopPropagation) e.stopPropagation();
+      this.toggle(e);
+    }, this);
+
+    this._triggerHtml.addListenerOnce("appear", () => {
       this._applyTriggerLabel(this.getTriggerLabel());
       this._applyTitle(this.getTitle());
       this._applyDescription(this.getDescription());
       this._applyPopoverWidth(this.getPopoverWidth());
-      // Attach listeners; if elements not yet available, retry shortly.
-      const tryAttach = () => {
-        this._attachListeners();
-        // if still not attached, schedule again
-        const trigger = this._getTriggerElement();
-        if (!trigger) {
-          setTimeout(tryAttach, 0);
-        }
-      };
-      tryAttach();
     });
+
+    // Ensure content/props are applied once popup DOM is mounted.
+    this._panelHtml.addListener("appear", () => {
+      this._applyTitle(this.getTitle());
+      this._applyDescription(this.getDescription());
+      this._applyPopoverWidth(this.getPopoverWidth());
+      this._renderSectionContent();
+    }, this);
   },
 
   members: {
-    _html: null,
+    _triggerHtml: null,
+    _panelHtml: null,
+    _popup: null,
     _popoverId: null,
     _triggerId: null,
     _panelId: null,
-    _outsideClickListener: null,
+    _pendingSectionContent: null,
+
+    _resolveWidthPx(widthClass) {
+      const widthMap = {
+        "w-64": 256,
+        "w-72": 288,
+        "w-80": 320,
+        "w-96": 384
+      };
+      return widthMap[widthClass || "w-80"] || 320;
+    },
 
     _escapeHtml(text) {
       if (!text) return "";
@@ -121,87 +152,28 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       return div.innerHTML;
     },
 
-    _getRootElement() {
-      if (!this._html || !this._html.getContentElement()) return null;
-      const root = this._html.getContentElement().getDomElement();
-      return root ? root.querySelector(".popover") || root.firstElementChild : null;
-    },
-
     _getTriggerElement() {
-      // try quick document lookup first
-      let el = document.getElementById(this._triggerId);
-      if (el) return el;
-      const root = this._getRootElement();
-      return root ? root.querySelector("#" + this._triggerId) : null;
+      if (!this._triggerHtml || !this._triggerHtml.getContentElement()) return null;
+      const host = this._triggerHtml.getContentElement().getDomElement();
+      return host ? host.querySelector("#" + this._triggerId) : null;
     },
 
     _getPanelElement() {
-      // use id since it's unique and easier to find across embeddings
-      let el = document.getElementById(this._panelId);
-      if (el) return el;
-      const root = this._getRootElement();
-      return root ? root.querySelector("[data-popover]") : null;
+      if (!this._panelHtml || !this._panelHtml.getContentElement()) return null;
+      const host = this._panelHtml.getContentElement().getDomElement();
+      return host ? host.querySelector("#" + this._panelId) : null;
     },
 
     _getSectionContentElement() {
-      const root = this._getRootElement();
-      return root ? root.querySelector(".popover-section-content") : null;
+      const panel = this._getPanelElement();
+      return panel ? panel.querySelector(".popover-section-content") : null;
     },
 
-    _attachListeners() {
-      // debug
-      console.log("Popover._attachListeners called", this._popoverId);
-
+    _syncAria(open) {
       const trigger = this._getTriggerElement();
       const panel = this._getPanelElement();
-      if (trigger) {
-        console.log("found trigger element", trigger);
-        // attach native listener once
-        if (!trigger._popoverClickBound) {
-          trigger.addEventListener("click", (nativeEvt) => {
-            nativeEvt.preventDefault();
-            nativeEvt.stopPropagation();
-            console.log("native click on popover trigger");
-            this.toggle();
-          });
-          trigger._popoverClickBound = true;
-        }
-      } else {
-        console.warn("popover trigger not found yet");
-      }
-
-      // Qooxdoo event fallback
-      const contentEl = this._html && this._html.getContentElement();
-      if (contentEl) {
-        contentEl.addListener("click", (e) => {
-          let dom = null;
-          if (e.getDomTarget) {
-            dom = e.getDomTarget();
-          } else if (e.getTarget) {
-            const tgt = e.getTarget();
-            dom = tgt ? tgt.getContentElement && tgt.getContentElement().getDomElement() : null;
-          } else {
-            dom = e.target || e.srcElement;
-          }
-          if (dom && dom.id === this._triggerId) {
-            console.log("qx click on popover trigger");
-            if (e.preventDefault) e.preventDefault();
-            if (e.stopPropagation) e.stopPropagation();
-            this.toggle();
-          }
-        }, this);
-      }
-
-      // Prepare outside-click handler
-      if (!this._outsideClickListener) {
-        this._outsideClickListener = (e) => {
-          if (this.isDisposed() || !this.getOpen()) return;
-          const root = this._getRootElement();
-          if (root && !root.contains(e.target)) {
-            this.hide();
-          }
-        };
-      }
+      if (trigger) trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      if (panel) panel.setAttribute("aria-hidden", open ? "false" : "true");
     },
 
     _applyTriggerLabel(value) {
@@ -210,148 +182,100 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
     },
 
     _applyTitle(value) {
-      const root = this._getRootElement();
-      if (!root) return;
-      const el = root.querySelector(".popover-title");
-      if (el) el.textContent = value || "";
+      const panel = this._getPanelElement();
+      if (!panel) return;
+      const title = panel.querySelector(".popover-title");
+      if (title) title.textContent = value || "";
     },
 
     _applyDescription(value) {
-      const root = this._getRootElement();
-      if (!root) return;
-      const el = root.querySelector(".popover-description");
-      if (el) el.textContent = value || "";
+      const panel = this._getPanelElement();
+      if (!panel) return;
+      const description = panel.querySelector(".popover-description");
+      if (description) description.textContent = value || "";
     },
 
     _applyPopoverWidth(value) {
       const panel = this._getPanelElement();
-      if (!panel) return;
-      // Remove common width classes and add the new one
-      panel.classList.remove("w-80", "w-96", "w-72", "w-64");
-      if (value) panel.classList.add(value);
-    },
-
-    /**
-     * Show the popover panel and update aria attributes.
-     */
-    show() {
-      const trigger = this._getTriggerElement();
-      const panel = this._getPanelElement();
-      console.log("Popover.show called", trigger, panel);
-      if (!trigger || !panel) {
-        console.warn("Popover.show: missing elements", trigger, panel);
-        return;
+      const widthClass = value || "w-80";
+      const widthPx = this._resolveWidthPx(widthClass);
+      if (panel) {
+        panel.classList.remove("w-64", "w-72", "w-80", "w-96");
+        panel.classList.add(widthClass);
+        panel.style.width = widthPx + "px";
+        panel.style.maxWidth = "min(24rem, calc(100vw - 1rem))";
       }
 
-      // position panel relative to trigger (fixed to viewport) to avoid clipping
-      const rect = trigger.getBoundingClientRect();
-      panel.style.position = "fixed";
-      panel.style.left = rect.left + "px";
-      panel.style.top = rect.bottom + "px";
-      panel.style.minWidth = rect.width + "px";
-      panel.style.display = "block";
-      panel.setAttribute("aria-hidden", "false");
-      trigger.setAttribute("aria-expanded", "true");
+      if (this._panelHtml) {
+        this._panelHtml.setMinWidth(widthPx);
+        this._panelHtml.setWidth(widthPx);
+      }
 
-      document.addEventListener("click", this._outsideClickListener, true);
+      // Also size the qx popup widget itself so qooxdoo doesn't clip inner HTML.
+      if (this._popup) {
+        this._popup.setMinWidth(widthPx);
+        this._popup.setWidth(widthPx);
+      }
+    },
 
-      console.log("Popover.show completed", panel.getAttribute("aria-hidden"), panel.style.display, panel.style.left, panel.style.top);
-      this.fireEvent("open");
+    _applyPopupContainerStyles() {
+      if (!this._popup) return;
+      const popupEl = this._popup.getContentElement && this._popup.getContentElement();
+      const dom = popupEl && popupEl.getDomElement ? popupEl.getDomElement() : null;
+      if (!dom) return;
+      dom.style.overflow = "visible";
+      dom.style.maxWidth = "min(24rem, calc(100vw - 1rem))";
+    },
+
+    show(e) {
+      if (!this._popup) return;
+      if (this._popup.isVisible()) return;
+
+      // Anchor to trigger widget for consistent placement (single-click behavior,
+      // avoids pointer-based offsets that can render clipped/sideways in windows).
+      if (this._popup.placeToWidget) {
+        this._popup.placeToWidget(this._triggerHtml, true);
+      }
+      this._popup.show();
+      this._applyPopupContainerStyles();
     },
 
     hide() {
-      const trigger = this._getTriggerElement();
-      const panel = this._getPanelElement();
-      console.log("Popover.hide called", trigger, panel);
-      if (!trigger || !panel) return;
-
-      panel.style.display = "none";
-      panel.setAttribute("aria-hidden", "true");
-      trigger.setAttribute("aria-expanded", "false");
-
-      document.removeEventListener("click", this._outsideClickListener, true);
-
-      console.log("Popover.hide completed", panel.getAttribute("aria-hidden"), panel.style.display);
-      this.fireEvent("close");
+      if (!this._popup) return;
+      this._popup.hide();
     },
 
-    toggle() {
-      const panel = this._getPanelElement();
-      console.log("Popover.toggle called", panel);
-      if (!panel) return;
-      const isHidden = panel.getAttribute("aria-hidden") === "true";
-      if (isHidden) {
-        this.show();
-      } else {
+    toggle(e) {
+      if (this.getOpen()) {
         this.hide();
+      } else {
+        this.show(e);
       }
     },
 
-    /**
-     * Hide the popover panel and update aria attributes.
-     */
-    hide() {
-      const trigger = this._getTriggerElement();
-      const panel = this._getPanelElement();
-      if (!trigger || !panel) return;
-
-      panel.style.display = "none";
-      panel.setAttribute("aria-hidden", "true");
-      trigger.setAttribute("aria-expanded", "false");
-
-      document.removeEventListener("click", this._outsideClickListener, true);
-
-      this.fireEvent("close");
-    },
-
-    /**
-     * Toggle open/closed state.
-     */
-    toggle() {
-      const panel = this._getPanelElement();
-      if (!panel) return;
-      const isHidden = panel.getAttribute("aria-hidden") === "true";
-      if (isHidden) {
-        this.show();
-      } else {
-        this.hide();
-      }
-    },
-
-    /**
-     * Whether the popover is currently open.
-     * @return {Boolean}
-     */
     getOpen() {
-      const panel = this._getPanelElement();
-      return panel ? panel.getAttribute("aria-hidden") === "false" : false;
+      return this._popup ? this._popup.isVisible() : false;
     },
 
-    /**
-     * Set the section body HTML (e.g. form markup).
-     * @param {String} html - HTML or plain text for the section.
-     */
     setSectionContent(html) {
-      const el = this._getSectionContentElement();
-      if (el) {
-        el.innerHTML = this.getRichSectionContent() ? (html || "") : this._escapeHtml(String(html || ""));
-      }
+      this._pendingSectionContent = html != null ? String(html) : "";
+      this._renderSectionContent();
     },
 
-    /**
-     * Get the section content DOM element for appending nodes or setting innerHTML.
-     * @return {Element|null}
-     */
     getSectionElement() {
       return this._getSectionContentElement();
+    },
+
+    _renderSectionContent() {
+      const section = this._getSectionContentElement();
+      if (!section) return;
+      section.innerHTML = this.getRichSectionContent()
+        ? (this._pendingSectionContent || "")
+        : this._escapeHtml(this._pendingSectionContent || "");
     }
   },
 
   destruct() {
-    if (this._outsideClickListener) {
-      document.removeEventListener("click", this._outsideClickListener, true);
-      this._outsideClickListener = null;
-    }
-    this.base(arguments);
+    this._disposeObjects("_popup", "_triggerHtml", "_panelHtml");
   }
 });

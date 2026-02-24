@@ -815,7 +815,9 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
 
         // Store full student data with the row
         this._studentsData.push(studentData);
-        this._table.addRow(rGraphQL API
+        this._table.addRow(rowData);
+      },
+
       loadStudents: function () {
         const getStudentsQuery = `
           query {
@@ -848,57 +850,49 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           },
           body: JSON.stringify({ query: getStudentsQuery })
         })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(result => {
-          if (result.errors && result.errors.length > 0) {
-            throw new Error(result.errors[0].message);
-          }
-          const students = result.data.getStudents;
-            "Content-Type": "application/json"
-          }
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(students => {
-          // Clear existing rows
-          this.clear();
-          
-          // Add all students to table (store full student object with id)
-          students.forEach((student) => {
-            this.addStudent({
-              id: student.id, // Store id for update/delete operations
-              studentId: student.studentId,
-              firstName: student.firstName,
-              lastName: student.lastName,
-              program: student.program,
-              yearLevel: student.yearLevel,
-              // Store all other fields for complete update
-              dateOfBirth: student.dateOfBirth,
-              gender: student.gender,
-              address: student.address,
-              email: student.email,
-              personalPhone: student.personalPhone,
-              emergencyContact: student.emergencyContact,
-              emergencyContactPhone: student.emergencyContactPhone,
-              relationship: student.relationship,
-              gradeSchool: student.gradeSchool,
-              highSchool: student.highSchool,
-              college: student.college
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(result => {
+            if (result.errors && result.errors.length > 0) {
+              throw new Error(result.errors[0].message);
+            }
+
+            const students = (result.data && result.data.getStudents) || [];
+
+            // Clear existing rows
+            this.clear();
+
+            // Add all students to table (store full student object with id)
+            students.forEach((student) => {
+              this.addStudent({
+                id: student.id, // Store id for update/delete operations
+                studentId: student.studentId,
+                firstName: student.firstName,
+                lastName: student.lastName,
+                program: student.program,
+                yearLevel: student.yearLevel,
+                // Store all other fields for complete update
+                dateOfBirth: student.dateOfBirth,
+                gender: student.gender,
+                address: student.address,
+                email: student.email,
+                personalPhone: student.personalPhone,
+                emergencyContact: student.emergencyContact,
+                emergencyContactPhone: student.emergencyContactPhone,
+                relationship: student.relationship,
+                gradeSchool: student.gradeSchool,
+                highSchool: student.highSchool,
+                college: student.college
+              });
             });
+          })
+          .catch(error => {
+            console.error("Failed to load students from API:", error);
           });
-        })
-        .catch(error => {
-          console.error("Failed to load students from API:", error);
-        });
       },
 
       // Get all student data for export

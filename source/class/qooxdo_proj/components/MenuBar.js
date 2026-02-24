@@ -225,11 +225,19 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _getDemoMenu: function () {
         var menu = new qx.ui.menu.Menu();
         var uiDemoButton = new qx.ui.menu.Button("UI Component Demo");
+        var uiTabToastDemoButton = new qx.ui.menu.Button("TabView + Toast Demo");
         menu.add(uiDemoButton);
+        menu.add(uiTabToastDemoButton);
 
         uiDemoButton.addListener("execute", () => {
           if (this._windowManager) {
             this._windowManager.openWindow("uiDemo");
+          }
+        }, this);
+
+        uiTabToastDemoButton.addListener("execute", () => {
+          if (this._windowManager) {
+            this._windowManager.openWindow("uiTabToastDemo");
           }
         }, this);
 

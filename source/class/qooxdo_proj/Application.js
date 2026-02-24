@@ -100,6 +100,14 @@ qx.Class.define("qooxdo_proj.Application",
           { left: 700, top: 600, open: false }
         );
 
+        // Separate demo window for TabView + Toast
+        this._uiTabToastDemoWindow = new qooxdo_proj.components.Windows.UITabToastDemoWindow();
+        this._windowManager.registerWindow(
+          "uiTabToastDemo",
+          this._uiTabToastDemoWindow,
+          { left: 1380, top: 600, open: false }
+        );
+
         // Load students when table window is opened
         this._studentInfoTableWindow.addListener("appear", () => {
           this._studentInfoTableWindow.loadStudents();

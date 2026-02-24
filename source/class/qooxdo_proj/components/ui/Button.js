@@ -33,5 +33,57 @@ qx.Class.define("qooxdo_proj.components.ui.Button", {
       const btn = this._html.getContentElement().getDomElement().querySelector("button");
       btn.addEventListener("click", () => this.fireEvent("execute"));
     });
+  },
+
+  members: {
+    _basecoatToolTip: null,
+
+    /**
+     * Convenience helper to attach/update a Basecoat tooltip.
+     * @param {String} text Tooltip text
+     * @param {"top"|"bottom"|"left"|"right"} side Tooltip side
+     * @param {"start"|"center"|"end"} align Tooltip alignment
+     * @return {qooxdo_proj.components.ui.Button} this
+     */
+    setBasecoatToolTip(text, side = "top", align = "center") {
+      if (!this._basecoatToolTip) {
+        this._basecoatToolTip = new qooxdo_proj.components.ui.ToolTip(
+          String(text || ""),
+          side || "top",
+          align || "center"
+        );
+        this._basecoatToolTip.attachTo(this);
+      } else {
+        this._basecoatToolTip.setText(String(text || ""));
+        this._basecoatToolTip.setSide(side || "top");
+        this._basecoatToolTip.setAlign(align || "center");
+        this._basecoatToolTip.attachTo(this);
+      }
+      return this;
+    },
+
+    /**
+     * Remove any tooltip attached via setBasecoatToolTip.
+     * @return {qooxdo_proj.components.ui.Button} this
+     */
+    clearBasecoatToolTip() {
+      if (!this._basecoatToolTip) return this;
+      this._basecoatToolTip.detachFrom(this);
+      this._basecoatToolTip.dispose();
+      this._basecoatToolTip = null;
+      return this;
+    },
+
+    /**
+     * Get the tooltip instance attached via setBasecoatToolTip.
+     * @return {qooxdo_proj.components.ui.ToolTip|null}
+     */
+    getBasecoatToolTip() {
+      return this._basecoatToolTip || null;
+    }
+  },
+
+  destruct() {
+    this.clearBasecoatToolTip();
   }
 });
