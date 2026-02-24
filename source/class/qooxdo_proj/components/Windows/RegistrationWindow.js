@@ -155,13 +155,24 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
       this._isSubmitting = true;
       this._registerButton.setEnabled(false);
 
-      // Send registration request to API using fetch
-      fetch("http://localhost:3000/api/auth/register", {
+      // Send registration request to GraphQL API
+      const registerMutation = `
+        mutation {
+          register(input: { username: "${username}", password: "${password}" }) {
+            success
+            username
+            message
+            error
+          }
+        }
+      `;
+
+      fetch("http://localhost:5094/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username: username, password: password })
+        body: JSON.stringify({ query: registerMutation })
       })
       .then(async response => {
         // Parse JSON response first
@@ -174,10 +185,11 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
         }
 
         // Check if response is ok (status 200-299)
-        // Note: 201 (Created) is also considered successful
         if (!response.ok) {
           // Response is not ok, but we have parsed JSON
-          const errorMessage = result.error || this._getUserFriendlyError(response.status);
+          const errorMessage = result.errors && result.errors.length > 0 
+            ? result.errors[0].message 
+            : this._getUserFriendlyError(response.status);
           throw new Error(errorMessage);
         }
 
@@ -185,8 +197,13 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
         return result;
       })
       .then(result => {
+        // Check for GraphQL errors
+        if (result.errors && result.errors.length > 0) {
+          throw new Error(result.errors[0].message);
+        }
+
         // Check if registration was successful
-        if (result && result.success) {
+        if (result.data && result.data.register && result.data.register.success) {
           // Registration successful
           this._showError('<span style="color: green;">Registration successful! You can now login.</span>');
           this._registerButton.setEnabled(true);
@@ -194,13 +211,13 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
           
           // Fire success event after a short delay
           qx.event.Timer.once(() => {
-            const regUsername = result.user ? result.user.username : username;
+            const regUsername = result.data.register.username;
             this.fireDataEvent("registrationSuccess", { username: regUsername });
             this.close();
           }, this, 1500);
         } else {
           // Registration failed - check if there's an error message
-          const errorMsg = result.error || result.message || "Registration failed. Please try again.";
+          const errorMsg = result.data.register.error || result.data.register.message || "Registration failed. Please try again.";
           this._showError(errorMsg);
           this._registerButton.setEnabled(true);
           this._isSubmitting = false;

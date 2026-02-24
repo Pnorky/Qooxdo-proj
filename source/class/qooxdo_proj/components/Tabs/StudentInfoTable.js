@@ -642,12 +642,40 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           ...studentData
         };
 
-        fetch(`http://localhost:3000/api/students/${studentId}`, {
-          method: "PUT",
+        const updateStudentMutation = `
+          mutation {
+            updateStudent(id: ${studentId}, input: {
+              studentId: "${updateData.studentId || ''}"
+              firstName: "${updateData.firstName || ''}"
+              lastName: "${updateData.lastName || ''}"
+              program: "${updateData.program || ''}"
+              yearLevel: "${updateData.yearLevel || ''}"
+              gender: "${updateData.gender || ''}"
+              dateOfBirth: ${updateData.dateOfBirth ? `"${updateData.dateOfBirth}"` : 'null'}
+              address: "${updateData.address || ''}"
+              email: "${updateData.email || ''}"
+              personalPhone: "${updateData.personalPhone || ''}"
+              emergencyContact: "${updateData.emergencyContact || ''}"
+              emergencyContactPhone: "${updateData.emergencyContactPhone || ''}"
+              relationship: "${updateData.relationship || ''}"
+              gradeSchool: "${updateData.gradeSchool || ''}"
+              highSchool: "${updateData.highSchool || ''}"
+              college: "${updateData.college || ''}"
+            }) {
+              id
+              studentId
+              firstName
+              lastName
+            }
+          }
+        `;
+
+        fetch("http://localhost:5094/graphql", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(updateData)
+          body: JSON.stringify({ query: updateStudentMutation })
         })
         .then(response => {
           if (!response.ok) {
@@ -655,7 +683,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           }
           return response.json();
         })
-        .then(updatedStudent => {
+        .then(result => {
+          if (result.errors && result.errors.length > 0) {
+            throw new Error(result.errors[0].message);
+          }
           // Reload students to refresh the table
           this.loadStudents();
         })
@@ -738,11 +769,18 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       },
 
       _deleteStudent: function (studentId) {
-        fetch(`http://localhost:3000/api/students/${studentId}`, {
-          method: "DELETE",
+        const deleteStudentMutation = `
+          mutation {
+            deleteStudent(id: ${studentId})
+          }
+        `;
+
+        fetch("http://localhost:5094/graphql", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json"
-          }
+          },
+          body: JSON.stringify({ query: deleteStudentMutation })
         })
         .then(response => {
           if (!response.ok) {
@@ -750,7 +788,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           }
           return response.json();
         })
-        .then(() => {
+        .then(result => {
+          if (result.errors && result.errors.length > 0) {
+            throw new Error(result.errors[0].message);
+          }
           // Reload students to refresh the table
           this.loadStudents();
         })
@@ -774,21 +815,50 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
 
         // Store full student data with the row
         this._studentsData.push(studentData);
-        this._table.addRow(rowData, null, studentData);
-      },
-
-      // Clear all students
-      clear: function () {
-        this._table.clearRows();
-        this._studentRowNumber = 0;
-        this._studentsData = [];
-      },
-
-      // Load students from API
+        this._table.addRow(rGraphQL API
       loadStudents: function () {
-        fetch("http://localhost:3000/api/students", {
-          method: "GET",
+        const getStudentsQuery = `
+          query {
+            getStudents {
+              id
+              studentId
+              firstName
+              lastName
+              program
+              yearLevel
+              gender
+              dateOfBirth
+              address
+              email
+              personalPhone
+              emergencyContact
+              emergencyContactPhone
+              relationship
+              gradeSchool
+              highSchool
+              college
+            }
+          }
+        `;
+
+        fetch("http://localhost:5094/graphql", {
+          method: "POST",
           headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ query: getStudentsQuery })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(result => {
+          if (result.errors && result.errors.length > 0) {
+            throw new Error(result.errors[0].message);
+          }
+          const students = result.data.getStudents;
             "Content-Type": "application/json"
           }
         })

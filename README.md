@@ -1,34 +1,39 @@
 # Student Registration System
 
-A Qooxdoo-based frontend application with a Node.js/Express REST API backend.
+A Qooxdoo-based frontend application with a .NET/C# GraphQL API backend.
 
 ## Current API Configuration
 
-**ACTIVE API: Backend REST API (Node.js/Express)**
-- Location: `backend/` folder
-- Server: `http://localhost:3000`
-- Endpoints: `/api/students`, `/api/auth`
-- Database: SQLite (`backend/students.db`)
-
-**GraphQLApi is currently disabled/temporarily not in use**
+**ACTIVE API: GraphQLApi (.NET/C# GraphQL)**
 - Location: `GraphQLApi/` folder
-- This is a .NET/C# GraphQL API using HotChocolate
-- Not currently connected to the frontend
+- Server: `http://localhost:5094`
+- Endpoint: `/graphql`
+- Database: SQLite (`GraphQLApi/students.db`)
+- GraphQL Playground: Available at `http://localhost:5094/graphql` (if configured)
+
+**Backend REST API is deprecated**
+- Location: `backend/` folder (archived)
+- This was the previous Node.js/Express REST API
+- No longer used by the frontend
 
 ## Quick Start
 
-### 1. Start the Backend Server
+### 1. Start the GraphQL API Server
+
+Navigate to the `GraphQLApi/` directory and run:
 
 ```bash
-npm install
-npm run server
+dotnet run
+# or for development:
+dotnet watch run
 ```
 
-The backend server will start on `http://localhost:3000`
+The GraphQL API server will start on `http://localhost:5094`
 
 ### 2. Build and Run the Frontend
 
 ```bash
+npm install
 npm run compile
 # or for development with watch mode:
 npm run watch
