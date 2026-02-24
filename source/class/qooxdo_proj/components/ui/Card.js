@@ -14,7 +14,7 @@
  * Add content via getHeader(), getSection(), and getFooter() or use
  * setTitle() / setSubtitle() for the header.
  */
-qx.Class.define("landing_qooxdoo.ui.Card", {
+qx.Class.define("qooxdo_proj.components.ui.Card", {
   extend: qx.ui.container.Composite,
 
   properties: {

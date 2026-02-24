@@ -53,12 +53,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       var windowsMenu = new qx.ui.menubar.Button("Students", null, this._getWindowsMenu());
       // var viewMenu = new qx.ui.menubar.Button("View", null, this._getViewMenu());
       var windowMenu = new qx.ui.menubar.Button("Window", null, this._getWindowMenu());
-      var printingMenu = new qx.ui.menubar.Button("Printing", null, this._getPrintingMenu()); 
+      var printingMenu = new qx.ui.menubar.Button("Printing", null, this._getPrintingMenu());
+      var demoMenu = new qx.ui.menubar.Button("Demo", null, this._getDemoMenu());
 
       menubar.add(windowsMenu);
       // menubar.add(viewMenu);
       menubar.add(windowMenu);
       menubar.add(printingMenu);
+      menubar.add(demoMenu);
 
       // Add logout button as a menubar button (right-aligned)
       this._logoutButton = new qx.ui.menubar.Button("Logout");
@@ -212,6 +214,23 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
 
         excelReportButton.addListener("execute", () => {
           this._generateExcelReport();
+        }, this);
+
+        return menu;
+      },
+
+      /**
+       * Menu used to open demonstration windows/use custom UI components
+       */
+      _getDemoMenu: function () {
+        var menu = new qx.ui.menu.Menu();
+        var uiDemoButton = new qx.ui.menu.Button("UI Component Demo");
+        menu.add(uiDemoButton);
+
+        uiDemoButton.addListener("execute", () => {
+          if (this._windowManager) {
+            this._windowManager.openWindow("uiDemo");
+          }
         }, this);
 
         return menu;
