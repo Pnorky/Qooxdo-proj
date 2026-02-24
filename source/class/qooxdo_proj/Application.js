@@ -12,6 +12,7 @@ qx.Class.define("qooxdo_proj.Application",
       _contactInfoWindow: null,
       _academicInfoWindow: null,
       _studentInfoTableWindow: null,
+      _uiDemoWindow: null,
       _statusLabel: null,
       _loginPage: null,
       _mainContainer: null,
@@ -89,6 +90,14 @@ qx.Class.define("qooxdo_proj.Application",
           "studentTable",
           this._studentInfoTableWindow,
           { left: 50, top: 600, open: false, }
+        );
+
+        // UI demo window (shows examples of the custom components)
+        this._uiDemoWindow = new qooxdo_proj.components.Windows.UIDemoWindow();
+        this._windowManager.registerWindow(
+          "uiDemo",
+          this._uiDemoWindow,
+          { left: 700, top: 600, open: false }
         );
 
         // Load students when table window is opened

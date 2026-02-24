@@ -12,7 +12,7 @@
  * Basecoat-style accordion (one open at a time). Uses theme variables for dark mode.
  * Add items via addItem(summary, content) or setItems([{summary, content}]).
  */
-qx.Class.define("landing_qooxdoo.ui.Accordion", {
+qx.Class.define("qooxdo_proj.components.ui.Accordion", {
   extend: qx.ui.core.Widget,
 
   properties: {

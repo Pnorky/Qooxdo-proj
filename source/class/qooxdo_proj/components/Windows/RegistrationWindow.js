@@ -29,12 +29,11 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
     this.setMovable(true);
     this.center();
 
-    // Title
-    const title = new qooxdo_proj.components.ui.Label(
-      "Create New Account",
-    );
-    title.setFont("bold");
-    this.add(title);
+    // Create a card to hold the form
+    const card = new qooxdo_proj.components.ui.Card("Create New Account", "");
+    card.setFullWidth(true);
+    this.add(card, { flex: 1 });
+    const section = card.getSection();
 
     // Username field - label and input on same line
     const usernameContainer = new qx.ui.container.Composite();
@@ -45,7 +44,7 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
     this._usernameField.setPlaceholder("Enter username");
     usernameContainer.add(usernameLabel);
     usernameContainer.add(this._usernameField, { flex: 1 });
-    this.add(usernameContainer);
+    section.add(usernameContainer);
 
     // Password field - label and input on same line
     const passwordContainer = new qx.ui.container.Composite();
@@ -56,13 +55,18 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
     this._passwordField.setPlaceholder("Enter password");
     passwordContainer.add(passwordLabel);
     passwordContainer.add(this._passwordField, { flex: 1 });
-    this.add(passwordContainer);
+    section.add(passwordContainer);
+
+    // Terms and conditions checkbox (custom component)
+    this._termsCheckbox = new qooxdo_proj.components.ui.CheckBox("I agree to the terms and conditions");
+    this._termsCheckbox.setValue(false);
+    section.add(this._termsCheckbox);
 
     // Error message label
     this._errorLabel = new qooxdo_proj.components.ui.Label("");
     this._errorLabel.setRich(true);
     this._errorLabel.setVisibility("hidden");
-    this.add(this._errorLabel);
+    section.add(this._errorLabel);
 
     // Button container
     const buttonContainer = new qx.ui.container.Composite();
@@ -113,12 +117,13 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
 
     buttonContainer.add(this._registerButton, { flex: 1 });
     buttonContainer.add(this._cancelButton, { flex: 1 });
-    this.add(buttonContainer);
+    section.add(buttonContainer);
   },
 
   members: {
     _usernameField: null,
     _passwordField: null,
+    _termsCheckbox: null,
     _registerButton: null,
     _cancelButton: null,
     _errorLabel: null,
@@ -148,6 +153,11 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
 
       if (!password.trim()) {
         this._showError("Please enter a password");
+        return;
+      }
+
+      if (this._termsCheckbox && !this._termsCheckbox.getValue()) {
+        this._showError("You must agree to the terms and conditions");
         return;
       }
 
