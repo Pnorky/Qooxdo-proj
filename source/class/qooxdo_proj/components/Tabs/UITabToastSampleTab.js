@@ -21,7 +21,9 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     this.add(outer);
 
     const wrapper = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
-    wrapper.setWidth(600);
+    // allow wrapper to expand up to a reasonable maximum but not force a fixed width
+    wrapper.setMaxWidth(800);
+    wrapper.setWidth(null);
     outer.add(wrapper);
 
     const addSectionTitle = function (text) {
@@ -88,6 +90,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
 
     addSectionTitle("Toast");
     const toastButtonsRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(8));
+    toastButtonsRow.setAlignX("center");
+    toastButtonsRow.setAllowGrowX(true);
     const toastFrontendBtn = new qooxdo_proj.components.ui.Button("Toast from front-end", "outline", "sm");
     toastFrontendBtn.addListener("execute", function () {
       toaster.show({
