@@ -290,46 +290,16 @@ qx.Class.define("qooxdo_proj.Application",
           college: academicData.previousSchools.college
         };
 
-        // Send to GraphQL API
+        // Send to REST API
         const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
         this._statusLabel.setValue(`<span style='color: ${primaryColor};'>Saving student...</span>`);
-        
-        const addStudentMutation = `
-          mutation {
-            addStudent(input: {
-              studentId: "${studentData.studentId}"
-              firstName: "${studentData.firstName}"
-              lastName: "${studentData.lastName}"
-              program: "${studentData.program || ''}"
-              yearLevel: "${studentData.yearLevel || ''}"
-              gender: "${studentData.gender || ''}"
-              dateOfBirth: ${studentData.dateOfBirth ? `"${studentData.dateOfBirth}"` : 'null'}
-              address: "${studentData.address || ''}"
-              email: "${studentData.email || ''}"
-              personalPhone: "${studentData.personalPhone || ''}"
-              emergencyContact: "${studentData.emergencyContact || ''}"
-              emergencyContactPhone: "${studentData.emergencyContactPhone || ''}"
-              relationship: "${studentData.relationship || ''}"
-              gradeSchool: "${studentData.gradeSchool || ''}"
-              highSchool: "${studentData.highSchool || ''}"
-              college: "${studentData.college || ''}"
-            }) {
-              id
-              studentId
-              firstName
-              lastName
-              program
-              yearLevel
-            }
-          }
-        `;
 
-        fetch("http://localhost:5094/graphql", {
+        fetch("http://localhost:3000/api/students", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ query: addStudentMutation })
+          body: JSON.stringify(studentData)
         })
         .then(response => {
           if (!response.ok) {
@@ -341,13 +311,10 @@ qx.Class.define("qooxdo_proj.Application",
           }
           return response.json();
         })
-        .then(result => {
-          if (result.errors && result.errors.length > 0) {
-            throw new Error(result.errors[0].message);
-          }
-          const savedStudent = result.data.addStudent;
+        .then(savedStudent => {
           // Add student to table
           this._studentInfoTableWindow.addStudent({
+            id: savedStudent.id,
             studentId: savedStudent.studentId,
             firstName: savedStudent.firstName,
             lastName: savedStudent.lastName,

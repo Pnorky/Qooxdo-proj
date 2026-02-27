@@ -141,73 +141,87 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
      * @return {String|null} toast id
      */
     show(config = {}) {
-      const toaster = this._getToasterElement();
-      if (!toaster) return null;
-
-      const toastId = this._nextToastId();
-      const category = String(config.category || "info").toLowerCase();
-      const title = this._escapeHtml(String(config.title || "Notification"));
-      const descRaw = config.description != null ? String(config.description) : "";
-      const description = this.getRichDescription() ? descRaw : this._escapeHtml(descRaw);
-
-      const action = config.action && typeof config.action === "object" ? config.action : null;
-      const cancel = config.cancel && typeof config.cancel === "object" ? config.cancel : null;
-
-      const actionLabel = action && action.label ? this._escapeHtml(String(action.label)) : "";
-      const cancelLabel = cancel && cancel.label ? this._escapeHtml(String(cancel.label)) : "Dismiss";
-
-      const actionHtml = actionLabel
-        ? `<button type="button" class="btn" data-toast-action>${actionLabel}</button>`
-        : "";
-      const cancelHtml = cancel !== null
-        ? `<button type="button" class="btn-outline" data-toast-cancel>${cancelLabel}</button>`
-        : "";
-      const footerHtml = actionHtml || cancelHtml ? `<footer>${actionHtml}${cancelHtml}</footer>` : "";
-
-      const toast = document.createElement("div");
-      toast.className = "toast";
-      toast.id = toastId;
-      toast.setAttribute("role", "status");
-      toast.setAttribute("aria-atomic", "true");
-      toast.setAttribute("aria-hidden", "false");
-      toast.setAttribute("data-category", category);
-      toast.innerHTML = `
-        <div class="toast-content">
-          ${this._getCategoryIcon(category)}
-          <section>
-            <h2>${title}</h2>
-            <p>${description}</p>
-          </section>
-          ${footerHtml}
-        </div>
-      `;
-
-      toaster.insertBefore(toast, toaster.firstChild);
-
-      const actionBtn = toast.querySelector("[data-toast-action]");
-      if (actionBtn) {
-        actionBtn.addEventListener("click", () => {
-          if (typeof action.onClick === "function") {
-            action.onClick({ id: toastId, toast, category });
+      // Wait for the toaster element to be available if not yet in DOM
+      const tryShow = () => {
+        const toaster = this._getToasterElement();
+        if (!toaster) {
+          // Retry after a short delay if element not ready
+          if (!this.__toasterReady) {
+            this.__toasterReady = true;
+            setTimeout(() => tryShow(), 100);
           }
-          this.dismiss(toastId);
-        });
-      }
+          return null;
+        }
 
-      const cancelBtn = toast.querySelector("[data-toast-cancel]");
-      if (cancelBtn) {
-        cancelBtn.addEventListener("click", () => {
-          this.dismiss(toastId);
-        });
-      }
+        const toastId = this._nextToastId();
+        const category = String(config.category || "info").toLowerCase();
+        const title = this._escapeHtml(String(config.title || "Notification"));
+        const descRaw = config.description != null ? String(config.description) : "";
+        const description = this.getRichDescription() ? descRaw : this._escapeHtml(descRaw);
 
-      const duration = typeof config.duration === "number" ? config.duration : this.getDefaultDuration();
-      if (duration > 0) {
-        this.__timers[toastId] = setTimeout(() => this.dismiss(toastId), duration);
-      }
+        const action = config.action && typeof config.action === "object" ? config.action : null;
+        const cancel = config.cancel && typeof config.cancel === "object" ? config.cancel : null;
 
-      this.fireDataEvent("show", toastId);
-      return toastId;
+        const actionLabel = action && action.label ? this._escapeHtml(String(action.label)) : "";
+        const cancelLabel = cancel && cancel.label ? this._escapeHtml(String(cancel.label)) : "Dismiss";
+
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.id = toastId;
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-atomic", "true");
+        toast.setAttribute("aria-hidden", "false");
+        toast.setAttribute("data-category", category);
+
+        // Build toast HTML with proper styling matching basecoat Button component
+        const actionHtml = actionLabel
+          ? `<button type="button" class="btn btn-sm" data-toast-action>${actionLabel}</button>`
+          : "";
+        const cancelHtml = cancel !== null
+          ? `<button type="button" class="btn btn-outline btn-sm" data-toast-cancel>${cancelLabel}</button>`
+          : "";
+        const footerHtml = actionHtml || cancelHtml ? `<footer style="display: flex; gap: 8px; margin-top: 12px;">${actionHtml}${cancelHtml}</footer>` : "";
+
+        toast.innerHTML = `
+          <div class="toast-content" style="display: flex; gap: 12px; align-items: flex-start;">
+            <div style="flex-shrink: 0;">${this._getCategoryIcon(category)}</div>
+            <section style="flex: 1; min-width: 0;">
+              <h2 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">${title}</h2>
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">${description}</p>
+            </section>
+            ${footerHtml}
+          </div>
+        `;
+
+        toaster.insertBefore(toast, toaster.firstChild);
+
+        const actionBtn = toast.querySelector("[data-toast-action]");
+        if (actionBtn) {
+          actionBtn.addEventListener("click", () => {
+            if (typeof action.onClick === "function") {
+              action.onClick({ id: toastId, toast, category });
+            }
+            this.dismiss(toastId);
+          });
+        }
+
+        const cancelBtn = toast.querySelector("[data-toast-cancel]");
+        if (cancelBtn) {
+          cancelBtn.addEventListener("click", () => {
+            this.dismiss(toastId);
+          });
+        }
+
+        const duration = typeof config.duration === "number" ? config.duration : this.getDefaultDuration();
+        if (duration > 0) {
+          this.__timers[toastId] = setTimeout(() => this.dismiss(toastId), duration);
+        }
+
+        this.fireDataEvent("show", toastId);
+        return toastId;
+      };
+
+      return tryShow();
     },
 
     /**

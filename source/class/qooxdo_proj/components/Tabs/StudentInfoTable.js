@@ -79,10 +79,14 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _createTable: function () {
         // Create custom Table component with Basecoat UI styling
         this._table = new qooxdo_proj.components.ui.Table("");
-        
+
         // Set table headers
         const columnNames = ["#", "Student Id", "First Name", "Last Name", "Program", "Year Level"];
         this._table.setHeaders(columnNames);
+
+        // Enable pagination with basecoat styling
+        this._table.setPagination(true);
+        this._table.setPageSize(10); // Show 10 rows per page
 
         // Set table size
         this._table.set({
@@ -94,6 +98,12 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         this._table.addListener("rowClick", (e) => {
           const data = e.getData();
           this._handleRowClick(data.rowIndex, data.rowData);
+        }, this);
+
+        // Listen to page change events
+        this._table.addListener("pageChange", (e) => {
+          const pageData = e.getData();
+          console.log("Page changed to:", pageData.currentPage, "of", pageData.totalPages);
         }, this);
 
         this.add(this._table, { flex: 1 });
@@ -642,40 +652,12 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           ...studentData
         };
 
-        const updateStudentMutation = `
-          mutation {
-            updateStudent(id: ${studentId}, input: {
-              studentId: "${updateData.studentId || ''}"
-              firstName: "${updateData.firstName || ''}"
-              lastName: "${updateData.lastName || ''}"
-              program: "${updateData.program || ''}"
-              yearLevel: "${updateData.yearLevel || ''}"
-              gender: "${updateData.gender || ''}"
-              dateOfBirth: ${updateData.dateOfBirth ? `"${updateData.dateOfBirth}"` : 'null'}
-              address: "${updateData.address || ''}"
-              email: "${updateData.email || ''}"
-              personalPhone: "${updateData.personalPhone || ''}"
-              emergencyContact: "${updateData.emergencyContact || ''}"
-              emergencyContactPhone: "${updateData.emergencyContactPhone || ''}"
-              relationship: "${updateData.relationship || ''}"
-              gradeSchool: "${updateData.gradeSchool || ''}"
-              highSchool: "${updateData.highSchool || ''}"
-              college: "${updateData.college || ''}"
-            }) {
-              id
-              studentId
-              firstName
-              lastName
-            }
-          }
-        `;
-
-        fetch("http://localhost:5094/graphql", {
-          method: "POST",
+        fetch(`http://localhost:3000/api/students/${studentId}`, {
+          method: "PUT",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ query: updateStudentMutation })
+          body: JSON.stringify(updateData)
         })
         .then(response => {
           if (!response.ok) {
@@ -684,9 +666,6 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           return response.json();
         })
         .then(result => {
-          if (result.errors && result.errors.length > 0) {
-            throw new Error(result.errors[0].message);
-          }
           // Reload students to refresh the table
           this.loadStudents();
         })
@@ -769,18 +748,11 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       },
 
       _deleteStudent: function (studentId) {
-        const deleteStudentMutation = `
-          mutation {
-            deleteStudent(id: ${studentId})
-          }
-        `;
-
-        fetch("http://localhost:5094/graphql", {
-          method: "POST",
+        fetch(`http://localhost:3000/api/students/${studentId}`, {
+          method: "DELETE",
           headers: {
             "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ query: deleteStudentMutation })
+          }
         })
         .then(response => {
           if (!response.ok) {
@@ -789,9 +761,6 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           return response.json();
         })
         .then(result => {
-          if (result.errors && result.errors.length > 0) {
-            throw new Error(result.errors[0].message);
-          }
           // Reload students to refresh the table
           this.loadStudents();
         })
@@ -815,40 +784,20 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
 
         // Store full student data with the row
         this._studentsData.push(studentData);
+
+        // Use addRow - pagination will automatically handle display
         this._table.addRow(rowData);
+
+        // Update total rows for pagination
+        this._table.setTotalRows(this._studentsData.length);
       },
 
       loadStudents: function () {
-        const getStudentsQuery = `
-          query {
-            getStudents {
-              id
-              studentId
-              firstName
-              lastName
-              program
-              yearLevel
-              gender
-              dateOfBirth
-              address
-              email
-              personalPhone
-              emergencyContact
-              emergencyContactPhone
-              relationship
-              gradeSchool
-              highSchool
-              college
-            }
-          }
-        `;
-
-        fetch("http://localhost:5094/graphql", {
-          method: "POST",
+        fetch("http://localhost:3000/api/students", {
+          method: "GET",
           headers: {
             "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ query: getStudentsQuery })
+          }
         })
           .then(response => {
             if (!response.ok) {
@@ -856,19 +805,16 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
             }
             return response.json();
           })
-          .then(result => {
-            if (result.errors && result.errors.length > 0) {
-              throw new Error(result.errors[0].message);
-            }
+          .then(students => {
 
-            const students = (result.data && result.data.getStudents) || [];
+            // Reset student row number
+            this._studentRowNumber = 0;
+            this._studentsData = [];
 
-            // Clear existing rows
-            this.clear();
-
-            // Add all students to table (store full student object with id)
-            students.forEach((student) => {
-              this.addStudent({
+            // Build rows array for efficient bulk loading with pagination
+            const rows = students.map((student, index) => {
+              // Store full student data
+              this._studentsData.push({
                 id: student.id, // Store id for update/delete operations
                 studentId: student.studentId,
                 firstName: student.firstName,
@@ -888,7 +834,24 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
                 highSchool: student.highSchool,
                 college: student.college
               });
+
+              return [
+                index + 1,
+                student.studentId || "",
+                { text: student.firstName || "", classes: "font-medium" },
+                { text: student.lastName || "", classes: "font-medium" },
+                student.program || "",
+                this._normalizeYearLevel(student.yearLevel) || ""
+              ];
             });
+
+            this._studentRowNumber = students.length;
+
+            // Use setRows for efficient bulk loading with pagination
+            this._table.setRows(rows);
+
+            // Update total rows for pagination
+            this._table.setTotalRows(rows.length);
           })
           .catch(error => {
             console.error("Failed to load students from API:", error);

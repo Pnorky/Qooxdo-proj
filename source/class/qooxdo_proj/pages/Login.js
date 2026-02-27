@@ -237,24 +237,13 @@ qx.Class.define("qooxdo_proj.pages.Login", {
       // Disable login button during validation
       this._loginButton.setEnabled(false);
 
-      // Send login request to GraphQL API
-      const loginMutation = `
-        mutation {
-          login(input: { username: "${username}", password: "${password}" }) {
-            success
-            username
-            message
-            error
-          }
-        }
-      `;
-
-      fetch("http://localhost:5094/graphql", {
+      // Send login request to REST API
+      fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ query: loginMutation })
+        body: JSON.stringify({ username: username, password: password })
       })
       .then(response => {
         // Check if response is ok (status 200-299)
@@ -270,17 +259,12 @@ qx.Class.define("qooxdo_proj.pages.Login", {
         return response.json();
       })
       .then(result => {
-        if (result.errors && result.errors.length > 0) {
-          this._showError(result.errors[0].message);
-          this._loginButton.setEnabled(true);
-          return;
-        }
-        if (result.data && result.data.login && result.data.login.success) {
+        if (result.success) {
           // Login successful
-          this.fireDataEvent("loginSuccess", { username: result.data.login.username });
+          this.fireDataEvent("loginSuccess", { username: result.username });
         } else {
           // Login failed
-          this._showError(result.data.login.error || "Invalid username or password");
+          this._showError(result.error || "Invalid username or password");
           this._loginButton.setEnabled(true);
         }
       })

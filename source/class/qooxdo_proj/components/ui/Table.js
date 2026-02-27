@@ -7,12 +7,47 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       init: "",
       apply: "_applyCaption",
       event: "changeCaption"
+    },
+
+    /** Number of rows per page for pagination */
+    pageSize: {
+      check: "Number",
+      init: 10,
+      apply: "_applyPageSize",
+      event: "changePageSize"
+    },
+
+    /** Current page number (1-based) */
+    currentPage: {
+      check: "Number",
+      init: 1,
+      apply: "_applyCurrentPage",
+      event: "changeCurrentPage"
+    },
+
+    /** Total number of rows (for pagination calculation) */
+    totalRows: {
+      check: "Number",
+      init: 0,
+      apply: "_applyTotalRows",
+      event: "changeTotalRows"
+    },
+
+    /** Whether to show pagination controls */
+    pagination: {
+      check: "Boolean",
+      init: false,
+      apply: "_applyPagination",
+      event: "changePagination"
     }
   },
 
   events: {
     /** Fired when a table row is clicked. Data: {rowIndex: number, rowData: object} */
-    "rowClick": "qx.event.type.Data"
+    "rowClick": "qx.event.type.Data",
+
+    /** Fired when page changes. Data: {currentPage: number, pageSize: number, totalPages: number} */
+    "pageChange": "qx.event.type.Data"
   },
 
   construct(caption = "") {
@@ -24,22 +59,53 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     // Store initial values
     this._initialCaption = caption;
     this._headers = [];
-    this._rows = [];
+    this._allRows = []; // Store all rows for pagination
+    this._rows = []; // Current page rows
     this._footerRows = [];
     this._columnWidths = [];
+
+    // Pagination state
+    this._currentPage = 1;
+    this._pageSize = 10;
+    this._totalRows = 0;
+    this._paginationEnabled = false;
 
     // Generate unique ID for the table
     this._tableId = `table-${qx.core.Id.getInstance().toHashCode(this)}`;
 
-    // Create HTML with Basecoat table class
+    // Create HTML with Basecoat table class and pagination
     this._html = new qx.ui.embed.Html(`
-      <div class="overflow-x-auto" style="width: 100%; height: 100%;">
-        <table class="table" id="${this._tableId}" style="border: 1px solid rgba(0, 0, 0, 0.15); border-collapse: collapse;">
-          <caption></caption>
-          <thead></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table>
+      <div class="table-container" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+        <div class="overflow-x-auto" style="flex: 1; overflow: auto;">
+          <table class="table" id="${this._tableId}" style="border: 1px solid rgba(0, 0, 0, 0.15); border-collapse: collapse; width: 100%;">
+            <caption></caption>
+            <thead></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+        <nav role="navigation" aria-label="pagination" class="pagination-container mx-auto flex w-full justify-center" style="display: none; padding: 16px 0; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1);">
+          <ul class="pagination-pages-list flex flex-row items-center gap-1" style="display: flex; flex-direction: row; list-style: none; margin: 0; padding: 0; gap: 4px;">
+            <li>
+              <a href="#" class="btn-ghost pagination-prev" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                <span>Previous</span>
+              </a>
+            </li>
+            <li class="pagination-pages"></li>
+            <li>
+              <div class="pagination-ellipsis size-9 flex items-center justify-center" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
+              </div>
+            </li>
+            <li>
+              <a href="#" class="btn-ghost pagination-next" tabindex="0">
+                <span>Next</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </div>
     `);
 
@@ -48,12 +114,28 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
 
     // Hook DOM updates after the element appears
     this._html.addListenerOnce("appear", () => {
+      // Get container element
+      const container = this._html.getContentElement().getDomElement();
+
       // Initialize table elements
-      this._tableElement = this._html.getContentElement().getDomElement().querySelector(`#${this._tableId}`);
+      this._tableElement = container.querySelector(`#${this._tableId}`);
       this._captionElement = this._tableElement ? this._tableElement.querySelector("caption") : null;
       this._theadElement = this._tableElement ? this._tableElement.querySelector("thead") : null;
       this._tbodyElement = this._tableElement ? this._tableElement.querySelector("tbody") : null;
       this._tfootElement = this._tableElement ? this._tableElement.querySelector("tfoot") : null;
+
+      // Initialize pagination elements
+      this._paginationContainer = container.querySelector(".pagination-container");
+      this._paginationPages = container.querySelector(".pagination-pages");
+      this._paginationPrev = container.querySelector(".pagination-prev");
+      this._paginationNext = container.querySelector(".pagination-next");
+      this._paginationEllipsis = container.querySelector(".pagination-ellipsis");
+
+      // Apply pagination settings after DOM is ready
+      if (this._paginationEnabled && this._paginationContainer) {
+        this._paginationContainer.style.display = "flex";
+        this._updatePagination();
+      }
 
       // Ensure table has visible border and auto layout for automatic column width adjustment
       if (this._tableElement) {
@@ -97,6 +179,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     _tableId: null,
     _initialCaption: null,
     _headers: null,
+    _allRows: null,
     _rows: null,
     _footerRows: null,
     _columnWidths: null,
@@ -105,6 +188,20 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     _resizeStartX: null,
     _resizeStartWidth: null,
     _rowClickHandler: null,
+
+    // Pagination elements
+    _paginationContainer: null,
+    _paginationPages: null,
+    _paginationPrev: null,
+    _paginationNext: null,
+    _paginationEllipsis: null,
+    _paginationClickHandler: null,
+
+    // Pagination state
+    _currentPage: null,
+    _pageSize: null,
+    _totalRows: null,
+    _paginationEnabled: null,
 
     /**
      * Escape HTML to prevent XSS attacks
@@ -116,6 +213,284 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
       const div = document.createElement("div");
       div.textContent = String(text);
       return div.innerHTML;
+    },
+
+    /**
+     * Apply pageSize changes
+     * @param {Number} pageSize - New page size
+     */
+    _applyPageSize(pageSize) {
+      this._pageSize = pageSize;
+      if (this._paginationEnabled) {
+        // Reset to first page when page size changes
+        this._currentPage = 1;
+        this._updateCurrentPageRows();
+        this._updatePagination();
+        this._renderTable();
+      }
+    },
+
+    /**
+     * Apply currentPage changes
+     * @param {Number} currentPage - New current page
+     */
+    _applyCurrentPage(currentPage) {
+      const totalPages = this.getTotalPages();
+      if (currentPage < 1) {
+        currentPage = 1;
+      } else if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+      }
+      this._currentPage = currentPage;
+      if (this._paginationEnabled) {
+        this._updateCurrentPageRows();
+        this._updatePagination();
+        this._renderTable();
+      }
+    },
+
+    /**
+     * Apply totalRows changes
+     * @param {Number} totalRows - New total rows
+     */
+    _applyTotalRows(totalRows) {
+      this._totalRows = totalRows;
+      if (this._paginationEnabled) {
+        // Adjust current page if it's beyond the total pages
+        const totalPages = this.getTotalPages();
+        if (this._currentPage > totalPages) {
+          this._currentPage = totalPages > 0 ? totalPages : 1;
+        }
+        this._updateCurrentPageRows();
+        this._updatePagination();
+        this._renderTable();
+      }
+    },
+
+    /**
+     * Apply pagination changes
+     * @param {Boolean} enabled - Whether pagination is enabled
+     */
+    _applyPagination(enabled) {
+      this._paginationEnabled = enabled;
+      if (enabled) {
+        // Copy all rows to _allRows if not already done
+        if (this._allRows.length === 0 && this._rows.length > 0) {
+          this._allRows = [...this._rows];
+          this._totalRows = this._allRows.length;
+        }
+        this._updateCurrentPageRows();
+        this._updatePagination();
+      } else {
+        // When disabling pagination, show all rows
+        if (this._allRows.length > 0) {
+          this._rows = [...this._allRows];
+          this._renderTable();
+        }
+      }
+      if (this._paginationContainer) {
+        this._paginationContainer.style.display = enabled ? "flex" : "none";
+      }
+    },
+
+    /**
+     * Get total number of pages
+     * @return {Number} Total pages
+     */
+    getTotalPages() {
+      if (this._pageSize <= 0) return 0;
+      return Math.ceil(this._totalRows / this._pageSize);
+    },
+
+    /**
+     * Enable or disable pagination
+     * @param {Boolean} enabled - Whether to enable pagination
+     */
+    setPaginationEnabled(enabled) {
+      this.setPagination(enabled);
+    },
+
+    /**
+     * Go to a specific page
+     * @param {Number} page - Page number to go to (1-based)
+     */
+    goToPage(page) {
+      const totalPages = this.getTotalPages();
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+
+      const oldPage = this._currentPage;
+      this._currentPage = page;
+
+      // Update the rows to show for the current page
+      if (this._paginationEnabled) {
+        this._updateCurrentPageRows();
+      }
+
+      this._updatePagination();
+      this._renderTable();
+
+      // Fire page change event
+      if (oldPage !== page) {
+        this.fireDataEvent("pageChange", {
+          currentPage: page,
+          pageSize: this._pageSize,
+          totalPages: totalPages
+        });
+      }
+    },
+
+    /**
+     * Go to next page
+     */
+    nextPage() {
+      const totalPages = this.getTotalPages();
+      if (this._currentPage < totalPages) {
+        this.goToPage(this._currentPage + 1);
+      }
+    },
+
+    /**
+     * Go to previous page
+     */
+    previousPage() {
+      if (this._currentPage > 1) {
+        this.goToPage(this._currentPage - 1);
+      }
+    },
+
+    /**
+     * Update pagination UI
+     */
+    _updatePagination() {
+      if (!this._paginationContainer || !this._paginationEnabled) {
+        return;
+      }
+
+      const totalPages = this.getTotalPages();
+      const currentPage = this._currentPage;
+
+      // Update prev button state
+      if (this._paginationPrev) {
+        this._paginationPrev.style.pointerEvents = currentPage <= 1 ? "none" : "";
+        this._paginationPrev.style.opacity = currentPage <= 1 ? "0.5" : "1";
+      }
+
+      // Update next button state
+      if (this._paginationNext) {
+        this._paginationNext.style.pointerEvents = currentPage >= totalPages ? "none" : "";
+        this._paginationNext.style.opacity = currentPage >= totalPages ? "0.5" : "1";
+      }
+
+      // Render page numbers
+      if (this._paginationPages) {
+        this._paginationPages.innerHTML = this._renderPageNumbers(currentPage, totalPages);
+      }
+
+      // Show/hide ellipsis
+      if (this._paginationEllipsis) {
+        // Show ellipsis if there are more than 7 pages and we're not near the start or end
+        const showEllipsis = totalPages > 7 && currentPage < totalPages - 2;
+        this._paginationEllipsis.style.display = showEllipsis ? "flex" : "none";
+      }
+
+      // Setup click handlers for pagination
+      this._setupPaginationClickHandlers();
+    },
+
+    /**
+     * Render page numbers HTML
+     * @param {Number} currentPage - Current page number
+     * @param {Number} totalPages - Total number of pages
+     * @return {String} HTML for page numbers
+     */
+    _renderPageNumbers(currentPage, totalPages) {
+      if (totalPages <= 0) return "";
+
+      let pages = [];
+      
+      if (totalPages <= 7) {
+        // Show all pages
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show first few pages, current page, and last few pages
+        if (currentPage <= 3) {
+          pages = [1, 2, 3, 4, totalPages];
+        } else if (currentPage >= totalPages - 2) {
+          pages = [1, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        } else {
+          pages = [1, currentPage - 1, currentPage, currentPage + 1, totalPages];
+        }
+      }
+
+      let html = "";
+      let lastPage = 0;
+
+      pages.forEach((page, idx) => {
+        // Add ellipsis if there's a gap
+        if (idx > 0 && page - lastPage > 1) {
+          html += `<li style="display: inline-block;"><div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"><span>...</span></div></li>`;
+        }
+
+        const isActive = page === currentPage;
+        const btnStyle = isActive
+          ? "background-color: transparent; border: 1px solid rgba(0,0,0,0.2); color: inherit;"
+          : "background-color: transparent; border: none; color: inherit;";
+        html += `
+          <li style="display: inline-block;">
+            <a href="#" class="pagination-page-btn ${isActive ? 'btn-icon-outline' : 'btn-icon-ghost'}" data-page="${page}" tabindex="0" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; ${btnStyle} text-decoration: none; border-radius: 4px; cursor: pointer;">
+              ${page}
+            </a>
+          </li>
+        `;
+
+        lastPage = page;
+      });
+
+      return html;
+    },
+
+    /**
+     * Setup click handlers for pagination
+     */
+    _setupPaginationClickHandlers() {
+      if (!this._paginationContainer) return;
+
+      // Remove existing handler
+      if (this._paginationClickHandler) {
+        this._paginationContainer.removeEventListener("click", this._paginationClickHandler);
+      }
+
+      this._paginationClickHandler = (e) => {
+        e.preventDefault();
+
+        const target = e.target;
+        
+        // Check for prev button
+        if (target.closest(".pagination-prev")) {
+          this.previousPage();
+          return;
+        }
+
+        // Check for next button
+        if (target.closest(".pagination-next")) {
+          this.nextPage();
+          return;
+        }
+
+        // Check for page number button
+        const pageBtn = target.closest(".pagination-page-btn");
+        if (pageBtn) {
+          const page = parseInt(pageBtn.getAttribute("data-page"));
+          if (!isNaN(page)) {
+            this.goToPage(page);
+          }
+        }
+      };
+
+      this._paginationContainer.addEventListener("click", this._paginationClickHandler);
     },
 
     /**
@@ -166,14 +541,25 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         data: rowDataObj || null
       };
 
-      if (index === null || index === undefined) {
-        this._rows.push(row);
+      // Store in all rows for pagination
+      if (this._paginationEnabled) {
+        if (index === null || index === undefined) {
+          this._allRows.push(row);
+        } else {
+          this._allRows.splice(index, 0, row);
+        }
+        this._totalRows = this._allRows.length;
+        this._updateCurrentPageRows();
       } else {
-        this._rows.splice(index, 0, row);
+        if (index === null || index === undefined) {
+          this._rows.push(row);
+        } else {
+          this._rows.splice(index, 0, row);
+        }
       }
 
       this._renderTable();
-      
+
       // Auto-adjust column widths after adding row if table is visible
       if (this._tableElement && !this._hasExplicitColumnWidths()) {
         qx.event.Timer.once(() => {
@@ -183,13 +569,40 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     },
 
     /**
+     * Update current page rows based on pagination state
+     */
+    _updateCurrentPageRows() {
+      if (!this._paginationEnabled || this._allRows.length === 0) {
+        this._rows = [];
+        return;
+      }
+
+      const startIndex = (this._currentPage - 1) * this._pageSize;
+      const endIndex = Math.min(startIndex + this._pageSize, this._allRows.length);
+
+      this._rows = this._allRows.slice(startIndex, endIndex);
+    },
+
+    /**
      * Remove a row by index
      * @param {Number} index - Index of row to remove
      */
     removeRow(index) {
-      if (index >= 0 && index < this._rows.length) {
-        this._rows.splice(index, 1);
-        this._renderTable();
+      if (this._paginationEnabled) {
+        // Adjust index for all rows
+        const actualIndex = (this._currentPage - 1) * this._pageSize + index;
+        if (actualIndex >= 0 && actualIndex < this._allRows.length) {
+          this._allRows.splice(actualIndex, 1);
+          this._totalRows = this._allRows.length;
+          this._updateCurrentPageRows();
+          this._updatePagination();
+          this._renderTable();
+        }
+      } else {
+        if (index >= 0 && index < this._rows.length) {
+          this._rows.splice(index, 1);
+          this._renderTable();
+        }
       }
     },
 
@@ -197,7 +610,14 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
      * Clear all rows from the table body
      */
     clearRows() {
-      this._rows = [];
+      if (this._paginationEnabled) {
+        this._allRows = [];
+        this._rows = [];
+        this._totalRows = 0;
+        this._updatePagination();
+      } else {
+        this._rows = [];
+      }
       this._renderTable();
     },
 
@@ -239,11 +659,12 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     },
 
     /**
-     * Get all rows
+     * Get all rows (or current page rows if pagination is enabled)
      * @return {Array} Array of row data
      */
     getRows() {
-      return this._rows.map(row => ({
+      const rows = this._paginationEnabled ? this._allRows : this._rows;
+      return rows.map(row => ({
         cells: row.cells.map(cell => ({
           text: cell.text,
           classes: cell.classes,
@@ -253,11 +674,78 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     },
 
     /**
-     * Get row count
+     * Get all rows regardless of pagination
+     * @return {Array} Array of all row data
+     */
+    getAllRows() {
+      return this._allRows.map(row => ({
+        cells: row.cells.map(cell => ({
+          text: cell.text,
+          classes: cell.classes,
+          align: cell.align
+        }))
+      }));
+    },
+
+    /**
+     * Set all rows at once (useful for loading data)
+     * @param {Array<Array>} rows - Array of row data arrays
+     */
+    setRows(rows) {
+      if (!rows || !Array.isArray(rows)) {
+        return;
+      }
+
+      this._allRows = rows.map(rowData => ({
+        cells: (rowData || []).map(cell => {
+          if (typeof cell === "string" || typeof cell === "number") {
+            return { text: String(cell), classes: "", align: "" };
+          } else if (cell && typeof cell === "object") {
+            return {
+              text: String(cell.text || cell.value || ""),
+              classes: cell.classes || cell.className || "",
+              align: cell.align || cell.textAlign || ""
+            };
+          }
+          return { text: "", classes: "", align: "" };
+        }),
+        data: null
+      }));
+
+      this._totalRows = this._allRows.length;
+
+      if (this._paginationEnabled) {
+        this._currentPage = 1;
+        this._updateCurrentPageRows();
+        this._updatePagination();
+      } else {
+        this._rows = [...this._allRows];
+      }
+
+      this._renderTable();
+
+      // Auto-adjust column widths after setting rows if table is visible
+      if (this._tableElement && !this._hasExplicitColumnWidths()) {
+        qx.event.Timer.once(() => {
+          this._autoAdjustColumnWidths();
+        }, this, 100);
+      }
+    },
+
+    /**
+     * Get row count (total or current page depending on pagination)
      * @return {Number} Number of rows
      */
     getRowCount() {
-      return this._rows.length;
+      return this._paginationEnabled ? this._totalRows : this._rows.length;
+    },
+
+    /**
+     * Get total row count (all rows, not just current page)
+     * @return {Number} Total number of rows
+     */
+    getTotalRowCount() {
+      return this._totalRows;
     },
 
     /**
@@ -359,7 +847,11 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         this._rows.forEach((row, rowIndex) => {
           const tr = document.createElement("tr");
           // Store row index and data for click events
-          tr.setAttribute("data-row-index", rowIndex);
+          // If pagination is enabled, calculate actual index in all rows
+          const actualIndex = this._paginationEnabled 
+            ? (this._currentPage - 1) * this._pageSize + rowIndex 
+            : rowIndex;
+          tr.setAttribute("data-row-index", actualIndex);
           
           // Auto-adjust row height based on content
           tr.style.minHeight = "44px"; // Minimum row height for consistent spacing
@@ -523,13 +1015,14 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         if (!tr) {
           return;
         }
-        
+
         const rowIndex = parseInt(tr.getAttribute("data-row-index"));
-        if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= this._rows.length) {
+        const rows = this._paginationEnabled ? this._allRows : this._rows;
+        if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= rows.length) {
           return;
         }
 
-        const row = this._rows[rowIndex];
+        const row = rows[rowIndex];
         this.fireDataEvent("rowClick", {
           rowIndex: rowIndex,
           rowData: row.data || null

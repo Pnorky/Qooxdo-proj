@@ -121,5 +121,41 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     toastButtonsRow.add(toastEventBtn);
 
     wrapper.add(toastButtonsRow);
+
+    addSectionTitle("RadioButton (Basecoat Style)");
+    const radioButtonsRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+    radioButtonsRow.setAlignX("center");
+
+    // Create a radio button group
+    const radioGroup = new qooxdo_proj.components.ui.RadioButtonGroup();
+    radioGroup.setGroupName("demo-radio-group");
+
+    // Add radio buttons
+    const rb1 = new qooxdo_proj.components.ui.RadioButton("Default");
+    rb1.setValue("default");
+    rb1.setChecked(true);
+
+    const rb2 = new qooxdo_proj.components.ui.RadioButton("Comfortable");
+    rb2.setValue("comfortable");
+
+    const rb3 = new qooxdo_proj.components.ui.RadioButton("Compact");
+    rb3.setValue("compact");
+
+    radioGroup.add(rb1);
+    radioGroup.add(rb2);
+    radioGroup.add(rb3);
+
+    // Listen for selection changes
+    radioGroup.addListener("changeSelection", function(e) {
+      toaster.show({
+        category: "info",
+        title: "Radio Selected",
+        description: "Selected: " + e.getData().value,
+        cancel: { label: "Dismiss" }
+      });
+    });
+
+    radioButtonsRow.add(radioGroup);
+    wrapper.add(radioButtonsRow);
   }
 });

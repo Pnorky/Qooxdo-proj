@@ -476,39 +476,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           console.log("[PDF] Window manager not available");
         }
 
-        // If no data in window, load from GraphQL API
-        console.log("[PDF] Loading student data from GraphQL API...");
-        
-        const getStudentsQuery = `
-          query {
-            getStudents {
-              id
-              studentId
-              firstName
-              lastName
-              program
-              yearLevel
-              gender
-              dateOfBirth
-              address
-              email
-              personalPhone
-              emergencyContact
-              emergencyContactPhone
-              relationship
-              gradeSchool
-              highSchool
-              college
-            }
-          }
-        `;
+        // If no data in window, load from REST API
+        console.log("[PDF] Loading student data from REST API...");
 
-        fetch("http://localhost:5094/graphql", {
-          method: "POST",
+        fetch("http://localhost:3000/api/students", {
+          method: "GET",
           headers: {
             "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ query: getStudentsQuery })
+          }
         })
         .then(response => {
           console.log("[PDF] API response status:", response.status);
@@ -517,18 +492,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           }
           return response.json();
         })
-        .then(result => {
-          if (result.errors && result.errors.length > 0) {
-            throw new Error(result.errors[0].message);
-          }
-          const students = result.data.getStudents;
+        .then(students => {
           console.log("[PDF] API returned", students ? students.length : 0, "students");
           // Return all student fields - no need to transform/limit
           console.log("[PDF] Returning", students.length, "students with all fields");
           callback(students || []);
         })
         .catch(error => {
-          console.error("[PDF] Failed to load students from GraphQL API:", error);
+          console.error("[PDF] Failed to load students from REST API:", error);
           console.error("[PDF] Error details:", error.message, error.stack);
           alert("Failed to load student data: " + error.message);
           callback([]);
