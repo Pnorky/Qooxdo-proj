@@ -55,11 +55,15 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButton", {
 
     this._setLayout(new qx.ui.layout.HBox(8).set({ alignY: "middle" }));
 
+    // Allow the widget to grow horizontally
+    this.setAllowGrowX(true);
+    this.setMinWidth(150);
+
     // Create the HTML structure
     this._html = new qx.ui.embed.Html(`
-      <label class="label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; padding: 4px 0;">
+      <label class="label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; padding: 4px 0; min-width: 120px;">
         <input type="radio" class="input" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--color-primary, #3b82f6); flex-shrink: 0;">
-        <span class="label-text" style="line-height: 1.2; white-space: nowrap; color: inherit; font-size: 14px;"></span>
+        <span class="label-text" style="line-height: 1.2; white-space: nowrap; color: inherit; font-size: 14px; flex-shrink: 0; min-width: 80px;"></span>
       </label>
     `);
 
@@ -214,7 +218,7 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButtonGroup", {
   construct() {
     this.base(arguments);
 
-    this._setLayout(new qx.ui.layout.HBox(20).set({ alignY: "middle" }));
+    this._setLayout(new qx.ui.layout.VBox(12).set({ alignX: "left" }));
 
     this._radioButtons = [];
     this._selectedButton = null;
@@ -232,7 +236,7 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButtonGroup", {
       radioButton.setGroupName(this.getGroupName());
       radioButton.addListener("changeChecked", this._onRadioButtonChange, this);
       this._radioButtons.push(radioButton);
-      this._add(radioButton);
+      this._add(radioButton, { flex: 1 });
     },
 
     /**

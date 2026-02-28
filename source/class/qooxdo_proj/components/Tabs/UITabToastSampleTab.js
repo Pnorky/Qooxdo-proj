@@ -92,7 +92,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     const toastButtonsRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(8));
     toastButtonsRow.setAlignX("center");
     toastButtonsRow.setAllowGrowX(true);
-    const toastFrontendBtn = new qooxdo_proj.components.ui.Button("Toast from front-end", "outline", "sm");
+    const toastFrontendBtn = new qooxdo_proj.components.ui.Button("Front toast", "primary", "sm");
     toastFrontendBtn.addListener("execute", function () {
       toaster.show({
         category: "success",
@@ -104,7 +104,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     toastFrontendBtn.setBasecoatToolTip("Calls toaster.show(...)", "bottom", "start");
     toastButtonsRow.add(toastFrontendBtn);
 
-    const toastEventBtn = new qooxdo_proj.components.ui.Button("Toast from event", "outline", "sm");
+    const toastEventBtn = new qooxdo_proj.components.ui.Button("Event toast", "primary", "sm");
     toastEventBtn.addListener("execute", function () {
       document.dispatchEvent(new CustomEvent("basecoat:toast", {
         detail: {
@@ -122,8 +122,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
 
     wrapper.add(toastButtonsRow);
 
-    addSectionTitle("RadioButton (Basecoat Style)");
-    const radioButtonsRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+    addSectionTitle("RadioButton");
+    const radioButtonsRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(20));
     radioButtonsRow.setAlignX("center");
 
     // Create a radio button group
@@ -135,14 +135,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     rb1.setValue("default");
     rb1.setChecked(true);
 
-    const rb2 = new qooxdo_proj.components.ui.RadioButton("Comfortable");
-    rb2.setValue("comfortable");
-
     const rb3 = new qooxdo_proj.components.ui.RadioButton("Compact");
     rb3.setValue("compact");
 
     radioGroup.add(rb1);
-    radioGroup.add(rb2);
     radioGroup.add(rb3);
 
     // Listen for selection changes
@@ -157,5 +153,35 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
 
     radioButtonsRow.add(radioGroup);
     wrapper.add(radioButtonsRow);
+
+    addSectionTitle("DropdownMenu");
+    const dropdownMenuRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+    dropdownMenuRow.setAlignX("center");
+
+    // Create a dropdown menu
+    const dropdown = new qooxdo_proj.components.ui.DropdownMenu("Open");
+    
+    // Add menu items like in the basecoat example
+    dropdown.addItem("Profile", "profile", { shortcut: "⇧⌘P", group: "account", groupLabel: "My Account" });
+    dropdown.addItem("Billing", "billing", { shortcut: "⌘B", group: "account", groupLabel: "My Account" });
+    dropdown.addItem("Settings", "settings", { shortcut: "⌘S", group: "account", groupLabel: "My Account" });
+    dropdown.addItem("Keyboard shortcuts", "shortcuts", { shortcut: "⌘K", group: "account", groupLabel: "My Account" });
+    dropdown.addItem("GitHub", "github", { separator: true });
+    dropdown.addItem("Support", "support");
+    dropdown.addItem("API", "api", { disabled: true });
+    dropdown.addItem("Logout", "logout", { shortcut: "⇧⌘Q", separator: true });
+
+    // Listen for selection changes
+    dropdown.addListener("changeSelection", function(e) {
+      toaster.show({
+        category: "info",
+        title: "Menu Selected",
+        description: "Selected: " + e.getData().label,
+        cancel: { label: "Dismiss" }
+      });
+    });
+
+    dropdownMenuRow.add(dropdown);
+    wrapper.add(dropdownMenuRow);
   }
 });
