@@ -49,6 +49,24 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       init: "primary",
       apply: "_applySaveIntent"
     },
+    /** Preset dialog size */
+    size: {
+      check: ["sm", "md", "lg", "xl", "full", "custom"],
+      init: "md",
+      apply: "_applySize"
+    },
+    /** Custom maximum width of the dialog (CSS value, e.g. "425px", "900px", "90vw") */
+    dialogMaxWidth: {
+      check: "String",
+      init: "425px",
+      apply: "_applyDialogMaxWidth"
+    },
+    /** Custom maximum height of the dialog (CSS value, e.g. "612px", "85vh") */
+    dialogMaxHeight: {
+      check: "String",
+      init: "612px",
+      apply: "_applyDialogMaxHeight"
+    },
     /** If true, setSectionContent accepts HTML; otherwise content is escaped */
     richSectionContent: {
       check: "Boolean",
@@ -76,7 +94,7 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
     const descEsc = this._escapeHtml(description || "");
 
     this._html = new qx.ui.embed.Html(`
-      <dialog id="${this._dialogId}" class="dialog w-full sm:max-w-[425px] max-h-[612px]" aria-labelledby="${this._titleId}" aria-describedby="${this._descriptionId}" style="margin: 0;">
+      <dialog id="${this._dialogId}" class="dialog" aria-labelledby="${this._titleId}" aria-describedby="${this._descriptionId}" style="margin: 0; max-width: 425px; max-height: 612px;">
         <div>
           <header>
             <h2 id="${this._titleId}">${titleEsc}</h2>
@@ -107,6 +125,9 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       this._applyCancelLabel(this.getCancelLabel());
       this._applySaveLabel(this.getSaveLabel());
       this._applySaveIntent(this.getSaveIntent());
+      this._applySize(this.getSize());
+      this._applyDialogMaxWidth(this.getDialogMaxWidth());
+      this._applyDialogMaxHeight(this.getDialogMaxHeight());
       this._attachListeners();
     });
   },
@@ -130,7 +151,24 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
     _getDialogElement() {
       if (!this._html || !this._html.getContentElement()) return null;
       const root = this._html.getContentElement().getDomElement();
-      return root ? root.querySelector("dialog") || root.firstElementChild : null;
+      if (!root) return null;
+
+      // In qx.ui.embed.Html, the DOM root can itself be the <dialog>.
+      if (root.tagName && root.tagName.toLowerCase() === "dialog") {
+        return root;
+      }
+
+      const nestedDialog = root.querySelector("dialog");
+      if (nestedDialog) {
+        return nestedDialog;
+      }
+
+      const first = root.firstElementChild;
+      if (first && first.tagName && first.tagName.toLowerCase() === "dialog") {
+        return first;
+      }
+
+      return null;
     },
 
     _getSectionContentElement() {
@@ -229,6 +267,62 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       }
     },
 
+    _applySize() {
+      this._applyDialogSizing();
+    },
+
+    _applyDialogMaxWidth(value) {
+      this._applyDialogSizing();
+    },
+
+    _applyDialogMaxHeight(value) {
+      this._applyDialogSizing();
+    },
+
+    _applyDialogSizing() {
+      const dialog = this._getDialogElement();
+      if (!dialog) return;
+
+      const size = this.getSize ? this.getSize() : "md";
+      const widthBySize = {
+        sm: "360px",
+        md: "425px",
+        lg: "720px",
+        xl: "980px",
+        full: "1200px"
+      };
+      const heightBySize = {
+        sm: "520px",
+        md: "612px",
+        lg: "760px",
+        xl: "85vh",
+        full: "92vh"
+      };
+
+      const maxWidth = this.getDialogMaxWidth ? this.getDialogMaxWidth() : "425px";
+      const maxHeight = this.getDialogMaxHeight ? this.getDialogMaxHeight() : "612px";
+      const hasCustomMaxWidth = maxWidth && maxWidth !== "425px";
+      const hasCustomMaxHeight = maxHeight && maxHeight !== "612px";
+      const useCustomSizing = size === "custom" || hasCustomMaxWidth || hasCustomMaxHeight;
+      const targetWidth = useCustomSizing
+        ? (maxWidth || "425px")
+        : (widthBySize[size] || widthBySize.md);
+      const targetHeight = useCustomSizing
+        ? (maxHeight || "612px")
+        : (heightBySize[size] || heightBySize.md);
+      // Basecoat applies width rules on `.dialog > *` (the inner panel), so size that node directly.
+      const panel = dialog.firstElementChild;
+      if (!panel || !panel.style) return;
+
+      const widthExpr = `min(${targetWidth}, calc(100vw - 2rem))`;
+      const heightExpr = `min(${targetHeight}, calc(100vh - 2rem))`;
+
+      panel.style.setProperty("width", widthExpr, "important");
+      panel.style.setProperty("max-width", widthExpr, "important");
+      panel.style.setProperty("max-height", heightExpr, "important");
+      panel.style.setProperty("overflow", "auto", "important");
+    },
+
     /**
      * Open the dialog (showModal).
      */
@@ -248,6 +342,9 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
         this._applyCancelLabel(this.getCancelLabel());
         this._applySaveLabel(this.getSaveLabel());
         this._applySaveIntent(this.getSaveIntent());
+        this._applySize(this.getSize());
+        this._applyDialogMaxWidth(this.getDialogMaxWidth());
+        this._applyDialogMaxHeight(this.getDialogMaxHeight());
         this._attachListeners();
 
         // If section content was set before DOM was ready, apply it now.
@@ -258,6 +355,9 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
         if (typeof dialog.showModal === "function" && !dialog.open) {
           dialog.showModal();
         }
+        // Re-apply after open to beat framework transitions applied on show.
+        this._applyDialogSizing();
+        qx.event.Timer.once(() => this._applyDialogSizing(), this, 60);
       };
 
       tryShow();
@@ -294,6 +394,14 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
      */
     getSectionElement() {
       return this._getSectionContentElement();
+    },
+
+    /**
+     * Get the native <dialog> element.
+     * @return {Element|null}
+     */
+    getDialogElement() {
+      return this._getDialogElement();
     }
   }
   ,

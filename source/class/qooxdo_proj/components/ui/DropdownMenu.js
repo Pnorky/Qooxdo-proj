@@ -43,7 +43,17 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     menuWidth: {
       check: "String",
       init: "min-w-56",
-      apply: "_applyMenuWidth"
+      apply: "_applyMenuSizing"
+    },
+    size: {
+      check: ["sm", "md", "lg", "xl", "custom"],
+      init: "md",
+      apply: "_applyMenuSizing"
+    },
+    dropdownMaxWidth: {
+      check: "String",
+      init: "",
+      apply: "_applyMenuSizing"
     },
 
     /** Currently selected value */
@@ -107,7 +117,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
 
     this._triggerHtml.addListenerOnce("appear", () => {
       this._applyTriggerLabel(this.getTriggerLabel());
-      this._applyMenuWidth(this.getMenuWidth());
+      this._applyMenuSizing();
     });
   },
 
@@ -148,7 +158,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       this._menuContainer.add(this._menuHtml);
 
       this._menuHtml.addListenerOnce("appear", () => {
-        this._applyMenuWidth(this.getMenuWidth());
+        this._applyMenuSizing();
       });
     },
 
@@ -183,19 +193,49 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       if (trigger) trigger.textContent = value || "Open";
     },
 
-    _applyMenuWidth(value) {
-      const popover = this._getMenuElement()?.parentElement;
-      if (popover) {
-        popover.classList.remove("min-w-56", "min-w-48", "min-w-64");
-        popover.classList.add(value || "min-w-56");
-      }
-
-      const widthMap = {
+    _resolveMenuSizing() {
+      const size = this.getSize ? this.getSize() : "md";
+      const maxWidth = this.getDropdownMaxWidth ? this.getDropdownMaxWidth() : "";
+      const menuWidth = this.getMenuWidth ? this.getMenuWidth() : "min-w-56";
+      const widthBySize = {
+        sm: { className: "min-w-48", px: 192 },
+        md: { className: "min-w-56", px: 224 },
+        lg: { className: "min-w-64", px: 256 },
+        xl: { className: "min-w-64", px: 320 }
+      };
+      const classWidthMap = {
         "min-w-48": 192,
         "min-w-56": 224,
         "min-w-64": 256
       };
-      const width = widthMap[value] || 224;
+
+      if (size === "custom" || (maxWidth && maxWidth.trim() !== "")) {
+        const raw = (maxWidth || "").trim();
+        const px = raw.endsWith("px") ? parseInt(raw, 10) : null;
+        return {
+          className: menuWidth || "min-w-56",
+          px: px && !isNaN(px) ? px : (classWidthMap[menuWidth] || 224),
+          cssWidth: raw || null
+        };
+      }
+
+      const preset = widthBySize[size] || widthBySize.md;
+      return {
+        className: preset.className,
+        px: preset.px,
+        cssWidth: null
+      };
+    },
+
+    _applyMenuSizing() {
+      const sizing = this._resolveMenuSizing();
+      const popover = this._getMenuElement()?.parentElement;
+      if (popover) {
+        popover.classList.remove("min-w-56", "min-w-48", "min-w-64");
+        popover.classList.add(sizing.className || "min-w-56");
+        popover.style.width = sizing.cssWidth || (sizing.px + "px");
+      }
+      const width = sizing.px || 224;
       
       if (this._menuContainer) {
         this._menuContainer.setMinWidth(width);

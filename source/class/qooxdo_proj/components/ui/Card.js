@@ -37,6 +37,30 @@ qx.Class.define("qooxdo_proj.components.ui.Card", {
       check: "Boolean",
       init: true,
       apply: "_applyFullWidth"
+    },
+    /** Visual intent variant for status cards */
+    intent: {
+      check: ["default", "warning", "destructive"],
+      init: "default",
+      apply: "_applyIntent"
+    },
+    /** Preset card size */
+    size: {
+      check: ["sm", "md", "lg", "xl", "full", "custom"],
+      init: "custom",
+      apply: "_applySizing"
+    },
+    /** Optional custom max width for card sizing (CSS value) */
+    cardMaxWidth: {
+      check: "String",
+      init: "",
+      apply: "_applySizing"
+    },
+    /** Optional custom max height for card sizing (CSS value) */
+    cardMaxHeight: {
+      check: "String",
+      init: "",
+      apply: "_applySizing"
     }
   },
 
@@ -60,6 +84,8 @@ qx.Class.define("qooxdo_proj.components.ui.Card", {
       this.addListenerOnce("appear", () => {
         this._applyCardClasses(this, ["card"]);
         this._applyFullWidth(this.getFullWidth());
+        this._applyIntent(this.getIntent());
+        this._applySizing();
       });
 
       // Header area (Basecoat: <header><h2>...</h2><p>...</p></header>)
@@ -162,6 +188,60 @@ qx.Class.define("qooxdo_proj.components.ui.Card", {
         dom.classList.add("w-full");
       } else {
         dom.classList.remove("w-full");
+      }
+    },
+
+    _applySizing() {
+      const contentEl = this.getContentElement();
+      if (!contentEl) return;
+      const dom = contentEl.getDomElement();
+      if (!dom) return;
+
+      const size = this.getSize ? this.getSize() : "custom";
+      const widthBySize = {
+        sm: "320px",
+        md: "425px",
+        lg: "720px",
+        xl: "980px",
+        full: "100%"
+      };
+      const heightBySize = {
+        sm: "320px",
+        md: "420px",
+        lg: "560px",
+        xl: "720px",
+        full: "100%"
+      };
+
+      if (size !== "custom") {
+        dom.style.maxWidth = widthBySize[size] || "";
+        dom.style.maxHeight = heightBySize[size] || "";
+      } else {
+        dom.style.maxWidth = this.getCardMaxWidth() || "";
+        dom.style.maxHeight = this.getCardMaxHeight() || "";
+      }
+    },
+
+    _applyIntent(value) {
+      const contentEl = this.getContentElement();
+      if (!contentEl) return;
+      const dom = contentEl.getDomElement();
+      if (!dom) return;
+
+      const intent = value || "default";
+      // Reset first so intent switches are deterministic.
+      dom.style.borderColor = "";
+      dom.style.background = "";
+      dom.style.color = "";
+      dom.removeAttribute("data-intent");
+      dom.setAttribute("data-intent", intent);
+
+      if (intent === "warning") {
+        dom.style.borderColor = "var(--warning, #f59e0b)";
+        dom.style.background = "color-mix(in srgb, var(--warning, #f59e0b) 8%, var(--card))";
+      } else if (intent === "destructive") {
+        dom.style.borderColor = "var(--destructive)";
+        dom.style.background = "color-mix(in srgb, var(--destructive) 8%, var(--card))";
       }
     },
 

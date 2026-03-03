@@ -37,7 +37,17 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
     popoverWidth: {
       check: "String",
       init: "w-80",
-      apply: "_applyPopoverWidth"
+      apply: "_applyPopoverSizing"
+    },
+    size: {
+      check: ["sm", "md", "lg", "xl", "custom"],
+      init: "md",
+      apply: "_applyPopoverSizing"
+    },
+    popoverMaxWidth: {
+      check: "String",
+      init: "",
+      apply: "_applyPopoverSizing"
     },
     richSectionContent: {
       check: "Boolean",
@@ -114,14 +124,14 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       this._applyTriggerLabel(this.getTriggerLabel());
       this._applyTitle(this.getTitle());
       this._applyDescription(this.getDescription());
-      this._applyPopoverWidth(this.getPopoverWidth());
+      this._applyPopoverSizing();
     });
 
     // Ensure content/props are applied once popup DOM is mounted.
     this._panelHtml.addListener("appear", () => {
       this._applyTitle(this.getTitle());
       this._applyDescription(this.getDescription());
-      this._applyPopoverWidth(this.getPopoverWidth());
+      this._applyPopoverSizing();
       this._renderSectionContent();
     }, this);
   },
@@ -143,6 +153,35 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
         "w-96": 384
       };
       return widthMap[widthClass || "w-80"] || 320;
+    },
+
+    _resolvePopoverSizing() {
+      const size = this.getSize ? this.getSize() : "md";
+      const maxWidth = this.getPopoverMaxWidth ? this.getPopoverMaxWidth() : "";
+      const popoverWidth = this.getPopoverWidth ? this.getPopoverWidth() : "w-80";
+      const widthBySize = {
+        sm: { className: "w-64", px: 256 },
+        md: { className: "w-80", px: 320 },
+        lg: { className: "w-96", px: 384 },
+        xl: { className: "w-96", px: 448 }
+      };
+
+      if (size === "custom" || (maxWidth && maxWidth.trim() !== "")) {
+        const raw = (maxWidth || "").trim();
+        const px = raw.endsWith("px") ? parseInt(raw, 10) : null;
+        return {
+          className: popoverWidth || "w-80",
+          px: px && !isNaN(px) ? px : this._resolveWidthPx(popoverWidth || "w-80"),
+          maxWidth: raw || "min(24rem, calc(100vw - 1rem))"
+        };
+      }
+
+      const preset = widthBySize[size] || widthBySize.md;
+      return {
+        className: preset.className,
+        px: preset.px,
+        maxWidth: "min(24rem, calc(100vw - 1rem))"
+      };
     },
 
     _escapeHtml(text) {
@@ -195,15 +234,16 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       if (description) description.textContent = value || "";
     },
 
-    _applyPopoverWidth(value) {
+    _applyPopoverSizing() {
+      const sizing = this._resolvePopoverSizing();
       const panel = this._getPanelElement();
-      const widthClass = value || "w-80";
-      const widthPx = this._resolveWidthPx(widthClass);
+      const widthClass = sizing.className || "w-80";
+      const widthPx = sizing.px || 320;
       if (panel) {
         panel.classList.remove("w-64", "w-72", "w-80", "w-96");
         panel.classList.add(widthClass);
         panel.style.width = widthPx + "px";
-        panel.style.maxWidth = "min(24rem, calc(100vw - 1rem))";
+        panel.style.maxWidth = sizing.maxWidth;
       }
 
       if (this._panelHtml) {

@@ -28,17 +28,40 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
   extend: qx.ui.core.Widget,
 
   properties: {
+    /** Toast placement preset */
+    placement: {
+      check: ["top-start", "top-center", "top-end", "bottom-start", "bottom-center", "bottom-end", "custom"],
+      init: "top-end",
+      apply: "_applyPlacement"
+    },
     /** Toaster alignment: start | center | end */
     align: {
       check: ["start", "center", "end"],
       init: "end",
       apply: "_applyAlign"
     },
+    /** Horizontal offset in pixels from edge/center anchor */
+    offsetX: {
+      check: "Number",
+      init: 16,
+      apply: "_applyPlacement"
+    },
+    /** Vertical offset in pixels from top/bottom edge */
+    offsetY: {
+      check: "Number",
+      init: 16,
+      apply: "_applyPlacement"
+    },
 
     /** Default auto-dismiss timeout (ms). 0 disables auto-dismiss by default. */
     defaultDuration: {
       check: "Number",
       init: 4000
+    },
+    /** Maximum number of visible toasts at once; 0 means unlimited. */
+    stackLimit: {
+      check: "Number",
+      init: 5
     },
 
     /** If true, description allows raw HTML; otherwise it is escaped. */
@@ -102,6 +125,56 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
     _applyAlign(value) {
       const toaster = this._getToasterElement();
       if (toaster) toaster.setAttribute("data-align", value || "end");
+      // Keep backward compatibility for existing setAlign callers.
+      this._applyPlacement(this.getPlacement());
+    },
+
+    _applyPlacement(value) {
+      const toaster = this._getToasterElement();
+      if (!toaster) return;
+
+      const placement = value || "top-end";
+      const offsetX = this.getOffsetX ? this.getOffsetX() : 16;
+      const offsetY = this.getOffsetY ? this.getOffsetY() : 16;
+      const align = this.getAlign ? this.getAlign() : "end";
+
+      toaster.style.position = "fixed";
+      toaster.style.zIndex = "10000";
+      toaster.style.left = "";
+      toaster.style.right = "";
+      toaster.style.top = "";
+      toaster.style.bottom = "";
+      toaster.style.transform = "";
+
+      if (placement !== "custom") {
+        const [vertical, horizontal] = placement.split("-");
+        if (vertical === "bottom") {
+          toaster.style.bottom = `${offsetY}px`;
+        } else {
+          toaster.style.top = `${offsetY}px`;
+        }
+
+        if (horizontal === "start") {
+          toaster.style.left = `${offsetX}px`;
+        } else if (horizontal === "center") {
+          toaster.style.left = "50%";
+          toaster.style.transform = "translateX(-50%)";
+        } else {
+          toaster.style.right = `${offsetX}px`;
+        }
+        toaster.setAttribute("data-align", horizontal || align);
+      } else {
+        // Custom placement uses legacy align + top offset defaults.
+        toaster.style.top = `${offsetY}px`;
+        if (align === "start") {
+          toaster.style.left = `${offsetX}px`;
+        } else if (align === "center") {
+          toaster.style.left = "50%";
+          toaster.style.transform = "translateX(-50%)";
+        } else {
+          toaster.style.right = `${offsetX}px`;
+        }
+      }
     },
 
     _getCategoryIcon(category) {
@@ -133,6 +206,31 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
         clearTimeout(this.__removeTimers[toastId]);
         delete this.__removeTimers[toastId];
       }
+    },
+
+    _enforceStackLimit() {
+      const limit = this.getStackLimit ? this.getStackLimit() : 0;
+      if (!limit || limit <= 0) return;
+      const toaster = this._getToasterElement();
+      if (!toaster) return;
+
+      const visibleToasts = Array.from(toaster.querySelectorAll(".toast"));
+      if (visibleToasts.length <= limit) return;
+
+      // Newest toast is inserted first; remove oldest extras at the end.
+      const toRemove = visibleToasts.slice(limit);
+      toRemove.forEach((node) => {
+        const id = node.id;
+        if (id) {
+          this._clearToastTimers(id);
+        }
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+        if (id) {
+          this.fireDataEvent("hide", id);
+        }
+      });
     },
 
     /**
@@ -194,6 +292,7 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
         `;
 
         toaster.insertBefore(toast, toaster.firstChild);
+        this._enforceStackLimit();
 
         const actionBtn = toast.querySelector("[data-toast-action]");
         if (actionBtn) {
