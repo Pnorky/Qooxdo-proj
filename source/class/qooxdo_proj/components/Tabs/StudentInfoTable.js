@@ -40,15 +40,15 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
        */
       _normalizeYearLevel: function (yearLevel) {
         if (!yearLevel) return "";
-
+        
         // If it's already a number, convert to string
         if (typeof yearLevel === 'number') {
           return String(yearLevel);
         }
-
+        
         const str = String(yearLevel).trim();
         if (!str) return "";
-
+        
         // Extract the last digit from the string
         const match = str.match(/(\d+)/);
         if (match) {
@@ -58,7 +58,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
             return String(num);
           }
         }
-
+        
         return str; // Return original if no valid number found
       },
 
@@ -70,7 +70,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _formatYearLevelForComboBox: function (yearLevel) {
         const normalized = this._normalizeYearLevel(yearLevel);
         if (!normalized) return "";
-
+        
         const num = parseInt(normalized, 10);
         if (num >= 1 && num <= 4) {
           const suffixes = ["", "st", "nd", "rd", "th"];
@@ -158,7 +158,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           this._pendingDeleteStudentId = null;
           this._deleteWindow.setVisibility("excluded");
         }, this);
-
+        
         // Add windows to root
         const root = qx.core.Init.getApplication().getRoot();
         if (root) {
@@ -417,15 +417,15 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           },
           body: JSON.stringify(updateData)
         })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Server error: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(result => {
-            // Reload students to refresh the table
-            this.loadStudents();
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(result => {
+          // Reload students to refresh the table
+          this.loadStudents();
 
             // Show success feedback for update action
             this._ensureFeedbackUI();
@@ -437,11 +437,11 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
                 cancel: { label: "Dismiss" }
               });
             }
-          })
-          .catch(error => {
-            console.error("Failed to update student:", error);
+        })
+        .catch(error => {
+          console.error("Failed to update student:", error);
             this._showErrorFeedback("Failed to update student", error.message);
-          });
+        });
       },
 
       _showDeleteDialog: function (student) {
@@ -512,20 +512,20 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
             "Content-Type": "application/json"
           }
         })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Server error: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(result => {
-            // Reload students to refresh the table
-            this.loadStudents();
-          })
-          .catch(error => {
-            console.error("Failed to delete student:", error);
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(result => {
+          // Reload students to refresh the table
+          this.loadStudents();
+        })
+        .catch(error => {
+          console.error("Failed to delete student:", error);
             this._showErrorFeedback("Failed to delete student", error.message);
-          });
+        });
       },
 
       // Public method to add a student to the table
