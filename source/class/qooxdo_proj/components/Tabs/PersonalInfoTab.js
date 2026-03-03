@@ -53,8 +53,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       grid.add(this._dobField, { row: 3, column: 1 });
 
       this._genderField = new qooxdo_proj.components.ui.ComboBox();
-      this._genderField.add(new qx.ui.form.ListItem("Male"));
-      this._genderField.add(new qx.ui.form.ListItem("Female"));
+      this._genderField.add("Male");
+      this._genderField.add("Female");
       this._genderField.setWidth(180); // Set combobox width
       
       // Wrap label and field in containers with matching height and middle alignment

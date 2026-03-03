@@ -37,13 +37,13 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
 
       // Academic Info Fields
       this._programField = new qooxdo_proj.components.ui.ComboBox();
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Computer Science"));
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Information Technology"));
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Information Systems"));
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Business Administration"));
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Accounting"));
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Marketing"));
-      this._programField.add(new qx.ui.form.ListItem("Bachelor of Science in Management"));
+      this._programField.add("Bachelor of Science in Computer Science");
+      this._programField.add("Bachelor of Science in Information Technology");
+      this._programField.add("Bachelor of Science in Information Systems");
+      this._programField.add("Bachelor of Science in Business Administration");
+      this._programField.add("Bachelor of Science in Accounting");
+      this._programField.add("Bachelor of Science in Marketing");
+      this._programField.add("Bachelor of Science in Management");
       
       // Wrap Program label and field in containers with matching height
       const programLabelContainer = new qx.ui.container.Composite();
@@ -65,10 +65,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       this._programField.setWidth(350);
 
       this._yearLevelField = new qooxdo_proj.components.ui.ComboBox();
-      this._yearLevelField.add(new qx.ui.form.ListItem("1"));
-      this._yearLevelField.add(new qx.ui.form.ListItem("2"));
-      this._yearLevelField.add(new qx.ui.form.ListItem("3"));
-      this._yearLevelField.add(new qx.ui.form.ListItem("4"));
+      this._yearLevelField.add("1");
+      this._yearLevelField.add("2");
+      this._yearLevelField.add("3");
+      this._yearLevelField.add("4");
       
       // Wrap Year Level label and field in containers with matching height
       const yearLevelLabelContainer = new qx.ui.container.Composite();

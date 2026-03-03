@@ -127,7 +127,7 @@ qx.Class.define("qooxdo_proj.Application",
         mainContainer.setDecorator("main");
 
         // Header
-        const header = new qx.ui.basic.Label("Student Registration System");
+        const header = new qooxdo_proj.components.ui.Label("Student Registration System");
         header.setFont("bold");
         mainContainer.add(header);
 
@@ -145,7 +145,7 @@ qx.Class.define("qooxdo_proj.Application",
         mainContainer.add(buttonContainer);
 
         // Status
-        this._statusLabel = new qx.ui.basic.Label("Ready");
+        this._statusLabel = new qooxdo_proj.components.ui.Label("Ready");
         this._statusLabel.setRich(true);
         mainContainer.add(this._statusLabel);
 

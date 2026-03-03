@@ -34,3 +34,6 @@ build/
 # Database
 backend/*.db
 backend/*.db-journal
+
+GraphQLApi/bin/
+GraphQLApi/obj/

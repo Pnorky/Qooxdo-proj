@@ -65,18 +65,12 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
      */
     _createPaginationUI() {
       // Previous button
-      this._prevButton = new qx.ui.form.Button()
+      this._prevButton = new qx.ui.form.Button("Previous")
         .set({
-          label: "",
-          icon: "qx/icon/Oxygen/22x22/navigation/previous.png",
-          iconPosition: "left",
           appearance: "button-standard",
           padding: [8, 12],
           cursor: "pointer"
         });
-      this._prevButton._getLayoutElement().setStyle("display", "flex");
-      this._prevButton._getLayoutElement().setStyle("align-items", "center");
-      this._prevButton._getLayoutElement().setStyle("gap", "4px");
       this._prevButton.addListener("execute", this._onPrevClick, this);
 
       // Container for page numbers
@@ -90,18 +84,12 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
         });
 
       // Next button
-      this._nextButton = new qx.ui.form.Button()
+      this._nextButton = new qx.ui.form.Button("Next")
         .set({
-          label: "",
-          icon: "qx/icon/Oxygen/22x22/navigation/next.png",
-          iconPosition: "right",
           appearance: "button-standard",
           padding: [8, 12],
           cursor: "pointer"
         });
-      this._nextButton._getLayoutElement().setStyle("display", "flex");
-      this._nextButton._getLayoutElement().setStyle("align-items", "center");
-      this._nextButton._getLayoutElement().setStyle("gap", "4px");
       this._nextButton.addListener("execute", this._onNextClick, this);
 
       // Add components
@@ -242,8 +230,13 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
 
         // Style active button differently
         if (isActive) {
-          btn._getLayoutElement().setStyle("background-color", "rgba(0, 0, 0, 0.1)");
-          btn._getLayoutElement().setStyle("font-weight", "bold");
+          btn.addListenerOnce("appear", () => {
+            const dom = btn.getContentElement() && btn.getContentElement().getDomElement();
+            if (dom) {
+              dom.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+              dom.style.fontWeight = "bold";
+            }
+          });
         }
 
         btn.addListener("execute", () => {

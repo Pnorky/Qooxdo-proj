@@ -28,6 +28,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _editWindow: null,
       _deleteWindow: null,
       _currentStudent: null,
+      _pendingDeleteStudentId: null,
 
       /**
        * Extract numeric part from yearLevel string
@@ -37,15 +38,15 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
        */
       _normalizeYearLevel: function (yearLevel) {
         if (!yearLevel) return "";
-        
+
         // If it's already a number, convert to string
         if (typeof yearLevel === 'number') {
           return String(yearLevel);
         }
-        
+
         const str = String(yearLevel).trim();
         if (!str) return "";
-        
+
         // Extract the last digit from the string
         const match = str.match(/(\d+)/);
         if (match) {
@@ -55,7 +56,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
             return String(num);
           }
         }
-        
+
         return str; // Return original if no valid number found
       },
 
@@ -67,7 +68,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _formatYearLevelForComboBox: function (yearLevel) {
         const normalized = this._normalizeYearLevel(yearLevel);
         if (!normalized) return "";
-        
+
         const num = parseInt(normalized, 10);
         if (num >= 1 && num <= 4) {
           const suffixes = ["", "st", "nd", "rd", "th"];
@@ -123,27 +124,32 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         this._editWindow.setShowClose(true);
         this._editWindow.setShowMaximize(false);
         this._editWindow.setShowMinimize(false);
-        
-        // Create delete confirmation window
-        this._deleteWindow = new qx.ui.window.Window("Delete Student");
-        this._deleteWindow.setLayout(new qx.ui.layout.VBox(15));
-        this._deleteWindow.setWidth(500);
-        this._deleteWindow.setHeight(220);
-        this._deleteWindow.setAllowClose(true);
-        this._deleteWindow.setAllowMaximize(false);
-        this._deleteWindow.setAllowMinimize(false);
-        this._deleteWindow.setResizable(false);
-        this._deleteWindow.setMovable(true);
-        this._deleteWindow.setShowClose(true);
-        this._deleteWindow.setShowMaximize(false);
-        this._deleteWindow.setShowMinimize(false);
-        this._deleteWindow.setPadding(20);
-        
+
+        // Create delete confirmation dialog (custom UI component)
+        this._deleteWindow = new qooxdo_proj.components.ui.Dialog(
+          "Delete Student",
+          "Are you sure you want to delete this student? This action cannot be undone."
+        );
+        this._deleteWindow.setCancelLabel("Cancel");
+        this._deleteWindow.setSaveLabel("Delete");
+        this._deleteWindow.addListener("save", () => {
+          if (this._pendingDeleteStudentId) {
+            this._deleteStudent(this._pendingDeleteStudentId);
+            this._pendingDeleteStudentId = null;
+          }
+          this._deleteWindow.setVisibility("excluded");
+        }, this);
+        this._deleteWindow.addListener("cancel", () => {
+          this._pendingDeleteStudentId = null;
+          this._deleteWindow.setVisibility("excluded");
+        }, this);
+
         // Add windows to root
         const root = qx.core.Init.getApplication().getRoot();
         if (root) {
           root.add(this._editWindow);
-          root.add(this._deleteWindow);
+          root.add(this._deleteWindow, { left: 0, top: 0 });
+          this._deleteWindow.setVisibility("excluded");
         }
       },
 
@@ -168,7 +174,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _showEditDialog: function (student) {
         // Debug: Log student data to see what we're working with
         console.log("[DEBUG] Student data for edit:", student);
-        
+
         // Clear previous content
         this._editWindow.removeAll();
 
@@ -191,7 +197,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         gridLayout.setColumnFlex(1, 1); // Input column (flexible, fills remaining space)
         formGrid.setLayout(gridLayout);
         formGrid.setPadding(10);
-        
+
         // Set minimum width on labels for consistent alignment
         const labelWidth = 180;
         let currentRow = 0;
@@ -249,8 +255,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         const genderLabel = new qooxdo_proj.components.ui.Label("Gender:");
         genderLabel.setWidth(labelWidth);
         const genderField = new qooxdo_proj.components.ui.ComboBox();
-        genderField.add(new qx.ui.form.ListItem("Male"));
-        genderField.add(new qx.ui.form.ListItem("Female"));
+        genderField.add("Male");
+        genderField.add("Female");
         if (student.gender) {
           genderField.setValue(student.gender);
         }
@@ -333,13 +339,13 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         const programLabel = new qooxdo_proj.components.ui.Label("Program:");
         programLabel.setWidth(labelWidth);
         const programField = new qooxdo_proj.components.ui.ComboBox();
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Computer Science"));
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Information Technology"));
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Information Systems"));
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Business Administration"));
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Accounting"));
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Marketing"));
-        programField.add(new qx.ui.form.ListItem("Bachelor of Science in Management"));
+        programField.add("Bachelor of Science in Computer Science");
+        programField.add("Bachelor of Science in Information Technology");
+        programField.add("Bachelor of Science in Information Systems");
+        programField.add("Bachelor of Science in Business Administration");
+        programField.add("Bachelor of Science in Accounting");
+        programField.add("Bachelor of Science in Marketing");
+        programField.add("Bachelor of Science in Management");
         if (student.program) {
           programField.setValue(student.program);
         }
@@ -350,10 +356,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         const yearLevelLabel = new qooxdo_proj.components.ui.Label("Year Level:");
         yearLevelLabel.setWidth(labelWidth);
         const yearLevelField = new qooxdo_proj.components.ui.ComboBox();
-        yearLevelField.add(new qx.ui.form.ListItem("1st Year"));
-        yearLevelField.add(new qx.ui.form.ListItem("2nd Year"));
-        yearLevelField.add(new qx.ui.form.ListItem("3rd Year"));
-        yearLevelField.add(new qx.ui.form.ListItem("4th Year"));
+        yearLevelField.add("1st Year");
+        yearLevelField.add("2nd Year");
+        yearLevelField.add("3rd Year");
+        yearLevelField.add("4th Year");
         if (student.yearLevel) {
           // Normalize and format yearLevel for ComboBox
           const formattedYearLevel = this._formatYearLevelForComboBox(student.yearLevel);
@@ -407,23 +413,23 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         // Use a small delay to ensure DOM is ready
         qx.event.Timer.once(() => {
           console.log("[DEBUG] Setting field values after rendering, student data:", student);
-          
+
           // Re-set all values after rendering to ensure they display
           if (student.studentId) {
             studentIdField.setValue(student.studentId);
             console.log("[DEBUG] Set studentId:", student.studentId);
           }
-          
+
           if (student.firstName) {
             firstNameField.setValue(student.firstName);
             console.log("[DEBUG] Set firstName:", student.firstName);
           }
-          
+
           if (student.lastName) {
             lastNameField.setValue(student.lastName);
             console.log("[DEBUG] Set lastName:", student.lastName);
           }
-          
+
           // Date of Birth
           if (student.dateOfBirth) {
             try {
@@ -436,49 +442,49 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
               console.warn("Error parsing dateOfBirth:", e);
             }
           }
-          
+
           // Gender
           if (student.gender) {
             genderField.setValue(student.gender);
             console.log("[DEBUG] Set gender:", student.gender);
           }
-          
+
           if (student.address) {
             addressField.setValue(student.address);
             console.log("[DEBUG] Set address:", student.address);
           }
-          
+
           if (student.email) {
             emailField.setValue(student.email);
             console.log("[DEBUG] Set email:", student.email);
           }
-          
+
           if (student.personalPhone) {
             personalPhoneField.setValue(student.personalPhone);
             console.log("[DEBUG] Set personalPhone:", student.personalPhone);
           }
-          
+
           if (student.emergencyContact) {
             emergencyContactField.setValue(student.emergencyContact);
             console.log("[DEBUG] Set emergencyContact:", student.emergencyContact);
           }
-          
+
           if (student.emergencyContactPhone) {
             emergencyContactPhoneField.setValue(student.emergencyContactPhone);
             console.log("[DEBUG] Set emergencyContactPhone:", student.emergencyContactPhone);
           }
-          
+
           if (student.relationship) {
             relationshipField.setValue(student.relationship);
             console.log("[DEBUG] Set relationship:", student.relationship);
           }
-          
+
           // Program
           if (student.program) {
             programField.setValue(student.program);
             console.log("[DEBUG] Set program:", student.program);
           }
-          
+
           // Year Level
           if (student.yearLevel) {
             // Normalize and format yearLevel for ComboBox
@@ -488,22 +494,22 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
               console.log("[DEBUG] Set yearLevel:", formattedYearLevel, "(from:", student.yearLevel + ")");
             }
           }
-          
+
           if (student.gradeSchool) {
             gradeSchoolField.setValue(student.gradeSchool);
             console.log("[DEBUG] Set gradeSchool:", student.gradeSchool);
           }
-          
+
           if (student.highSchool) {
             highSchoolField.setValue(student.highSchool);
             console.log("[DEBUG] Set highSchool:", student.highSchool);
           }
-          
+
           if (student.college) {
             collegeField.setValue(student.college);
             console.log("[DEBUG] Set college:", student.college);
           }
-          
+
           console.log("[DEBUG] All values set after rendering");
         }, this, 150);
 
@@ -526,7 +532,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
               dateOfBirthValue = dobValue;
             }
           }
-          
+
           // Get gender value
           let genderValue = "";
           const genderSelection = genderField.getSelection();
@@ -535,7 +541,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           } else {
             genderValue = genderField.getValue() || "";
           }
-          
+
           this._saveStudent(student.id, {
             studentId: studentIdField.getValue(),
             firstName: firstNameField.getValue(),
@@ -592,21 +598,21 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           highSchool: highSchoolField,
           college: collegeField
         };
-        
+
         // Store student data for later use
         this._editStudentData = student;
 
         // Set values when window appears (ensures DOM is ready)
         this._editWindow.addListenerOnce("appear", () => {
           console.log("[DEBUG] Window appeared, setting values from student:", this._editStudentData);
-          
+
           const s = this._editStudentData;
           const f = this._editFields;
-          
+
           if (s.studentId) f.studentId.setValue(s.studentId);
           if (s.firstName) f.firstName.setValue(s.firstName);
           if (s.lastName) f.lastName.setValue(s.lastName);
-          
+
           if (s.dateOfBirth) {
             try {
               const dobDate = new Date(s.dateOfBirth);
@@ -617,7 +623,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
               console.warn("Error parsing dateOfBirth:", e);
             }
           }
-          
+
           if (s.gender) f.gender.setValue(s.gender);
           if (s.address) f.address.setValue(s.address);
           if (s.email) f.email.setValue(s.email);
@@ -636,7 +642,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           if (s.gradeSchool) f.gradeSchool.setValue(s.gradeSchool);
           if (s.highSchool) f.highSchool.setValue(s.highSchool);
           if (s.college) f.college.setValue(s.college);
-          
+
           console.log("[DEBUG] Values set on window appear");
         }, this);
 
@@ -659,92 +665,62 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           },
           body: JSON.stringify(updateData)
         })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(result => {
-          // Reload students to refresh the table
-          this.loadStudents();
-        })
-        .catch(error => {
-          console.error("Failed to update student:", error);
-          alert("Failed to update student: " + error.message);
-        });
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(result => {
+            // Reload students to refresh the table
+            this.loadStudents();
+          })
+          .catch(error => {
+            console.error("Failed to update student:", error);
+            alert("Failed to update student: " + error.message);
+          });
       },
 
       _showDeleteDialog: function (student) {
-        // Clear previous content
-        this._deleteWindow.removeAll();
+        this._pendingDeleteStudentId = student && student.id ? student.id : null;
+        const esc = (value) => {
+          const div = document.createElement("div");
+          div.textContent = value == null ? "" : String(value);
+          return div.innerHTML;
+        };
 
-        // Create content container with proper padding
-        const contentContainer = new qx.ui.container.Composite();
-        contentContainer.setLayout(new qx.ui.layout.VBox(15));
-        contentContainer.setPadding(10);
+        const studentName = `${student.firstName || ""} ${student.lastName || ""}`.trim() || "N/A";
+        const studentId = student.studentId || "N/A";
+        const program = student.program || "N/A";
+        const yearLevel = this._normalizeYearLevel(student.yearLevel) || "N/A";
+        const email = student.email || "N/A";
+        const personalPhone = student.personalPhone || "N/A";
 
-        // Add description label with proper width to allow wrapping
-        const descriptionLabel = new qooxdo_proj.components.ui.Label(
-          "Are you sure you want to delete this student? This action cannot be undone."
-        );
-        descriptionLabel.setWidth(440);
-        // Allow text wrapping by modifying the label element after it appears
-        descriptionLabel.addListenerOnce("appear", () => {
-          const labelElement = descriptionLabel._getLabelElement();
-          if (labelElement) {
-            labelElement.style.whiteSpace = "normal";
-            labelElement.style.wordWrap = "break-word";
-            labelElement.style.maxWidth = "440px";
-          }
-        }, this);
-        contentContainer.add(descriptionLabel);
+        this._deleteWindow.setRichSectionContent(true);
+        this._deleteWindow.setSectionContent(`
+          <div style="display:grid; gap:12px;">
+            <div style="display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px solid var(--destructive); border-radius:8px; background:color-mix(in srgb, var(--destructive) 8%, transparent);">
+              <span style="font-size:18px; line-height:1;">!</span>
+              <div>
+                <div style="font-weight:700; font-size:15px; margin-bottom:2px;">Confirm student deletion</div>
+                <div style="color:var(--muted-foreground); font-size:13px;">
+                  Are you sure you want to delete this student? This action cannot be undone.
+                </div>
+              </div>
+            </div>
 
-        // Show student info
-        const infoLabel = new qooxdo_proj.components.ui.Label(
-          `Student: ${student.firstName} ${student.lastName} (${student.studentId})`
-        );
-        infoLabel.setWidth(440);
-        infoLabel.setFont("bold");
-        // Allow text wrapping for student info as well
-        infoLabel.addListenerOnce("appear", () => {
-          const labelElement = infoLabel._getLabelElement();
-          if (labelElement) {
-            labelElement.style.whiteSpace = "normal";
-            labelElement.style.wordWrap = "break-word";
-            labelElement.style.maxWidth = "440px";
-          }
-        }, this);
-        contentContainer.add(infoLabel);
-
-        // Add content container to window
-        this._deleteWindow.add(contentContainer, { flex: 1 });
-
-        // Create button container
-        const buttonContainer = new qx.ui.container.Composite();
-        buttonContainer.setLayout(new qx.ui.layout.HBox(10, "right")); // Right-align buttons
-        buttonContainer.setPadding(10);
-
-        // Add buttons
-        const cancelButton = new qooxdo_proj.components.ui.Button("Cancel", "outline");
-        cancelButton.addListener("execute", () => {
-          this._deleteWindow.close();
-        }, this);
-
-        const deleteButton = new qooxdo_proj.components.ui.Button("Delete", "");
-        deleteButton.addListener("execute", () => {
-          this._deleteWindow.close();
-          this._deleteStudent(student.id);
-        }, this);
-
-        buttonContainer.add(cancelButton);
-        buttonContainer.add(deleteButton);
-
-        this._deleteWindow.add(buttonContainer);
-
-        // Center and open window
-        this._deleteWindow.center();
-        this._deleteWindow.open();
+            <div style="display:grid; gap:6px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--card);">
+              <div style="font-size:14px;"><strong>Student:</strong> ${esc(studentName)}</div>
+              <div style="font-size:14px;"><strong>ID:</strong> ${esc(studentId)}</div>
+              <div style="font-size:14px;"><strong>Program:</strong> ${esc(program)}</div>
+              <div style="font-size:14px;"><strong>Year Level:</strong> ${esc(yearLevel)}</div>
+              <div style="font-size:14px;"><strong>Email:</strong> ${esc(email)}</div>
+              <div style="font-size:14px;"><strong>Phone:</strong> ${esc(personalPhone)}</div>
+            </div>
+          </div>
+        `);
+        this._deleteWindow.setVisibility("visible");
+        this._deleteWindow.show();
       },
 
       _deleteStudent: function (studentId) {
@@ -754,20 +730,20 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
             "Content-Type": "application/json"
           }
         })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(result => {
-          // Reload students to refresh the table
-          this.loadStudents();
-        })
-        .catch(error => {
-          console.error("Failed to delete student:", error);
-          alert("Failed to delete student: " + error.message);
-        });
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(result => {
+            // Reload students to refresh the table
+            this.loadStudents();
+          })
+          .catch(error => {
+            console.error("Failed to delete student:", error);
+            alert("Failed to delete student: " + error.message);
+          });
       },
 
       // Public method to add a student to the table

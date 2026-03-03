@@ -183,5 +183,23 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
 
     dropdownMenuRow.add(dropdown);
     wrapper.add(dropdownMenuRow);
+
+    addSectionTitle("Pagination");
+    const paginationRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+    paginationRow.setAlignX("center");
+    const pagination = new qooxdo_proj.components.ui.Pagination();
+    pagination.setTotalPages(12);
+    pagination.setCurrentPage(1);
+    pagination.addListener("changePage", function (e) {
+      const pageData = e.getData() || {};
+      toaster.show({
+        category: "info",
+        title: "Page Changed",
+        description: "Current page: " + (pageData.page || 1),
+        cancel: { label: "Dismiss" }
+      });
+    });
+    paginationRow.add(pagination);
+    wrapper.add(paginationRow);
   }
 });
