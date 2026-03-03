@@ -65,12 +65,7 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
      */
     _createPaginationUI() {
       // Previous button
-      this._prevButton = new qx.ui.form.Button("Previous")
-        .set({
-          appearance: "button-standard",
-          padding: [8, 12],
-          cursor: "pointer"
-        });
+      this._prevButton = new qooxdo_proj.components.ui.Button("Previous", "secondary");
       this._prevButton.addListener("execute", this._onPrevClick, this);
 
       // Container for page numbers
@@ -84,12 +79,7 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
         });
 
       // Next button
-      this._nextButton = new qx.ui.form.Button("Next")
-        .set({
-          appearance: "button-standard",
-          padding: [8, 12],
-          cursor: "pointer"
-        });
+      this._nextButton = new qooxdo_proj.components.ui.Button("Next", "secondary");
       this._nextButton.addListener("execute", this._onNextClick, this);
 
       // Add components
@@ -221,23 +211,10 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
       // Create page number buttons
       pages.forEach((page) => {
         const isActive = page === currentPage;
-        const btn = new qx.ui.form.Button(String(page))
-          .set({
-            padding: [8, 12],
-            cursor: "pointer",
-            appearance: isActive ? "button-primary" : "button-standard"
-          });
-
-        // Style active button differently
-        if (isActive) {
-          btn.addListenerOnce("appear", () => {
-            const dom = btn.getContentElement() && btn.getContentElement().getDomElement();
-            if (dom) {
-              dom.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
-              dom.style.fontWeight = "bold";
-            }
-          });
-        }
+        const btn = new qooxdo_proj.components.ui.Button(
+          String(page),
+          isActive ? "primary" : "secondary"
+        );
 
         btn.addListener("execute", () => {
           this._onPageClick(page);

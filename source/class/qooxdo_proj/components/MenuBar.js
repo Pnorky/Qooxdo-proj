@@ -84,6 +84,8 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _showStudentTableCheckbox: null,
       _logoutButton: null,
       _loadedScripts: null, // Track loaded scripts
+      _feedbackToast: null,
+      _feedbackDialog: null,
 
       /**
        * Handle logout button click
@@ -91,6 +93,69 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _handleLogout: function () {
         // Fire logout event
         this.fireEvent("logout");
+      },
+
+      _ensureFeedbackUI: function () {
+        if (this._feedbackToast && this._feedbackDialog) return;
+        const app = qx.core.Init.getApplication();
+        const root = app && app.getRoot ? app.getRoot() : null;
+        if (!root) return;
+
+        if (!this._feedbackToast) {
+          this._feedbackToast = new qooxdo_proj.components.ui.Toast();
+          root.add(this._feedbackToast, { edge: 0 });
+        }
+
+        if (!this._feedbackDialog) {
+          this._feedbackDialog = new qooxdo_proj.components.ui.Dialog("Notice", "");
+          this._feedbackDialog.setCancelLabel("Close");
+          this._feedbackDialog.setSaveLabel("OK");
+          this._feedbackDialog.setVisibility("excluded");
+          this._feedbackDialog.addListener("save", () => {
+            this._feedbackDialog.setVisibility("excluded");
+          }, this);
+          this._feedbackDialog.addListener("cancel", () => {
+            this._feedbackDialog.setVisibility("excluded");
+          }, this);
+          root.add(this._feedbackDialog, { left: 0, top: 0 });
+        }
+      },
+
+      _notifyError: function (title, message) {
+        this._ensureFeedbackUI();
+        const safeTitle = title || "Action failed";
+        const safeMessage = message || "Unexpected error";
+
+        if (this._feedbackToast) {
+          this._feedbackToast.show({
+            category: "error",
+            title: safeTitle,
+            description: safeMessage,
+            cancel: { label: "Dismiss" }
+          });
+        }
+        if (this._feedbackDialog) {
+          this._feedbackDialog.setTitle(safeTitle);
+          this._feedbackDialog.setDescription("Please review details below.");
+          this._feedbackDialog.setRichSectionContent(false);
+          this._feedbackDialog.setSectionContent(safeMessage);
+          this._feedbackDialog.setVisibility("visible");
+          this._feedbackDialog.show();
+        }
+      },
+
+      _notifyInfo: function (title, message) {
+        this._ensureFeedbackUI();
+        const safeTitle = title || "Notice";
+        const safeMessage = message || "";
+        if (this._feedbackToast) {
+          this._feedbackToast.show({
+            category: "info",
+            title: safeTitle,
+            description: safeMessage,
+            cancel: { label: "Dismiss" }
+          });
+        }
       },
 
       /**
@@ -281,7 +346,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           if (errorCallback) {
             errorCallback();
           } else {
-            alert("Failed to load script from CDN: " + cdnUrl);
+            this._notifyError("Failed to load script from CDN", cdnUrl);
           }
         };
 
@@ -332,7 +397,10 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           if (errorCallback) {
             errorCallback();
           } else {
-            alert("Failed to load script from node_modules: " + modulePath + "\nPath: " + fullPath + "\n\nNote: Your dev server needs to serve node_modules, or use a bundler.");
+            this._notifyError(
+              "Failed to load script from node_modules",
+              modulePath + "\nPath: " + fullPath + "\nNote: Dev server must serve node_modules."
+            );
           }
         };
 
@@ -415,7 +483,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           if (errorCallback) {
             errorCallback();
           } else {
-            alert("Failed to load script: " + scriptPath + "\nPath: " + fullPath);
+            this._notifyError("Failed to load script", scriptPath + "\nPath: " + fullPath);
           }
         };
 
@@ -501,7 +569,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         .catch(error => {
           console.error("[PDF] Failed to load students from REST API:", error);
           console.error("[PDF] Error details:", error.message, error.stack);
-          alert("Failed to load student data: " + error.message);
+          this._notifyError("Failed to load student data", error.message);
           callback([]);
         });
       },
@@ -519,7 +587,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           
           if (students.length === 0) {
             console.warn("[PDF] No student data available");
-            alert("No student data available to generate PDF report.");
+            this._notifyInfo("No data available", "No student data available to generate PDF report.");
             return;
           }
 
@@ -551,16 +619,16 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
                   this._createPDFDocument(students, window.pdfMake);
                 } else {
                   console.error("[PDF] pdfMake or vfs not available after loading");
-                  alert("Failed to initialize PDF library. Please refresh the page and try again.");
+                  this._notifyError("PDF initialization failed", "Please refresh the page and try again.");
                 }
               }, 100);
             }, (error) => {
               console.error("[PDF] Failed to load vfs_fonts from CDN:", error);
-              alert("Failed to load PDF fonts from CDN. Please check your internet connection.");
+              this._notifyError("Failed to load PDF fonts", "Please check your internet connection.");
             });
           }, (error) => {
             console.error("[PDF] Failed to load pdfmake from CDN:", error);
-            alert("Failed to load PDF library from CDN. Please check your internet connection.");
+            this._notifyError("Failed to load PDF library", "Please check your internet connection.");
           });
         });
       },
@@ -784,7 +852,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         
         if (!pdfMake || typeof pdfMake === "undefined") {
           console.error("[PDF] pdfMake is undefined - library not loaded");
-          alert("PDF library failed to load. Please refresh the page.");
+          this._notifyError("PDF library failed to load", "Please refresh the page.");
           return;
         }
         
@@ -910,7 +978,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         try {
           if (typeof pdfMake === "undefined") {
             console.error("[PDF] pdfMake is undefined in try block");
-            alert("PDF library not available.");
+            this._notifyError("PDF library not available", "Please refresh and try again.");
             return;
           }
 
@@ -930,7 +998,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           } catch (createError) {
             console.error("[PDF] Error creating PDF document:", createError);
             console.error("[PDF] Error stack:", createError.stack);
-            alert("Error creating PDF: " + createError.message);
+            this._notifyError("Error creating PDF", createError.message);
             return;
           }
           
@@ -956,7 +1024,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
                   }, 1000);
                 } else {
                   console.error("[PDF] Popup blocked - attempting direct download");
-                  alert("Popup was blocked. Please allow popups for this site and try again, or the PDF will be downloaded directly.");
+                  this._notifyInfo("Popup blocked", "Enable popups to preview PDF in a new window. Download will continue.");
                   // Fallback to direct download
                   const link = document.createElement("a");
                   link.href = url;
@@ -968,17 +1036,17 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
                 }
               } catch (blobError) {
                 console.error("[PDF] Error with blob preview:", blobError);
-                alert("Error generating PDF preview: " + (blobError.message || "Unknown error"));
+                this._notifyError("Error generating PDF preview", blobError.message || "Unknown error");
               }
             }, (error) => {
               console.error("[PDF] Error generating PDF blob:", error);
-              alert("Error generating PDF: " + (error.message || "Unknown error"));
+              this._notifyError("Error generating PDF", error.message || "Unknown error");
             });
           }
         } catch (error) {
           console.error("[PDF] Error generating PDF:", error);
           console.error("[PDF] Error stack:", error.stack);
-          alert("Error generating PDF: " + error.message);
+          this._notifyError("Error generating PDF", error.message);
         }
       },
 
@@ -989,7 +1057,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         // Get student data (from window or API)
         this._getStudentData((students) => {
           if (students.length === 0) {
-            alert("No student data available to generate Excel report.");
+            this._notifyInfo("No data available", "No student data available to generate Excel report.");
             return;
           }
 
@@ -1009,7 +1077,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         const ExcelJS = window.ExcelJS || window.Excel || (typeof require !== "undefined" && require("exceljs"));
         
         if (!ExcelJS) {
-          alert("Excel library failed to load. Please refresh the page.");
+          this._notifyError("Excel library failed to load", "Please refresh the page.");
           return;
         }
 
@@ -1076,11 +1144,11 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             window.URL.revokeObjectURL(url);
           }).catch((error) => {
             console.error("Error generating Excel:", error);
-            alert("Error generating Excel: " + error.message);
+            this._notifyError("Error generating Excel", error.message);
           });
         } catch (error) {
           console.error("Error creating Excel document:", error);
-          alert("Error creating Excel document: " + error.message);
+          this._notifyError("Error creating Excel document", error.message);
         }
       },
 

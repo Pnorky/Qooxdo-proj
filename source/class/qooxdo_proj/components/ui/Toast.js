@@ -178,7 +178,7 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
           ? `<button type="button" class="btn btn-sm" data-toast-action>${actionLabel}</button>`
           : "";
         const cancelHtml = cancel !== null
-          ? `<button type="button" class="btn btn-outline btn-sm" data-toast-cancel>${cancelLabel}</button>`
+          ? `<button type="button" class="btn btn-sm" data-toast-cancel style="background: var(--secondary); color: var(--secondary-foreground); border: 1px solid var(--border); white-space: nowrap;">${cancelLabel}</button>`
           : "";
         const footerHtml = actionHtml || cancelHtml ? `<footer style="display: flex; gap: 8px; margin-top: 12px;">${actionHtml}${cancelHtml}</footer>` : "";
 

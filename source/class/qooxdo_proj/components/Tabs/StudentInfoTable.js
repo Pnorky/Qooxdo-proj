@@ -29,6 +29,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
       _deleteWindow: null,
       _currentStudent: null,
       _pendingDeleteStudentId: null,
+      _feedbackToast: null,
+      _feedbackDialog: null,
 
       /**
        * Extract numeric part from yearLevel string
@@ -151,6 +153,55 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           root.add(this._editWindow);
           root.add(this._deleteWindow, { left: 0, top: 0 });
           this._deleteWindow.setVisibility("excluded");
+        }
+      },
+
+      _ensureFeedbackUI: function () {
+        if (this._feedbackToast && this._feedbackDialog) return;
+        const root = qx.core.Init.getApplication().getRoot();
+        if (!root) return;
+
+        if (!this._feedbackToast) {
+          this._feedbackToast = new qooxdo_proj.components.ui.Toast();
+          root.add(this._feedbackToast, { edge: 0 });
+        }
+
+        if (!this._feedbackDialog) {
+          this._feedbackDialog = new qooxdo_proj.components.ui.Dialog("Action failed", "");
+          this._feedbackDialog.setCancelLabel("Close");
+          this._feedbackDialog.setSaveLabel("OK");
+          this._feedbackDialog.setVisibility("excluded");
+          this._feedbackDialog.addListener("save", () => {
+            this._feedbackDialog.setVisibility("excluded");
+          }, this);
+          this._feedbackDialog.addListener("cancel", () => {
+            this._feedbackDialog.setVisibility("excluded");
+          }, this);
+          root.add(this._feedbackDialog, { left: 0, top: 0 });
+        }
+      },
+
+      _showErrorFeedback: function (title, message) {
+        this._ensureFeedbackUI();
+        const safeTitle = title || "Action failed";
+        const safeMessage = message || "Unexpected error";
+
+        if (this._feedbackToast) {
+          this._feedbackToast.show({
+            category: "error",
+            title: safeTitle,
+            description: safeMessage,
+            cancel: { label: "Dismiss" }
+          });
+        }
+
+        if (this._feedbackDialog) {
+          this._feedbackDialog.setTitle(safeTitle);
+          this._feedbackDialog.setDescription("Please review the error details below.");
+          this._feedbackDialog.setRichSectionContent(false);
+          this._feedbackDialog.setSectionContent(safeMessage);
+          this._feedbackDialog.setVisibility("visible");
+          this._feedbackDialog.show();
         }
       },
 
@@ -563,12 +614,12 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           });
         }, this);
 
-        const cancelButton = new qooxdo_proj.components.ui.Button("Cancel", "outline");
+        const cancelButton = new qooxdo_proj.components.ui.Button("Cancel", "secondary");
         cancelButton.addListener("execute", () => {
           this._editWindow.close();
         }, this);
 
-        const deleteButton = new qooxdo_proj.components.ui.Button("Delete", "outline");
+        const deleteButton = new qooxdo_proj.components.ui.Button("Delete", "secondary");
         deleteButton.addListener("execute", () => {
           this._editWindow.close();
           this._showDeleteDialog(student);
@@ -675,10 +726,21 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           .then(result => {
             // Reload students to refresh the table
             this.loadStudents();
+
+            // Show success feedback for update action
+            this._ensureFeedbackUI();
+            if (this._feedbackToast) {
+              this._feedbackToast.show({
+                category: "success",
+                title: "Student updated",
+                description: "Student information was updated successfully.",
+                cancel: { label: "Dismiss" }
+              });
+            }
           })
           .catch(error => {
             console.error("Failed to update student:", error);
-            alert("Failed to update student: " + error.message);
+            this._showErrorFeedback("Failed to update student", error.message);
           });
       },
 
@@ -762,7 +824,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           })
           .catch(error => {
             console.error("Failed to delete student:", error);
-            alert("Failed to delete student: " + error.message);
+            this._showErrorFeedback("Failed to delete student", error.message);
           });
       },
 
