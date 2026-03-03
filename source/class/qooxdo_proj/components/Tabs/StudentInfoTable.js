@@ -128,12 +128,13 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         // Create delete confirmation dialog (custom UI component)
         this._deleteWindow = new qooxdo_proj.components.ui.Dialog(
           "Delete Student",
-          "Are you sure you want to delete this student? This action cannot be undone."
+          "Please review the details before continuing."
         );
-        this._deleteWindow.setCancelLabel("Cancel");
-        this._deleteWindow.setSaveLabel("Delete");
+        this._deleteWindow.setCancelLabel("Keep Student");
+        this._deleteWindow.setSaveLabel("Delete Student");
+        this._deleteWindow.setSaveIntent("destructive");
         this._deleteWindow.addListener("save", () => {
-          if (this._pendingDeleteStudentId) {
+          if (this._pendingDeleteStudentId != null) {
             this._deleteStudent(this._pendingDeleteStudentId);
             this._pendingDeleteStudentId = null;
           }
@@ -698,24 +699,43 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
 
         this._deleteWindow.setRichSectionContent(true);
         this._deleteWindow.setSectionContent(`
-          <div style="display:grid; gap:12px;">
-            <div style="display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px solid var(--destructive); border-radius:8px; background:color-mix(in srgb, var(--destructive) 8%, transparent);">
-              <span style="font-size:18px; line-height:1;">!</span>
+          <div style="display:grid; gap:12px; max-width:560px;">
+            <div style="display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border:1px solid var(--destructive); border-radius:10px; background:color-mix(in srgb, var(--destructive) 7%, transparent);">
+              <span style="font-size:16px; line-height:1.2; font-weight:700;">!</span>
               <div>
-                <div style="font-weight:700; font-size:15px; margin-bottom:2px;">Confirm student deletion</div>
-                <div style="color:var(--muted-foreground); font-size:13px;">
-                  Are you sure you want to delete this student? This action cannot be undone.
+                <div style="font-weight:700; font-size:16px; margin-bottom:4px;">Delete this student record?</div>
+                <div style="color:var(--foreground); font-size:14px; line-height:1.45;">
+                  This permanently removes the student from the system and cannot be undone.
                 </div>
               </div>
             </div>
 
-            <div style="display:grid; gap:6px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--card);">
-              <div style="font-size:14px;"><strong>Student:</strong> ${esc(studentName)}</div>
-              <div style="font-size:14px;"><strong>ID:</strong> ${esc(studentId)}</div>
-              <div style="font-size:14px;"><strong>Program:</strong> ${esc(program)}</div>
-              <div style="font-size:14px;"><strong>Year Level:</strong> ${esc(yearLevel)}</div>
-              <div style="font-size:14px;"><strong>Email:</strong> ${esc(email)}</div>
-              <div style="font-size:14px;"><strong>Phone:</strong> ${esc(personalPhone)}</div>
+            <div style="display:grid; gap:10px; padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--card);">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div style="font-size:20px; font-weight:700; line-height:1.2;">${esc(studentName)}</div>
+                <div style="font-size:12px; color:var(--muted-foreground); border:1px solid var(--border); border-radius:999px; padding:2px 8px;">ID ${esc(studentId)}</div>
+              </div>
+              <div style="font-size:14px; color:var(--muted-foreground);">Program: ${esc(program)}</div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div>
+                  <div style="font-size:12px; color:var(--muted-foreground);">Year Level</div>
+                  <div style="font-size:14px; font-weight:600;">${esc(yearLevel)}</div>
+                </div>
+                <div>
+                  <div style="font-size:12px; color:var(--muted-foreground);">Phone</div>
+                  <div style="font-size:14px; font-weight:600;">${esc(personalPhone)}</div>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-size:12px; color:var(--muted-foreground);">Email</div>
+                <div style="font-size:14px; font-weight:600; word-break:break-word;">${esc(email)}</div>
+              </div>
+            </div>
+
+            <div style="font-size:12px; color:var(--muted-foreground);">
+              Select <strong>Keep Student</strong> to cancel, or <strong>Delete Student</strong> to confirm.
             </div>
           </div>
         `);

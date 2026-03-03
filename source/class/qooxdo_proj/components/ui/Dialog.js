@@ -43,6 +43,12 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       init: "Save changes",
       apply: "_applySaveLabel"
     },
+    /** Visual intent for save button: primary or destructive */
+    saveIntent: {
+      check: ["primary", "destructive"],
+      init: "primary",
+      apply: "_applySaveIntent"
+    },
     /** If true, setSectionContent accepts HTML; otherwise content is escaped */
     richSectionContent: {
       check: "Boolean",
@@ -100,6 +106,7 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       this._applyDescription(this.getDescription());
       this._applyCancelLabel(this.getCancelLabel());
       this._applySaveLabel(this.getSaveLabel());
+      this._applySaveIntent(this.getSaveIntent());
       this._attachListeners();
     });
   },
@@ -109,6 +116,9 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
     _dialogId: null,
     _titleId: null,
     _descriptionId: null,
+    __listenersAttached: false,
+    __boundDialogElement: null,
+    __pendingSectionContent: null,
 
     _escapeHtml(text) {
       if (!text) return "";
@@ -132,6 +142,7 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
     _attachListeners() {
       const dialog = this._getDialogElement();
       if (!dialog) return;
+      if (this.__boundDialogElement === dialog) return;
 
       // Backdrop click: close when clicking the dialog itself
       dialog.addEventListener("click", (e) => {
@@ -167,6 +178,9 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
           dialog.close();
         });
       }
+
+      this.__listenersAttached = true;
+      this.__boundDialogElement = dialog;
     },
 
     _applyTitle(value) {
@@ -197,14 +211,56 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       if (btn) btn.textContent = value || "Save changes";
     },
 
+    _applySaveIntent(value) {
+      const dialog = this._getDialogElement();
+      if (!dialog) return;
+      const btn = dialog.querySelector(".dialog-save-btn");
+      if (!btn) return;
+
+      // Keep default "btn" style for primary actions.
+      if ((value || "primary") === "destructive") {
+        btn.style.background = "var(--destructive)";
+        btn.style.color = "var(--destructive-foreground)";
+        btn.style.borderColor = "var(--destructive)";
+      } else {
+        btn.style.background = "";
+        btn.style.color = "";
+        btn.style.borderColor = "";
+      }
+    },
+
     /**
      * Open the dialog (showModal).
      */
     show() {
-      const dialog = this._getDialogElement();
-      if (dialog && typeof dialog.showModal === "function") {
-        dialog.showModal();
-      }
+      const tryShow = (retriesLeft = 10) => {
+        const dialog = this._getDialogElement();
+        if (!dialog) {
+          if (retriesLeft > 0) {
+            qx.event.Timer.once(() => tryShow(retriesLeft - 1), this, 25);
+          }
+          return;
+        }
+
+        // Ensure listeners and latest properties are wired before open.
+        this._applyTitle(this.getTitle());
+        this._applyDescription(this.getDescription());
+        this._applyCancelLabel(this.getCancelLabel());
+        this._applySaveLabel(this.getSaveLabel());
+        this._applySaveIntent(this.getSaveIntent());
+        this._attachListeners();
+
+        // If section content was set before DOM was ready, apply it now.
+        if (this.__pendingSectionContent != null) {
+          this.setSectionContent(this.__pendingSectionContent);
+        }
+
+        if (typeof dialog.showModal === "function" && !dialog.open) {
+          dialog.showModal();
+        }
+      };
+
+      tryShow();
     },
 
     /**
@@ -225,6 +281,10 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       const el = this._getSectionContentElement();
       if (el) {
         el.innerHTML = this.getRichSectionContent() ? (html || "") : this._escapeHtml(String(html || ""));
+        this.__pendingSectionContent = null;
+      } else {
+        // Cache content for first render/open so it is not lost.
+        this.__pendingSectionContent = html;
       }
     },
 
@@ -235,5 +295,12 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
     getSectionElement() {
       return this._getSectionContentElement();
     }
+  }
+  ,
+
+  destruct() {
+    this.__listenersAttached = false;
+    this.__boundDialogElement = null;
+    this.__pendingSectionContent = null;
   }
 });
