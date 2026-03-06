@@ -366,22 +366,55 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           }
 
           const children = menu.getChildren ? menu.getChildren() : [];
+          const isSeparatorChild = (entry) => {
+            if (!entry) return false;
+            const entryClassName = entry.classname || "";
+            return entry instanceof qooxdo_proj.components.ui.MenuSeparator
+              || entryClassName.indexOf("qx.ui.menu.Separator") !== -1;
+          };
+
           children.forEach((child) => {
             const className = child.classname || "";
             const isCustomSeparator = child instanceof qooxdo_proj.components.ui.MenuSeparator;
             const isQxSeparator = className.indexOf("qx.ui.menu.Separator") !== -1;
             if (isCustomSeparator || isQxSeparator) {
-              // Custom separator component styles itself; keep fallback for raw qx separator.
-              if (!isCustomSeparator) {
-                const separatorEl = child.getContentElement ? child.getContentElement().getDomElement() : null;
-                if (separatorEl) {
-                  separatorEl.style.setProperty("border-top", "1px solid var(--border)", "important");
-                  separatorEl.style.setProperty("margin", "8px 0", "important");
-                }
+              const separatorEl = child.getContentElement ? child.getContentElement().getDomElement() : null;
+              if (separatorEl) {
+                // Force a visible, full-width divider regardless of widget/theme internals.
+                separatorEl.style.setProperty("display", "block", "important");
+                separatorEl.style.setProperty("box-sizing", "border-box", "important");
+                separatorEl.style.setProperty("height", "2px", "important");
+                separatorEl.style.setProperty("min-height", "2px", "important");
+                separatorEl.style.setProperty("max-height", "2px", "important");
+                separatorEl.style.setProperty("width", "calc(100% + 12px)", "important");
+                separatorEl.style.setProperty("max-width", "none", "important");
+                separatorEl.style.setProperty("margin", "1px -6px", "important");
+                separatorEl.style.setProperty("padding", "0", "important");
+                separatorEl.style.setProperty("border", "none", "important");
+                separatorEl.style.setProperty("border-top", "none", "important");
+                separatorEl.style.setProperty("background", "var(--popover-foreground)", "important");
+                separatorEl.style.setProperty("background-color", "var(--popover-foreground)", "important");
+                separatorEl.style.setProperty("opacity", "0.24", "important");
+                separatorEl.style.setProperty("visibility", "visible", "important");
               }
               return;
             }
             this._stylePopupMenuItem(child);
+
+            const childIndex = children.indexOf(child);
+            const prevIsSeparator = isSeparatorChild(children[childIndex - 1]);
+            const nextIsSeparator = isSeparatorChild(children[childIndex + 1]);
+            if (prevIsSeparator || nextIsSeparator) {
+              const childEl = child.getContentElement ? child.getContentElement().getDomElement() : null;
+              if (childEl) {
+                if (prevIsSeparator) {
+                  childEl.style.setProperty("margin-top", "0", "important");
+                }
+                if (nextIsSeparator) {
+                  childEl.style.setProperty("margin-bottom", "0", "important");
+                }
+              }
+            }
           });
 
           // Keep submenu width stable across opens by sizing to the widest item text.

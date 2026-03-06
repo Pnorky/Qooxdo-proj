@@ -1,0 +1,233 @@
+/* ************************************************************************
+   Sidebar built with the custom Card component.
+************************************************************************ */
+
+qx.Class.define("qooxdo_proj.components.Sidebar", {
+  extend: qx.ui.container.Composite,
+
+  properties: {
+    collapsed: {
+      check: "Boolean",
+      init: false,
+      apply: "_applyCollapsed",
+      event: "changeCollapsed"
+    }
+  },
+
+  events: {
+    /** Fires with window key (e.g. "personalInfo") */
+    openWindowRequest: "qx.event.type.Data",
+    toggleThemeRequest: "qx.event.type.Event",
+    logoutRequest: "qx.event.type.Event"
+  },
+
+  construct: function () {
+    this.base(arguments);
+
+    this.setLayout(new qx.ui.layout.VBox(0));
+    this.addListenerOnce("appear", () => {
+      const el = this.getContentElement ? this.getContentElement() : null;
+      const dom = el ? el.getDomElement() : null;
+      if (!dom) return;
+      dom.style.background = "var(--sidebar)";
+      dom.style.borderRight = "1px solid var(--border)";
+      dom.style.boxSizing = "border-box";
+      dom.style.padding = "10px";
+      dom.style.overflow = "hidden";
+      dom.style.borderRadius = "0";
+      dom.style.outline = "none";
+      dom.style.boxShadow = "none";
+    }, this);
+    this._buildUi();
+  },
+
+  members: {
+    _card: null,
+    _sidebarNavHtml: null,
+    _sidebarClickHandler: null,
+    _expandedSubtitle: "Open forms and actions",
+    _expandedWidth: 280,
+    _collapsedWidth: 72,
+
+    _buildUi: function () {
+      this._card = new qooxdo_proj.components.ui.Card("Quick Access", "Open forms and actions", true);
+      this._card.setFullWidth(true);
+      this._card.addListenerOnce("appear", () => {
+        const cardEl = this._card.getContentElement ? this._card.getContentElement().getDomElement() : null;
+        if (!cardEl) return;
+        // Use explicit card colors for the main Quick Access card surface.
+        cardEl.style.background = "var(--card)";
+        cardEl.style.color = "var(--card-foreground)";
+        cardEl.style.borderColor = "var(--border)";
+        cardEl.style.borderRadius = "0";
+        cardEl.style.boxShadow = "none";
+        cardEl.style.outline = "none";
+      }, this);
+
+      const section = this._card.getSection();
+      section.setLayout(new qx.ui.layout.Grow());
+
+      // Basecoat-style sidebar markup embedded inside the card body.
+      this._sidebarNavHtml = new qx.ui.embed.Html(`
+        <aside class="sidebar qoox-sidebar" data-side="left" aria-hidden="false" style="position: static; overflow: hidden; border: 0; --sidebar: var(--card); --sidebar-foreground: var(--card-foreground); --sidebar-border: var(--border); --sidebar-accent: var(--muted); --sidebar-accent-foreground: var(--card-foreground);">
+          <style>
+            .qoox-sidebar .sidebar-toggle-row {
+              display: flex;
+              justify-content: flex-end;
+              margin-bottom: 0.5rem;
+            }
+            .qoox-sidebar .sidebar-toggle {
+              width: 2rem;
+              height: 2rem;
+              border: 1px solid var(--border);
+              border-radius: 0.375rem;
+              background: var(--card);
+              color: var(--card-foreground);
+              cursor: pointer;
+              line-height: 1;
+              font-size: 1rem;
+            }
+            .qoox-sidebar nav ul li > a,
+            .qoox-sidebar nav ul li > details > summary {
+              background: var(--card) !important;
+              color: var(--card-foreground) !important;
+              border: 1px solid var(--border) !important;
+            }
+            .qoox-sidebar .nav-icon {
+              width: 1rem;
+              display: inline-flex;
+              justify-content: center;
+              flex-shrink: 0;
+            }
+            .qoox-sidebar nav ul li > a:hover,
+            .qoox-sidebar nav ul li > details > summary:hover {
+              background: var(--accent) !important;
+              color: var(--accent-foreground) !important;
+            }
+            .qoox-sidebar nav h3 {
+              color: var(--muted-foreground) !important;
+            }
+            .qoox-sidebar.is-collapsed nav h3,
+            .qoox-sidebar.is-collapsed .nav-text {
+              display: none !important;
+            }
+            .qoox-sidebar.is-collapsed nav ul li > a {
+              justify-content: center !important;
+              padding-inline: 0 !important;
+            }
+            .qoox-sidebar.is-collapsed .sidebar-toggle-row {
+              justify-content: center;
+            }
+          </style>
+          <nav aria-label="Sidebar navigation" style="position: static; inset: auto; z-index: auto; width: 100%; background: transparent; border: 0; color: var(--card-foreground); box-shadow: none; outline: none;">
+            <section class="scrollbar" style="max-height: 58vh; overflow-y: auto;">
+              <div class="sidebar-toggle-row">
+                <button class="sidebar-toggle" type="button" data-action="toggleSidebar" aria-label="Toggle sidebar" title="Toggle sidebar">◀</button>
+              </div>
+              <div role="group" aria-labelledby="group-label-content-1">
+                <h3 id="group-label-content-1">Getting started</h3>
+                <ul>
+                  <li><a href="#" data-action="personalInfo"><span class="nav-icon">P</span><span class="nav-text">Personal Information</span></a></li>
+                  <li><a href="#" data-action="contactInfo"><span class="nav-icon">C</span><span class="nav-text">Contact Information</span></a></li>
+                  <li><a href="#" data-action="academicInfo"><span class="nav-icon">A</span><span class="nav-text">Academic Information</span></a></li>
+                  <li><a href="#" data-action="studentTable"><span class="nav-icon">S</span><span class="nav-text">Student Table</span></a></li>
+                  <li><a href="#" data-action="uiDemo"><span class="nav-icon">U</span><span class="nav-text">UI Component Demo</span></a></li>
+                  <li><a href="#" data-action="uiTabToastDemo"><span class="nav-icon">T</span><span class="nav-text">Tab + Toast Demo</span></a></li>
+                </ul>
+              </div>
+
+              <div role="group" aria-labelledby="group-label-content-2">
+                <h3 id="group-label-content-2">Settings</h3>
+                <ul>
+                  <li><a href="#" data-action="toggleTheme"><span class="nav-icon">M</span><span class="nav-text">Toggle Dark Mode</span></a></li>
+                  <li><a href="#" data-action="logout"><span class="nav-icon">L</span><span class="nav-text">Logout</span></a></li>
+                </ul>
+              </div>
+            </section>
+          </nav>
+        </aside>
+      `);
+      section.add(this._sidebarNavHtml);
+
+      this._sidebarNavHtml.addListenerOnce("appear", () => {
+        const host = this._sidebarNavHtml.getContentElement
+          ? this._sidebarNavHtml.getContentElement().getDomElement()
+          : null;
+        if (!host) return;
+
+        this._sidebarClickHandler = (ev) => {
+          const target = ev.target;
+          const link = target && target.closest ? target.closest("[data-action]") : null;
+          if (!link) return;
+          ev.preventDefault();
+
+          const action = link.getAttribute("data-action");
+          if (!action) return;
+
+          if (action === "toggleSidebar") {
+            this.setCollapsed(!this.isCollapsed());
+            return;
+          }
+          if (action === "toggleTheme") {
+            this.fireEvent("toggleThemeRequest");
+            return;
+          }
+          if (action === "logout") {
+            this.fireEvent("logoutRequest");
+            return;
+          }
+
+          this.fireDataEvent("openWindowRequest", action);
+        };
+
+        host.addEventListener("click", this._sidebarClickHandler);
+      }, this);
+
+      this.add(this._card, { flex: 1 });
+      this._applyCollapsed(this.isCollapsed());
+    },
+
+    _applyCollapsed: function (collapsed) {
+      this.setWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+      this.setMinWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+
+      if (this._card) {
+        this._card.setTitle(collapsed ? "" : "Quick Access");
+        this._card.setSubtitle(collapsed ? "" : this._expandedSubtitle);
+      }
+
+      if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement) return;
+      const host = this._sidebarNavHtml.getContentElement().getDomElement();
+      if (!host) return;
+      const aside = host.querySelector(".qoox-sidebar");
+      if (!aside) return;
+      aside.classList.toggle("is-collapsed", !!collapsed);
+
+      const toggleBtn = host.querySelector(".sidebar-toggle");
+      if (toggleBtn) {
+        toggleBtn.textContent = collapsed ? "▶" : "◀";
+        toggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+      }
+    },
+
+    /**
+     * Updates the subtitle text (e.g. show logged in user).
+     * @param {String} subtitle
+     */
+    setSidebarSubtitle: function (subtitle) {
+      this._expandedSubtitle = String(subtitle || "");
+      if (this._card) {
+        this._card.setSubtitle(this.isCollapsed() ? "" : this._expandedSubtitle);
+      }
+    }
+  },
+
+  destruct: function () {
+    if (this._sidebarNavHtml && this._sidebarClickHandler && this._sidebarNavHtml.getContentElement) {
+      const host = this._sidebarNavHtml.getContentElement().getDomElement();
+      if (host) {
+        host.removeEventListener("click", this._sidebarClickHandler);
+      }
+    }
+  }
+});

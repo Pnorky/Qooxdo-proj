@@ -16,6 +16,7 @@ qx.Class.define("qooxdo_proj.Application",
       _statusLabel: null,
       _loginPage: null,
       _mainContainer: null,
+      _sidebar: null,
 
       main() {
         this.base(arguments);
@@ -60,6 +61,42 @@ qx.Class.define("qooxdo_proj.Application",
         }, this);
         
         rootContainer.add(menuBar, { left: 0, top: 0, right: 0 });
+
+        // Sidebar built with custom Card component
+        this._sidebar = new qooxdo_proj.components.Sidebar();
+        this._sidebar.setMinWidth(280);
+        this._sidebar.setWidth(280);
+        rootContainer.add(this._sidebar, { left: 0, top: 0, bottom: 0 });
+
+        const syncSidebarAndNavbarLayout = () => {
+          const sidebarBounds = this._sidebar.getBounds ? this._sidebar.getBounds() : null;
+          const sidebarWidth = (sidebarBounds && sidebarBounds.width) || this._sidebar.getWidth() || 280;
+
+          // Sidebar is a full-height left rail.
+          this._mainContainer.add(this._sidebar, { left: 0, top: 0, bottom: 0 });
+          // Navbar starts where the sidebar ends.
+          this._mainContainer.add(menuBar, { left: sidebarWidth, top: 0, right: 0 });
+        };
+
+        this._sidebar.addListener("appear", syncSidebarAndNavbarLayout, this);
+        this._sidebar.addListener("resize", syncSidebarAndNavbarLayout, this);
+        this._sidebar.addListener("changeCollapsed", syncSidebarAndNavbarLayout, this);
+        qx.event.Timer.once(syncSidebarAndNavbarLayout, this, 0);
+
+        this._sidebar.addListener("openWindowRequest", (e) => {
+          const key = e.getData();
+          if (this._windowManager && key) {
+            this._windowManager.openWindow(key);
+          }
+        }, this);
+
+        this._sidebar.addListener("toggleThemeRequest", () => {
+          this.toggleTheme();
+        }, this);
+
+        this._sidebar.addListener("logoutRequest", () => {
+          this._handleLogout();
+        }, this);
 
         // Create window components
         this._personalInfoWindow = new qooxdo_proj.components.Windows.PersonalInfoWindow();
@@ -190,6 +227,9 @@ qx.Class.define("qooxdo_proj.Application",
           const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
           this._statusLabel.setValue(`<span style='color: ${primaryColor};'>Welcome, ${username}!</span>`);
         }
+        if (this._sidebar) {
+          this._sidebar.setSidebarSubtitle(`Signed in as ${username}`);
+        }
       },
 
       _handleLogout() {
@@ -221,6 +261,9 @@ qx.Class.define("qooxdo_proj.Application",
         // Reset status label
         if (this._statusLabel) {
           this._statusLabel.setValue("Ready");
+        }
+        if (this._sidebar) {
+          this._sidebar.setSidebarSubtitle("Open forms and actions");
         }
       },
 
