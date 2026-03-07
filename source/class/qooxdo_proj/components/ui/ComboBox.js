@@ -122,6 +122,11 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
     _selectedItem: null,
     _popoverContainer: null, // Container for popover when moved to body
     _updatePositionHandler: null, // Handler for position updates
+    _mobileSidePadding: 12,
+    _getViewportWidth() {
+      return window.innerWidth || document.documentElement.clientWidth || 1200;
+    },
+
 
     /**
      * Setup event listeners for the dropdown
@@ -265,9 +270,13 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       }
       
       const buttonRect = this._buttonElement.getBoundingClientRect();
+      const viewportWidth = this._getViewportWidth();
+      const minLeft = this._mobileSidePadding;
+      const maxAllowedWidth = Math.max(180, viewportWidth - (this._mobileSidePadding * 2));
+      const width = Math.min(buttonRect.width, maxAllowedWidth);
+      const leftPx = Math.max(minLeft, Math.min(buttonRect.left, viewportWidth - width - this._mobileSidePadding));
       const top = buttonRect.bottom + window.scrollY + 2;
-      const left = buttonRect.left + window.scrollX;
-      const width = buttonRect.width;
+      const left = leftPx + window.scrollX;
       
       // Set position immediately without transitions
       this._popoverElement.style.setProperty("top", `${top}px`, "important");
@@ -275,6 +284,10 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       this._popoverElement.style.setProperty("width", `${width}px`, "important");
       this._popoverElement.style.setProperty("min-width", `${width}px`, "important");
       this._popoverElement.style.setProperty("max-width", `${width}px`, "important");
+      this._popoverElement.style.setProperty("max-height", "45vh", "important");
+      if (this._listboxElement) {
+        this._listboxElement.style.maxHeight = "45vh";
+      }
     },
 
     /**

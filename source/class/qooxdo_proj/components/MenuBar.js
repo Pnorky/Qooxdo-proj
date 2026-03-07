@@ -15,6 +15,8 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
     events: {
       /** Fired when logout is requested */
       logout: "qx.event.type.Event",
+      /** Fired when mobile sidebar toggle is requested */
+      toggleSidebar: "qx.event.type.Event",
     },
 
     construct: function () {
@@ -39,6 +41,15 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       this._menuBar = menubar;
       this._applyBasecoatMenuBarStyles(menubar);
 
+      // Mobile off-canvas toggle (shown only in compact mode)
+      this._mobileMenuButton = new qx.ui.menubar.Button("Menu");
+      this._mobileMenuButton.setVisibility("excluded");
+      this._mobileMenuButton.addListener("execute", () => {
+        this.fireEvent("toggleSidebar");
+      }, this);
+      menubar.add(this._mobileMenuButton);
+      this._styleMenuBarButton(this._mobileMenuButton);
+
       var navbarRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(12));
       navbarRow.setAlignY("middle");
       navbarRow.setAllowGrowX(true);
@@ -52,6 +63,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       rightSlot.setAllowShrinkX(false);
       rightSlot.setMinWidth(104);
       rightSlot.setWidth(104);
+      this._rightSlot = rightSlot;
       navbarRow.add(rightSlot);
       navbarCard.getSection().add(navbarRow, { flex: 1 });
 
@@ -61,6 +73,11 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       var printingMenu = new qx.ui.menubar.Button("Printing", null, this._getPrintingMenu());
       var demoMenu = new qx.ui.menubar.Button("Demo", null, this._getDemoMenu());
       var mainMenuButtons = [windowsMenu, windowMenu, printingMenu, demoMenu];
+      this._mainMenuButtons = mainMenuButtons;
+      this._windowsMenuButton = windowsMenu;
+      this._windowMenuButton = windowMenu;
+      this._printingMenuButton = printingMenu;
+      this._demoMenuButton = demoMenu;
       mainMenuButtons.forEach((btn) => {
         // Use layout margins so spacing is respected by qx menubar layout.
         btn.setMarginRight(10);
@@ -105,9 +122,55 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _feedbackDialog: null,
       _menuBar: null,
       _navbarCard: null,
+      _mainMenuButtons: null,
+      _rightSlot: null,
+      _windowsMenuButton: null,
+      _windowMenuButton: null,
+      _printingMenuButton: null,
+      _demoMenuButton: null,
+      _mobileMenuButton: null,
+      _isCompactMode: false,
 
       _createMenuSeparator: function () {
         return new qooxdo_proj.components.ui.MenuSeparator();
+      },
+
+      setCompactMode: function (compact) {
+        const isCompact = !!compact;
+        if (this._isCompactMode === isCompact) return;
+        this._isCompactMode = isCompact;
+
+        if (this._windowsMenuButton) this._windowsMenuButton.setLabel(isCompact ? "Forms" : "Students");
+        if (this._windowMenuButton) this._windowMenuButton.setLabel(isCompact ? "Layout" : "Window");
+        if (this._printingMenuButton) this._printingMenuButton.setLabel(isCompact ? "Print" : "Printing");
+        if (this._demoMenuButton) this._demoMenuButton.setLabel("Demo");
+
+        if (this._mainMenuButtons) {
+          this._mainMenuButtons.forEach((btn) => {
+            btn.setMarginRight(isCompact ? 6 : 10);
+            btn.setPaddingLeft(isCompact ? 6 : 10);
+            btn.setPaddingRight(isCompact ? 6 : 10);
+          });
+        }
+
+        if (this._rightSlot) {
+          const width = isCompact ? 84 : 104;
+          this._rightSlot.setMinWidth(width);
+          this._rightSlot.setWidth(width);
+        }
+        if (this._mobileMenuButton) {
+          this._mobileMenuButton.setVisibility(isCompact ? "visible" : "excluded");
+        }
+
+        const menuEl = this._menuBar && this._menuBar.getContentElement
+          ? this._menuBar.getContentElement().getDomElement()
+          : null;
+        if (menuEl) {
+          menuEl.style.gap = isCompact ? "10px" : "28px";
+          menuEl.style.padding = isCompact ? "8px 10px 8px 8px" : "8px 22px 8px 16px";
+          menuEl.style.overflowX = isCompact ? "auto" : "visible";
+          menuEl.style.scrollbarWidth = isCompact ? "thin" : "auto";
+        }
       },
 
       _applyClassesToElement: function (element, classes) {

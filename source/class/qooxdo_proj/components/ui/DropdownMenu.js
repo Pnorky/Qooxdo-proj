@@ -132,6 +132,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     _menuId: null,
     _menuItems: null,
     _selectedItem: null,
+    _mobileSidePadding: 12,
 
     _buildTrigger() {
       const triggerLabel = this._escapeHtml(this.getTriggerLabel());
@@ -188,6 +189,16 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       if (menu) menu.parentElement.setAttribute("aria-hidden", open ? "false" : "true");
     },
 
+    _getViewportWidth() {
+      return window.innerWidth || document.documentElement.clientWidth || 1200;
+    },
+
+    _getResponsiveMenuWidth(width) {
+      const viewportWidth = this._getViewportWidth();
+      const safeWidth = viewportWidth - (this._mobileSidePadding * 2);
+      return Math.max(160, Math.min(width || 224, safeWidth));
+    },
+
     _applyTriggerLabel(value) {
       const trigger = this._getTriggerElement();
       if (trigger) trigger.textContent = value || "Open";
@@ -230,12 +241,15 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     _applyMenuSizing() {
       const sizing = this._resolveMenuSizing();
       const popover = this._getMenuElement()?.parentElement;
+      const responsiveWidth = this._getResponsiveMenuWidth(sizing.px || 224);
       if (popover) {
         popover.classList.remove("min-w-56", "min-w-48", "min-w-64");
         popover.classList.add(sizing.className || "min-w-56");
-        popover.style.width = sizing.cssWidth || (sizing.px + "px");
+        popover.style.width = sizing.cssWidth || (responsiveWidth + "px");
+        popover.style.maxWidth = `calc(100vw - ${this._mobileSidePadding * 2}px)`;
+        popover.style.boxSizing = "border-box";
       }
-      const width = sizing.px || 224;
+      const width = responsiveWidth;
       
       if (this._menuContainer) {
         this._menuContainer.setMinWidth(width);
@@ -400,7 +414,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       if (this._popup.isVisible()) return;
 
       // Ensure size is set before showing
-      const width = this._menuContainer.getMinWidth() || 224;
+      const width = this._getResponsiveMenuWidth(this._menuContainer.getMinWidth() || 224);
       this._popup.setMinWidth(width);
       this._popup.setWidth(width);
 

@@ -22,6 +22,9 @@ qx.Class.define("qooxdo_proj.components.Buttons.FormActionButtons", {
   construct: function () {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.HBox(10));
+    this.setAllowGrowX(true);
+    this.setAllowShrinkX(true);
+    this.setMinWidth(0);
 
     this._createButtons();
   },
@@ -52,8 +55,8 @@ qx.Class.define("qooxdo_proj.components.Buttons.FormActionButtons", {
         this.fireEvent("cancel");
       });
 
-      this.add(this._submitButton);
-      this.add(this._cancelButton);
+      this.add(this._submitButton, { flex: 1 });
+      this.add(this._cancelButton, { flex: 1 });
     },
 
     // Public methods to enable/disable buttons

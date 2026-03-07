@@ -16,6 +16,7 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
   {
     _windows : null,
     _root : null,
+    _mobileBreakpoint : 900,
 
     /**
      * Initialize the window manager
@@ -25,6 +26,38 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
     {
       this._root = root;
       this._windows = {};
+    },
+
+    _fitWindowForViewport : function(win)
+    {
+      if (!win || !this._root) return;
+
+      let rootWidth = window.innerWidth || 1200;
+      let rootHeight = window.innerHeight || 800;
+
+      try {
+        const innerSize = this._root.getInnerSize ? this._root.getInnerSize() : null;
+        if (innerSize) {
+          rootWidth = innerSize.width || rootWidth;
+          rootHeight = innerSize.height || rootHeight;
+        }
+      } catch (e) {
+        // Use window size fallback.
+      }
+
+      if (rootWidth > this._mobileBreakpoint) return;
+
+      const margin = 12;
+      const topOffset = 64;
+      const availableWidth = Math.max(280, rootWidth - (margin * 2));
+      const availableHeight = Math.max(240, rootHeight - topOffset - margin);
+
+      const currentWidth = win.getWidth ? (win.getWidth() || 600) : 600;
+      const currentHeight = win.getHeight ? (win.getHeight() || 500) : 500;
+
+      win.setWidth(Math.min(currentWidth, availableWidth));
+      win.setHeight(Math.min(currentHeight, availableHeight));
+      win.moveTo(margin, topOffset);
     },
 
     /**
@@ -197,6 +230,7 @@ qx.Class.define("qooxdo_proj.components.WindowManager",
         if (win.toFront) {
           win.toFront();
         }
+        this._fitWindowForViewport(win);
       }
     },
 

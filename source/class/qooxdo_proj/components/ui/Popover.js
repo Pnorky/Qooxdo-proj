@@ -144,6 +144,17 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
     _triggerId: null,
     _panelId: null,
     _pendingSectionContent: null,
+    _mobileSidePadding: 12,
+    _getViewportWidth() {
+      return window.innerWidth || document.documentElement.clientWidth || 1200;
+    },
+
+    _getResponsivePopoverWidth(width) {
+      const viewportWidth = this._getViewportWidth();
+      const safeWidth = viewportWidth - (this._mobileSidePadding * 2);
+      return Math.max(220, Math.min(width || 320, safeWidth));
+    },
+
 
     _resolveWidthPx(widthClass) {
       const widthMap = {
@@ -238,7 +249,7 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       const sizing = this._resolvePopoverSizing();
       const panel = this._getPanelElement();
       const widthClass = sizing.className || "w-80";
-      const widthPx = sizing.px || 320;
+      const widthPx = this._getResponsivePopoverWidth(sizing.px || 320);
       if (panel) {
         panel.classList.remove("w-64", "w-72", "w-80", "w-96");
         panel.classList.add(widthClass);
@@ -264,7 +275,7 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       const dom = popupEl && popupEl.getDomElement ? popupEl.getDomElement() : null;
       if (!dom) return;
       dom.style.overflow = "visible";
-      dom.style.maxWidth = "min(24rem, calc(100vw - 1rem))";
+      dom.style.maxWidth = `calc(100vw - ${this._mobileSidePadding * 2}px)`;
     },
 
     show(e) {

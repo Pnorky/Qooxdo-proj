@@ -57,13 +57,13 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButton", {
 
     // Allow the widget to grow horizontally
     this.setAllowGrowX(true);
-    this.setMinWidth(150);
+    this.setMinWidth(0);
 
     // Create the HTML structure
     this._html = new qx.ui.embed.Html(`
-      <label class="label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; padding: 4px 0; min-width: 120px;">
+      <label class="label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; padding: 4px 0; min-width: 0; width: 100%;">
         <input type="radio" class="input" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--color-primary, #3b82f6); flex-shrink: 0;">
-        <span class="label-text" style="line-height: 1.2; white-space: nowrap; color: inherit; font-size: 14px; flex-shrink: 0; min-width: 80px;"></span>
+        <span class="label-text" style="line-height: 1.2; white-space: normal; color: inherit; font-size: 14px; min-width: 0; overflow-wrap: anywhere;"></span>
       </label>
     `);
 

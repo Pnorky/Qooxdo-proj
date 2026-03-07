@@ -33,7 +33,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
     {
       // Academic Info Grid
       const academicInfoGrid = new qx.ui.container.Composite();
-      academicInfoGrid.setLayout(new qx.ui.layout.Grid(5, 5));
+      const academicGridLayout = new qx.ui.layout.Grid(5, 5);
+      academicGridLayout.setColumnFlex(1, 1);
+      academicGridLayout.setColumnMinWidth(1, 180);
+      academicInfoGrid.setLayout(academicGridLayout);
 
       // Academic Info Fields
       this._programField = new qooxdo_proj.components.ui.ComboBox();
@@ -52,17 +55,16 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       programLabelContainer.setMarginTop(-5); // Move label higher
       const programLabel = new qooxdo_proj.components.ui.Label("Program:");
       programLabelContainer.add(programLabel, { flex: 0 });
-      this._programField.setWidth(400);
-      this._programField.setMinWidth(400);
+      this._programField.setMinWidth(0);
+      this._programField.setMaxWidth(720);
       
       const programFieldContainer = new qx.ui.container.Composite();
       programFieldContainer.setLayout(new qx.ui.layout.HBox());
       programFieldContainer.setHeight(41); // Match combobox height
-      programFieldContainer.add(this._programField, { flex: 0 });
+      programFieldContainer.add(this._programField, { flex: 1 });
       
       academicInfoGrid.add(programLabelContainer, { row: 0, column: 0 });
       academicInfoGrid.add(programFieldContainer, { row: 0, column: 1 });
-      this._programField.setWidth(350);
 
       this._yearLevelField = new qooxdo_proj.components.ui.ComboBox();
       this._yearLevelField.add("1");
@@ -81,14 +83,15 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       const yearLevelFieldContainer = new qx.ui.container.Composite();
       yearLevelFieldContainer.setLayout(new qx.ui.layout.HBox());
       yearLevelFieldContainer.setHeight(41); // Match combobox height
-      yearLevelFieldContainer.add(this._yearLevelField, { flex: 0 });
+      yearLevelFieldContainer.add(this._yearLevelField, { flex: 1 });
       
       academicInfoGrid.add(yearLevelLabelContainer, { row: 1, column: 0 });
       academicInfoGrid.add(yearLevelFieldContainer, { row: 1, column: 1 });
-      this._yearLevelField.setWidth(100);
+      this._yearLevelField.setWidth(140);
       this._yearLevelField.setMinWidth(100);
+      this._yearLevelField.setMaxWidth(180);
 
-      this.add(academicInfoGrid);
+      this.add(academicInfoGrid, { flex: 1 });
 
       // Previous School Attended Section - Table
       const previousSchoolLabel = new qooxdo_proj.components.ui.Label("Previous School Attended:");
@@ -97,7 +100,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
 
       // Create table-like structure using Grid layout
       const previousSchoolTable = new qx.ui.container.Composite();
-      previousSchoolTable.setLayout(new qx.ui.layout.Grid(2, 2));
+      const previousSchoolGrid = new qx.ui.layout.Grid(2, 2);
+      previousSchoolGrid.setColumnFlex(1, 1);
+      previousSchoolGrid.setColumnMinWidth(1, 180);
+      previousSchoolTable.setLayout(previousSchoolGrid);
       previousSchoolTable.setDecorator("main");
       previousSchoolTable.setPadding(5);
 
@@ -118,7 +124,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       previousSchoolTable.add(gradeSchoolLabel, { row: 1, column: 0 });
       
       this._gradeSchoolField = new qooxdo_proj.components.ui.TextField();
-      this._gradeSchoolField.setWidth(400);
+      this._gradeSchoolField.setMinWidth(0);
+      this._gradeSchoolField.setMaxWidth(720);
       previousSchoolTable.add(this._gradeSchoolField, { row: 1, column: 1 });
 
       // High School Row
@@ -127,7 +134,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       previousSchoolTable.add(highSchoolLabel, { row: 2, column: 0 });
       
       this._highSchoolField = new qooxdo_proj.components.ui.TextField();
-      this._highSchoolField.setWidth(400);
+      this._highSchoolField.setMinWidth(0);
+      this._highSchoolField.setMaxWidth(720);
       previousSchoolTable.add(this._highSchoolField, { row: 2, column: 1 });
 
       // College Row
@@ -136,10 +144,11 @@ qx.Class.define("qooxdo_proj.components.Tabs.AcademicInfoTab",
       previousSchoolTable.add(collegeLabel, { row: 3, column: 0 });
       
       this._collegeField = new qooxdo_proj.components.ui.TextField();
-      this._collegeField.setWidth(400);
+      this._collegeField.setMinWidth(0);
+      this._collegeField.setMaxWidth(720);
       previousSchoolTable.add(this._collegeField, { row: 3, column: 1 });
 
-      this.add(previousSchoolTable);
+      this.add(previousSchoolTable, { flex: 1 });
     },
 
      // Public methods to get form data

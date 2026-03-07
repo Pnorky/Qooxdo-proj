@@ -11,6 +11,11 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
       init: false,
       apply: "_applyCollapsed",
       event: "changeCollapsed"
+    },
+    mobileMode: {
+      check: "Boolean",
+      init: false,
+      apply: "_applyMobileMode"
     }
   },
 
@@ -69,7 +74,7 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
 
       // Basecoat-style sidebar markup embedded inside the card body.
       this._sidebarNavHtml = new qx.ui.embed.Html(`
-        <aside class="sidebar qoox-sidebar" data-side="left" aria-hidden="false" style="position: static; overflow: hidden; border: 0; --sidebar: var(--card); --sidebar-foreground: var(--card-foreground); --sidebar-border: var(--border); --sidebar-accent: var(--muted); --sidebar-accent-foreground: var(--card-foreground);">
+        <aside class="qoox-sidebar" data-side="left" aria-hidden="false" style="position: static; display: block; overflow: hidden; border: 0; --sidebar: var(--card); --sidebar-foreground: var(--card-foreground); --sidebar-border: var(--border); --sidebar-accent: var(--muted); --sidebar-accent-foreground: var(--card-foreground);">
           <style>
             .qoox-sidebar .sidebar-toggle-row {
               display: flex;
@@ -86,6 +91,16 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
               cursor: pointer;
               line-height: 1;
               font-size: 1rem;
+            }
+            .qoox-sidebar nav,
+            .qoox-sidebar nav section.scrollbar,
+            .qoox-sidebar nav [role="group"],
+            .qoox-sidebar nav ul,
+            .qoox-sidebar nav li {
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              transform: none !important;
             }
             .qoox-sidebar nav ul li > a,
             .qoox-sidebar nav ul li > details > summary {
@@ -118,9 +133,33 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
             .qoox-sidebar.is-collapsed .sidebar-toggle-row {
               justify-content: center;
             }
+            .qoox-sidebar.is-mobile .sidebar-toggle-row {
+              justify-content: flex-start;
+            }
+            @media (max-width: 900px) {
+              .qoox-sidebar nav section.scrollbar {
+                max-height: 48vh !important;
+              }
+              .qoox-sidebar.is-mobile nav [role="group"] {
+                display: block !important;
+              }
+              .qoox-sidebar.is-mobile nav ul {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              .qoox-sidebar.is-mobile nav li {
+                display: block !important;
+              }
+              .qoox-sidebar nav ul li > a,
+              .qoox-sidebar nav ul li > details > summary {
+                min-height: 2.25rem;
+                padding-inline: 0.75rem !important;
+              }
+            }
           </style>
-          <nav aria-label="Sidebar navigation" style="position: static; inset: auto; z-index: auto; width: 100%; background: transparent; border: 0; color: var(--card-foreground); box-shadow: none; outline: none;">
-            <section class="scrollbar" style="max-height: 58vh; overflow-y: auto;">
+          <nav aria-label="Sidebar navigation" style="position: static; inset: auto; z-index: auto; width: 100%; background: transparent; border: 0; color: var(--card-foreground); box-shadow: none; outline: none; display: block;">
+            <section class="scrollbar" style="max-height: calc(100vh - 170px); overflow-y: auto;">
               <div class="sidebar-toggle-row">
                 <button class="sidebar-toggle" type="button" data-action="toggleSidebar" aria-label="Toggle sidebar" title="Toggle sidebar">◀</button>
               </div>
@@ -188,12 +227,22 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
     },
 
     _applyCollapsed: function (collapsed) {
-      this.setWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
-      this.setMinWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+      if (this.isMobileMode()) {
+        this.setWidth(this._expandedWidth);
+        this.setMinWidth(this._expandedWidth);
+        this.resetMaxWidth();
+        this.setAllowGrowX(true);
+        this.setAllowShrinkX(true);
+      } else {
+        this.setWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+        this.setMinWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+        this.resetMaxWidth();
+      }
 
       if (this._card) {
-        this._card.setTitle(collapsed ? "" : "Quick Access");
-        this._card.setSubtitle(collapsed ? "" : this._expandedSubtitle);
+        const hideLabels = collapsed && !this.isMobileMode();
+        this._card.setTitle(hideLabels ? "" : "Quick Access");
+        this._card.setSubtitle(hideLabels ? "" : this._expandedSubtitle);
       }
 
       if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement) return;
@@ -208,6 +257,20 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
         toggleBtn.textContent = collapsed ? "▶" : "◀";
         toggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
       }
+    },
+
+    _applyMobileMode: function (mobileMode) {
+      if (mobileMode && this.isCollapsed()) {
+        this.setCollapsed(false);
+      }
+      this._applyCollapsed(this.isCollapsed());
+
+      if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement) return;
+      const host = this._sidebarNavHtml.getContentElement().getDomElement();
+      if (!host) return;
+      const aside = host.querySelector(".qoox-sidebar");
+      if (!aside) return;
+      aside.classList.toggle("is-mobile", !!mobileMode);
     },
 
     /**
