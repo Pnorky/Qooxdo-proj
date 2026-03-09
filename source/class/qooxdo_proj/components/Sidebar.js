@@ -22,6 +22,7 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
   events: {
     /** Fires with window key (e.g. "personalInfo") */
     openWindowRequest: "qx.event.type.Data",
+    toggleSidebarRequest: "qx.event.type.Event",
     toggleThemeRequest: "qx.event.type.Event",
     logoutRequest: "qx.event.type.Event"
   },
@@ -138,23 +139,52 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
             }
             @media (max-width: 900px) {
               .qoox-sidebar nav section.scrollbar {
-                max-height: 48vh !important;
+                max-height: calc(100vh - 96px) !important;
+                height: auto !important;
+                display: block !important;
+                padding-right: 2px;
               }
               .qoox-sidebar.is-mobile nav [role="group"] {
                 display: block !important;
+              }
+              .qoox-sidebar.is-mobile nav section.scrollbar > [role="group"]:last-of-type {
+                margin-top: 0.25rem !important;
+                padding-top: 0 !important;
               }
               .qoox-sidebar.is-mobile nav ul {
                 display: block !important;
                 margin: 0 !important;
                 padding: 0 !important;
               }
+              .qoox-sidebar.is-mobile nav h3 {
+                font-size: 0.95rem !important;
+                font-weight: 700 !important;
+                margin: 0.4rem 0 0.55rem 0 !important;
+              }
               .qoox-sidebar.is-mobile nav li {
                 display: block !important;
+                margin-bottom: 0.45rem !important;
               }
               .qoox-sidebar nav ul li > a,
               .qoox-sidebar nav ul li > details > summary {
-                min-height: 2.25rem;
-                padding-inline: 0.75rem !important;
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                min-height: 2.45rem;
+                font-size: 0.96rem !important;
+                font-weight: 600 !important;
+                padding: 0.5rem 0.8rem !important;
+                border-radius: 0.5rem !important;
+              }
+              .qoox-sidebar.is-mobile .nav-icon {
+                width: 1.35rem !important;
+                margin-right: 0.25rem !important;
+                font-size: 1rem !important;
+              }
+              .qoox-sidebar.is-mobile .sidebar-toggle {
+                width: 2.25rem;
+                height: 2.25rem;
+                font-size: 1.05rem;
               }
             }
           </style>
@@ -204,7 +234,11 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
           if (!action) return;
 
           if (action === "toggleSidebar") {
-            this.setCollapsed(!this.isCollapsed());
+            if (this.isMobileMode()) {
+              this.fireEvent("toggleSidebarRequest");
+            } else {
+              this.setCollapsed(!this.isCollapsed());
+            }
             return;
           }
           if (action === "toggleTheme") {

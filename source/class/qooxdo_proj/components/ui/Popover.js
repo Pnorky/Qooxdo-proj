@@ -84,11 +84,11 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
 
     this._panelHtml = new qx.ui.embed.Html(`
       <div id="${this._panelId}" aria-hidden="true" class="w-80 qx-popover-panel"
-        style="background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem; box-shadow: var(--shadow-lg); width:20rem; max-width:24rem; box-sizing:border-box;">
-        <div class="grid gap-4">
-          <header class="grid gap-1.5">
-            <h4 class="leading-none font-medium popover-title">${titleEsc}</h4>
-            <p class="text-muted-foreground text-sm popover-description">${descEsc}</p>
+        style="background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius); padding:0.5rem 0.75rem 0.75rem; box-shadow: var(--shadow-lg); width:20rem; max-width:24rem; box-sizing:border-box; overflow:visible;">
+        <div style="display:block; width:100%; min-width:0;">
+          <header class="popover-header" style="display:block; margin:0 0 0.4rem 0; width:100%;">
+            <h4 class="popover-title" style="margin:0 0 0.25rem 0; line-height:1.25; font-weight:600; white-space:normal; overflow-wrap:anywhere;">${titleEsc}</h4>
+            <p class="popover-description" style="margin:0; color:var(--muted-foreground); font-size:0.875rem; line-height:1.35; white-space:normal; overflow-wrap:anywhere;">${descEsc}</p>
           </header>
           <div class="popover-section-content" style="display:block; width:100%; max-width:none; white-space:normal; word-break:break-word; overflow-wrap:anywhere; line-height:1.35;"></div>
         </div>
@@ -236,6 +236,7 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       if (!panel) return;
       const title = panel.querySelector(".popover-title");
       if (title) title.textContent = value || "";
+      this._syncHeaderVisibility();
     },
 
     _applyDescription(value) {
@@ -243,6 +244,19 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       if (!panel) return;
       const description = panel.querySelector(".popover-description");
       if (description) description.textContent = value || "";
+      this._syncHeaderVisibility();
+    },
+
+    _syncHeaderVisibility() {
+      const panel = this._getPanelElement();
+      if (!panel) return;
+      const header = panel.querySelector(".popover-header");
+      if (!header) return;
+      const hasTitle = ((this.getTitle && this.getTitle()) || "").trim() !== "";
+      const hasDescription = ((this.getDescription && this.getDescription()) || "").trim() !== "";
+      const showHeader = hasTitle || hasDescription;
+      header.style.display = showHeader ? "block" : "none";
+      header.style.marginBottom = showHeader ? "0.4rem" : "0";
     },
 
     _applyPopoverSizing() {
@@ -255,6 +269,8 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
         panel.classList.add(widthClass);
         panel.style.width = widthPx + "px";
         panel.style.maxWidth = sizing.maxWidth;
+        panel.style.minWidth = "0";
+        panel.style.height = "auto";
       }
 
       if (this._panelHtml) {
@@ -276,6 +292,8 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       if (!dom) return;
       dom.style.overflow = "visible";
       dom.style.maxWidth = `calc(100vw - ${this._mobileSidePadding * 2}px)`;
+      dom.style.maxHeight = "none";
+      dom.style.height = "auto";
     },
 
     show(e) {

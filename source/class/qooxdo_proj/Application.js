@@ -199,6 +199,15 @@ qx.Class.define("qooxdo_proj.Application",
         this._sidebar.addListener("appear", syncSidebarAndNavbarLayout, this);
         this._sidebar.addListener("resize", syncSidebarAndNavbarLayout, this);
         this._sidebar.addListener("changeCollapsed", syncSidebarAndNavbarLayout, this);
+        this._sidebar.addListener("toggleSidebarRequest", () => {
+          const width = window.innerWidth || 1200;
+          if (width <= this._mobileBreakpoint) {
+            this._mobileSidebarOpen = !this._mobileSidebarOpen;
+            syncSidebarAndNavbarLayout();
+            return;
+          }
+          this._sidebar.setCollapsed(!this._sidebar.isCollapsed());
+        }, this);
         root.addListener("resize", syncSidebarAndNavbarLayout, this);
         qx.event.Timer.once(syncSidebarAndNavbarLayout, this, 0);
 

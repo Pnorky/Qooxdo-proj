@@ -45,13 +45,19 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
     this.base(arguments);
 
     // Set layout
-    this._setLayout(new qx.ui.layout.HBox(10).set({
+    this._setLayout(new qx.ui.layout.HBox(6).set({
       alignX: "center",
       alignY: "middle"
     }));
+    this.setAllowGrowX(false);
+    this.setAllowShrinkX(true);
+    this.setMinWidth(0);
 
     // Create the pagination container
     this._createPaginationUI();
+    this.addListener("appear", this._applyResponsiveLayout, this);
+    this.addListener("resize", this._applyResponsiveLayout, this);
+    qx.event.Timer.once(this._applyResponsiveLayout, this, 0);
   },
 
   members: {
@@ -59,27 +65,42 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
     _nextButton: null,
     _pageNumbers: null,
     _ellipsis: null,
+    _mobileBreakpoint: 900,
 
     /**
      * Create the pagination UI
      */
     _createPaginationUI() {
       // Previous button
-      this._prevButton = new qooxdo_proj.components.ui.Button("Previous", "secondary");
+      this._prevButton = new qooxdo_proj.components.ui.Button("Previous", "ghost");
+      this._prevButton.setMinWidth(90);
+      this._prevButton.setWidth(90);
+      this._prevButton.setAllowGrowX(false);
+      this._prevButton.setAllowShrinkX(false);
       this._prevButton.addListener("execute", this._onPrevClick, this);
 
       // Container for page numbers
       this._pageNumbers = new qx.ui.container.Composite();
       this._pageNumbers._setLayout(new qx.ui.layout.HBox(4));
+      this._pageNumbers.setAllowGrowX(false);
+      this._pageNumbers.setAllowShrinkX(true);
+      this._pageNumbers.setMinWidth(0);
 
       // Ellipsis
       this._ellipsis = new qx.ui.basic.Label("...")
         .set({
-          padding: [8, 4]
+          padding: [8, 8],
+          alignX: "center",
+          textAlign: "center"
         });
+      this._ellipsis.setMinWidth(28);
 
       // Next button
-      this._nextButton = new qooxdo_proj.components.ui.Button("Next", "secondary");
+      this._nextButton = new qooxdo_proj.components.ui.Button("Next", "ghost");
+      this._nextButton.setMinWidth(80);
+      this._nextButton.setWidth(80);
+      this._nextButton.setAllowGrowX(false);
+      this._nextButton.setAllowShrinkX(false);
       this._nextButton.addListener("execute", this._onNextClick, this);
 
       // Add components
@@ -89,6 +110,31 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
 
       // Update UI
       this._updatePagination();
+    },
+
+    _applyResponsiveLayout() {
+      const isMobile = (window.innerWidth || 1200) <= this._mobileBreakpoint;
+      if (!this._prevButton || !this._nextButton || !this._pageNumbers) return;
+
+      this._setLayout(new qx.ui.layout.HBox(isMobile ? 6 : 10).set({
+        alignX: "center",
+        alignY: "middle"
+      }));
+      if (isMobile) {
+        this._prevButton.setLabel("Prev");
+        this._nextButton.setLabel("Next");
+        this._prevButton.setMinWidth(74);
+        this._prevButton.setWidth(74);
+        this._nextButton.setMinWidth(66);
+        this._nextButton.setWidth(66);
+      } else {
+        this._prevButton.setLabel("Previous");
+        this._nextButton.setLabel("Next");
+        this._prevButton.setMinWidth(90);
+        this._prevButton.setWidth(90);
+        this._nextButton.setMinWidth(80);
+        this._nextButton.setWidth(80);
+      }
     },
 
     /**
@@ -213,8 +259,12 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
         const isActive = page === currentPage;
         const btn = new qooxdo_proj.components.ui.Button(
           String(page),
-          isActive ? "primary" : "secondary"
+          isActive ? "outline" : "ghost"
         );
+        btn.setMinWidth(40);
+        btn.setWidth(40);
+        btn.setAllowGrowX(false);
+        btn.setAllowShrinkX(false);
 
         btn.addListener("execute", () => {
           this._onPageClick(page);
