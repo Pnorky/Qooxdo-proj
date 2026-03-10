@@ -57,7 +57,7 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButton", {
 
     // Allow the widget to grow horizontally
     this.setAllowGrowX(true);
-    this.setMinWidth(150);
+    this.setMinWidth(0);
 
     // Create the HTML structure
     this._html = new qx.ui.embed.Html(`

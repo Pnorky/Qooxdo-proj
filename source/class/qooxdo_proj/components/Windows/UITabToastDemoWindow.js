@@ -22,6 +22,8 @@ qx.Class.define("qooxdo_proj.components.Windows.UITabToastDemoWindow", {
     this.setAllowMinimize(true);
     this.setResizable(true);
     this.setMovable(true);
+    this.addListener("appear", this._applyResponsiveWindowSize, this);
+    this.addListener("resize", this._applyResponsiveWindowSize, this);
 
     this._demoTab = new qooxdo_proj.components.Tabs.UITabToastSampleTab();
     this.add(this._demoTab, { flex: 1 });
@@ -29,6 +31,16 @@ qx.Class.define("qooxdo_proj.components.Windows.UITabToastDemoWindow", {
 
   members: {
     _demoTab: null,
+    _mobileBreakpoint: 900,
+
+    _applyResponsiveWindowSize: function () {
+      const width = window.innerWidth || 1200;
+      const height = window.innerHeight || 800;
+      if (width > this._mobileBreakpoint) return;
+
+      this.setWidth(Math.max(300, Math.min(700, width - 24)));
+      this.setHeight(Math.max(400, Math.min(760, height - 80)));
+    },
 
     /**
      * Return underlying demo tab component

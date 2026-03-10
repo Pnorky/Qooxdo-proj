@@ -154,6 +154,17 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
     _triggerId: null,
     _panelId: null,
     _pendingSectionContent: null,
+    _mobileSidePadding: 12,
+    _getViewportWidth() {
+      return window.innerWidth || document.documentElement.clientWidth || 1200;
+    },
+
+    _getResponsivePopoverWidth(width) {
+      const viewportWidth = this._getViewportWidth();
+      const safeWidth = viewportWidth - (this._mobileSidePadding * 2);
+      return Math.max(220, Math.min(width || 320, safeWidth));
+    },
+
 
     _resolveWidthPx(widthClass) {
       const widthMap = {
@@ -235,6 +246,7 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       if (!panel) return;
       const title = panel.querySelector(".popover-title");
       if (title) title.textContent = value || "";
+      this._syncHeaderVisibility();
     },
 
     _applyDescription(value) {
@@ -242,6 +254,19 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       if (!panel) return;
       const description = panel.querySelector(".popover-description");
       if (description) description.textContent = value || "";
+      this._syncHeaderVisibility();
+    },
+
+    _syncHeaderVisibility() {
+      const panel = this._getPanelElement();
+      if (!panel) return;
+      const header = panel.querySelector(".popover-header");
+      if (!header) return;
+      const hasTitle = ((this.getTitle && this.getTitle()) || "").trim() !== "";
+      const hasDescription = ((this.getDescription && this.getDescription()) || "").trim() !== "";
+      const showHeader = hasTitle || hasDescription;
+      header.style.display = showHeader ? "block" : "none";
+      header.style.marginBottom = showHeader ? "0.4rem" : "0";
     },
 
     _applyPopoverSizing() {
@@ -285,7 +310,9 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       const dom = popupEl && popupEl.getDomElement ? popupEl.getDomElement() : null;
       if (!dom) return;
       dom.style.overflow = "visible";
-      dom.style.maxWidth = "min(24rem, calc(100vw - 1rem))";
+      dom.style.maxWidth = `calc(100vw - ${this._mobileSidePadding * 2}px)`;
+      dom.style.maxHeight = "none";
+      dom.style.height = "auto";
     },
 
     show(e) {

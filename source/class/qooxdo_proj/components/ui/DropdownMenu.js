@@ -130,6 +130,8 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     _menuId: null,
     _menuItems: null,
     _selectedItem: null,
+    _mobileSidePadding: 12,
+    _renderRetryScheduled: false,
 
     _buildTrigger() {
       const triggerLabel = this._escapeHtml(this.getTriggerLabel());
@@ -204,6 +206,27 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     _syncAria(open) {
       const trigger = this._getTriggerElement();
       if (trigger) trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    },
+
+    _getViewportWidth() {
+      return window.innerWidth || document.documentElement.clientWidth || 1200;
+    },
+
+    _getResponsiveMenuWidth(width) {
+      const viewportWidth = this._getViewportWidth();
+      const safeWidth = viewportWidth - (this._mobileSidePadding * 2);
+      return Math.max(160, Math.min(width || 224, safeWidth));
+    },
+
+    _composeMenuHtml(itemsHtml) {
+      return `
+        <div id="${this._popoverId}" data-popover aria-hidden="true" class="min-w-56" 
+          style="background:var(--popover, #ffffff); color:var(--popover-foreground, #111827); border:1px solid var(--border, #e5e7eb); border-radius:var(--radius, 0.5rem); box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.14)); width:14rem; box-sizing:border-box; overflow:hidden;">
+          <div role="menu" id="${this._menuId}" aria-labelledby="${this._triggerId}" style="display:block; width:100%; padding:0.25rem; color:var(--popover-foreground, #111827); box-sizing:border-box;">
+            ${itemsHtml || ""}
+          </div>
+        </div>
+      `;
     },
 
     _applyTriggerLabel(value) {
@@ -327,7 +350,16 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
      */
     _renderMenu() {
       const menu = this._getMenuElement();
-      if (!menu) return;
+      if (!menu) {
+        if (!this._renderRetryScheduled) {
+          this._renderRetryScheduled = true;
+          qx.event.Timer.once(() => {
+            this._renderRetryScheduled = false;
+            this._renderMenu();
+          }, this, 0);
+        }
+        return;
+      }
 
       let html = "";
       let currentGroup = null;
@@ -353,8 +385,8 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
           currentGroup = item.group;
           const groupId = "group-" + item.group;
           html += `
-            <div role="group" aria-labelledby="${groupId}" style="padding:0.25rem 0;">
-              <div role="heading" id="${groupId}" style="padding:0.5rem 0.75rem 0.25rem;font-size:0.75rem;font-weight:600;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:0.05em;">
+            <div role="group" aria-labelledby="${groupId}" style="display:block; width:100%; padding:0.25rem 0; box-sizing:border-box;">
+              <div role="heading" id="${groupId}" style="display:block; width:100%; padding:0.45rem 0.75rem 0.2rem; font-size:0.75rem; font-weight:600; color:var(--muted-foreground, #6b7280); text-transform:uppercase; letter-spacing:0.05em; line-height:1.2; box-sizing:border-box;">
                 ${this._escapeHtml(item.groupLabel || item.group)}
               </div>
           `;
@@ -371,7 +403,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
             tabindex="${item.disabled ? -1 : 0}"
             ${disabledAttrs || `style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;font-size:0.875rem;line-height:1.25;cursor:pointer;border-radius:var(--radius);${activeStyle}"`}
           >
-            <span>${this._escapeHtml(item.label)}</span>
+            <span style="display:block; color:inherit; white-space:normal; overflow-wrap:anywhere;">${this._escapeHtml(item.label)}</span>
         `;
 
         if (item.shortcut) {
@@ -387,7 +419,11 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
         }
       }
 
-      menu.innerHTML = html;
+      if (this._menuHtml && this._menuHtml.setHtml) {
+        this._menuHtml.setHtml(this._composeMenuHtml(html));
+      }
+      const renderedMenu = this._getMenuElement();
+      if (!renderedMenu) return;
 
       // Add click listeners
       menu.querySelectorAll('[role="menuitem"][data-value]').forEach((el) => {

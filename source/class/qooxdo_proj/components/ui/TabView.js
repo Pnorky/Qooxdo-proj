@@ -41,7 +41,7 @@ qx.Class.define("qooxdo_proj.components.ui.TabView", {
 
     this._html = new qx.ui.embed.Html(`
       <div class="tabs w-full" id="${this._tabsId}">
-        <nav role="tablist" aria-orientation="horizontal" class="w-full tabs-nav"></nav>
+        <nav role="tablist" aria-orientation="horizontal" class="w-full tabs-nav" style="display:flex; flex-wrap:wrap; gap:0.375rem; overflow-x:auto; scrollbar-width:thin;"></nav>
         <div class="tabs-panels"></div>
       </div>
     `);
@@ -148,6 +148,7 @@ qx.Class.define("qooxdo_proj.components.ui.TabView", {
           aria-controls="${panelId}"
           aria-selected="${selected ? "true" : "false"}"
           tabindex="${selected ? "0" : "-1"}"
+          style="min-height:2.35rem; padding:0.45rem 0.75rem; white-space:nowrap; flex-shrink:0;"
         >${labelEsc}</button>
       `;
     },

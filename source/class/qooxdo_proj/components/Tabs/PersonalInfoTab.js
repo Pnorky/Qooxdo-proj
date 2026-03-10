@@ -29,7 +29,10 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
 
     _createForm: function () {
       const grid = new qx.ui.container.Composite();
-      grid.setLayout(new qx.ui.layout.Grid(5, 5));
+      const gridLayout = new qx.ui.layout.Grid(5, 5);
+      gridLayout.setColumnFlex(1, 1);
+      gridLayout.setColumnMinWidth(1, 180);
+      grid.setLayout(gridLayout);
 
       // Personal Info Fields
       this._studentIdField = new qooxdo_proj.components.ui.TextField();
@@ -55,7 +58,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       this._genderField = new qooxdo_proj.components.ui.ComboBox();
       this._genderField.add("Male");
       this._genderField.add("Female");
-      this._genderField.setWidth(180); // Set combobox width
+      this._genderField.setMinWidth(140);
+      this._genderField.setMaxWidth(220);
       
       // Wrap label and field in containers with matching height and middle alignment
       const genderLabelContainer = new qx.ui.container.Composite();
@@ -68,7 +72,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       const genderFieldContainer = new qx.ui.container.Composite();
       genderFieldContainer.setLayout(new qx.ui.layout.HBox());
       genderFieldContainer.setHeight(41); // Match combobox height
-      genderFieldContainer.add(this._genderField, { flex: 0 });
+      genderFieldContainer.add(this._genderField, { flex: 1 });
       
       grid.add(genderLabelContainer, { row: 4, column: 0 });
       grid.add(genderFieldContainer, { row: 4, column: 1 });
@@ -84,9 +88,9 @@ qx.Class.define("qooxdo_proj.components.Tabs.PersonalInfoTab", {
       
       this._addressField = new qooxdo_proj.components.ui.TextArea();
       this._addressField.setHeight(100);
-      this._addressField.setMinWidth(400);
-      this._addressField.setWidth(400);
-      addressFieldContainer.add(this._addressField);
+      this._addressField.setMinWidth(0);
+      this._addressField.setMaxWidth(720);
+      addressFieldContainer.add(this._addressField, { flex: 1 });
       
       grid.add(addressLabelContainer, { row: 5, column: 0 });
       grid.add(addressFieldContainer, { row: 5, column: 1 });

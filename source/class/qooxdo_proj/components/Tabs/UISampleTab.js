@@ -19,11 +19,18 @@ qx.Class.define("qooxdo_proj.components.Tabs.UISampleTab", {
     // outer container to center content
     const outer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
     outer.setAlignX("center");
-    this.add(outer);
+    outer.setAllowGrowX(true);
+    outer.setAllowShrinkX(true);
+    this.add(outer, { flex: 1 });
 
     const wrapper = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
-    wrapper.setWidth(600);
-    outer.add(wrapper);
+    wrapper.setMaxWidth(800);
+    wrapper.setMinWidth(0);
+    wrapper.setAllowGrowX(true);
+    wrapper.setAllowShrinkX(true);
+    outer.add(wrapper, { flex: 1 });
+    this._outer = outer;
+    this._wrapper = wrapper;
 
     const addSectionTitle = function (text) {
       const title = new qooxdo_proj.components.ui.Label(text);
@@ -84,5 +91,24 @@ qx.Class.define("qooxdo_proj.components.Tabs.UISampleTab", {
     popover.setSectionContent("This is some popover content. You can include <strong>HTML</strong> if you set richSectionContent.");
     wrapper.add(popover);
 
+    this.addListener("appear", this._applyResponsiveLayout, this);
+    this.addListener("resize", this._applyResponsiveLayout, this);
+    qx.event.Timer.once(this._applyResponsiveLayout, this, 0);
+
+  },
+
+  members: {
+    _outer: null,
+    _wrapper: null,
+
+    _applyResponsiveLayout: function () {
+      const width = window.innerWidth || 1200;
+      const isMobile = width <= 900;
+      if (!this._outer || !this._wrapper) return;
+
+      this._outer.setAlignX(isMobile ? "left" : "center");
+      this.setPadding(isMobile ? 8 : 10);
+      this._wrapper.setMaxWidth(isMobile ? 9999 : 800);
+    }
   }
 });

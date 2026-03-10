@@ -38,7 +38,7 @@ qx.Class.define("qooxdo_proj.pages.Login", {
     });
     centerContainer.setDecorator("main");
     centerContainer.setWidth(500);
-    centerContainer.setMinWidth(500);
+    centerContainer.setMinWidth(300);
     centerContainer.setMaxWidth(500);
 
     // Title
@@ -138,7 +138,7 @@ qx.Class.define("qooxdo_proj.pages.Login", {
     // Center the container using Canvas layout with integer positions
     const self = this;
     const updatePosition = () => {
-      const containerWidth = 320;
+      let containerWidth = 500;
       let containerHeight = 350; // Default height
 
       // Try to get actual height
@@ -182,6 +182,16 @@ qx.Class.define("qooxdo_proj.pages.Login", {
       }
 
       // Calculate center position and round to integers (required by Canvas layout)
+      const isMobile = rootWidth <= 900;
+      if (isMobile) {
+        containerWidth = Math.max(280, rootWidth - 24);
+        centerContainer.setMinWidth(0);
+        centerContainer.setWidth(containerWidth);
+      } else {
+        centerContainer.setMinWidth(300);
+        centerContainer.setWidth(500);
+      }
+
       const left = Math.round((rootWidth - containerWidth) / 2);
       const top = Math.round((rootHeight - containerHeight) / 2);
 

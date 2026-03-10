@@ -156,6 +156,11 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         _updatePositionHandler: null,
         _clickHandler: null,
         _calendarClickHandler: null,
+        _mobileSidePadding: 12,
+
+        _getViewportWidth() {
+            return window.innerWidth || document.documentElement.clientWidth || 1200;
+        },
 
         /**
          * Setup event listeners for the date picker
@@ -311,9 +316,13 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             }
 
             const buttonRect = this._inputElement.getBoundingClientRect();
+            const viewportWidth = this._getViewportWidth();
+            const minLeft = this._mobileSidePadding;
+            const maxAllowedWidth = Math.max(220, viewportWidth - (this._mobileSidePadding * 2));
+            const width = Math.min(buttonRect.width, maxAllowedWidth);
+            const leftPx = Math.max(minLeft, Math.min(buttonRect.left, viewportWidth - width - this._mobileSidePadding));
             const top = buttonRect.bottom + window.scrollY + 2;
-            const left = buttonRect.left + window.scrollX;
-            const width = buttonRect.width;
+            const left = leftPx + window.scrollX;
 
             this._popoverElement.style.setProperty("top", `${top}px`, "important");
             this._popoverElement.style.setProperty("left", `${left}px`, "important");

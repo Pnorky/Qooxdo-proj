@@ -321,6 +321,13 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
       panel.style.setProperty("max-width", widthExpr, "important");
       panel.style.setProperty("max-height", heightExpr, "important");
       panel.style.setProperty("overflow", "auto", "important");
+
+      const footer = dialog.querySelector("footer");
+      if (footer && footer.style) {
+        footer.style.setProperty("display", "flex", "important");
+        footer.style.setProperty("flex-wrap", "wrap", "important");
+        footer.style.setProperty("gap", "0.5rem", "important");
+      }
     },
 
     /**

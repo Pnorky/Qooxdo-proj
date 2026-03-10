@@ -28,6 +28,8 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
     this.setResizable(false);
     this.setMovable(true);
     this.center();
+    this.addListener("appear", this._applyResponsiveLayout, this);
+    this.addListener("resize", this._applyResponsiveLayout, this);
 
     // Create a card to hold the form
     const card = new qooxdo_proj.components.ui.Card("Create New Account", "");
@@ -128,6 +130,7 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
     _cancelButton: null,
     _errorLabel: null,
     _isSubmitting: false,
+    _mobileBreakpoint: 900,
 
     /**
      * Handle registration attempt
@@ -223,6 +226,22 @@ qx.Class.define("qooxdo_proj.components.Windows.RegistrationWindow", {
         this._registerButton.setEnabled(true);
         this._isSubmitting = false;
       });
+    },
+
+    _applyResponsiveLayout: function () {
+      const viewportWidth = window.innerWidth || 1200;
+      const viewportHeight = window.innerHeight || 800;
+      const isMobile = viewportWidth <= this._mobileBreakpoint;
+
+      if (isMobile) {
+        this.setWidth(Math.max(300, viewportWidth - 24));
+        this.setHeight(Math.max(320, viewportHeight - 80));
+        this.moveTo(12, 56);
+      } else {
+        this.setWidth(450);
+        this.setHeight(350);
+        this.center();
+      }
     },
 
     /**

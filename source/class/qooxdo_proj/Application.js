@@ -16,6 +16,15 @@ qx.Class.define("qooxdo_proj.Application",
       _statusLabel: null,
       _loginPage: null,
       _mainContainer: null,
+      _sidebar: null,
+      _menuBar: null,
+      _mobileBreakpoint: 900,
+      _actionButtonsRow: null,
+      _formActionButtons: null,
+      _counterButtons: null,
+      _mobileLayoutPassScheduled: false,
+      _mobileSidebarOpen: false,
+      _mobileSidebarBackdrop: null,
 
       main() {
         this.base(arguments);
@@ -51,15 +60,176 @@ qx.Class.define("qooxdo_proj.Application",
         this._windowManager.init(root);
 
         // Create Menu Bar component and pass window manager reference
-        const menuBar = new qooxdo_proj.components.MenuBar();
+        this._menuBar = new qooxdo_proj.components.MenuBar();
+        const menuBar = this._menuBar;
         menuBar.setWindowManager(this._windowManager);
         
         // Listen for logout event
         menuBar.addListener("logout", () => {
           this._handleLogout();
         }, this);
+        menuBar.addListener("toggleSidebar", () => {
+          const width = window.innerWidth || 1200;
+          if (width <= this._mobileBreakpoint) {
+            this._mobileSidebarOpen = !this._mobileSidebarOpen;
+            syncSidebarAndNavbarLayout();
+          }
+        }, this);
         
         rootContainer.add(menuBar, { left: 0, top: 0, right: 0 });
+
+        // Sidebar built with custom Card component
+        this._sidebar = new qooxdo_proj.components.Sidebar();
+        this._sidebar.setMinWidth(280);
+        this._sidebar.setWidth(280);
+        rootContainer.add(this._sidebar, { left: 0, top: 0, bottom: 0 });
+
+        // Backdrop used only when mobile off-canvas sidebar is open.
+        this._mobileSidebarBackdrop = new qx.ui.core.Widget();
+        this._mobileSidebarBackdrop.setVisibility("excluded");
+        this._mobileSidebarBackdrop.addListenerOnce("appear", () => {
+          const el = this._mobileSidebarBackdrop.getContentElement
+            ? this._mobileSidebarBackdrop.getContentElement().getDomElement()
+            : null;
+          if (!el) return;
+          el.style.background = "rgba(15, 23, 42, 0.35)";
+        }, this);
+        this._mobileSidebarBackdrop.addListener("pointerdown", () => {
+          this._mobileSidebarOpen = false;
+          syncSidebarAndNavbarLayout();
+        }, this);
+        rootContainer.add(this._mobileSidebarBackdrop, { left: 0, right: 0, top: 52, bottom: 0 });
+
+        const syncSidebarAndNavbarLayout = () => {
+          const rootBounds = rootContainer.getBounds ? rootContainer.getBounds() : null;
+          const viewportWidth = (rootBounds && rootBounds.width) || window.innerWidth || 1200;
+          const isMobile = viewportWidth <= this._mobileBreakpoint;
+
+          const sidebarBounds = this._sidebar.getBounds ? this._sidebar.getBounds() : null;
+          const sidebarWidth = (sidebarBounds && sidebarBounds.width) || this._sidebar.getWidth() || 280;
+          const setLayoutProps = (widget, props) => {
+            if (widget && widget.setLayoutProperties) {
+              widget.setLayoutProperties(props);
+            }
+          };
+
+          if (this._sidebar && this._sidebar.setMobileMode) {
+            this._sidebar.setMobileMode(isMobile);
+          }
+          if (menuBar && menuBar.setCompactMode) {
+            menuBar.setCompactMode(isMobile);
+          }
+
+          if (isMobile) {
+            const mobileSidebarWidth = Math.max(220, Math.min(300, Math.round(viewportWidth * 0.82)));
+            const hiddenLeft = -(mobileSidebarWidth + 40);
+            this._sidebar.setCollapsed(false);
+            this._sidebar.setWidth(mobileSidebarWidth);
+            this._sidebar.setMinWidth(mobileSidebarWidth);
+            this._sidebar.setMaxWidth(mobileSidebarWidth);
+            // Mobile: stack navbar + sidebar vertically.
+            setLayoutProps(menuBar, { left: 0, top: 0, right: 0 });
+            this._sidebar.resetHeight();
+            this._sidebar.resetMaxHeight();
+            setLayoutProps(this._sidebar, {
+              left: this._mobileSidebarOpen ? 0 : hiddenLeft,
+              top: 52,
+              bottom: 0,
+              right: null
+            });
+            this._sidebar.setZIndex(20);
+            if (this._mobileSidebarBackdrop) {
+              setLayoutProps(this._mobileSidebarBackdrop, { left: 0, right: 0, top: 52, bottom: 0 });
+              this._mobileSidebarBackdrop.setVisibility(this._mobileSidebarOpen ? "visible" : "excluded");
+              this._mobileSidebarBackdrop.setZIndex(10);
+            }
+
+            if (this._buttonContainer) {
+              this._buttonContainer.resetWidth();
+              setLayoutProps(this._buttonContainer, {
+                left: 12,
+                right: 12,
+                top: 72,
+                bottom: null
+              });
+              this._buttonContainer.setVisibility(this._mobileSidebarOpen ? "excluded" : "visible");
+            }
+            if (this._actionButtonsRow) {
+              this._actionButtonsRow.setLayout(new qx.ui.layout.VBox(8));
+            }
+            if (this._formActionButtons) {
+              this._formActionButtons.setLayout(new qx.ui.layout.HBox(8));
+            }
+            if (this._counterButtons) {
+              this._counterButtons.setLayout(new qx.ui.layout.HBox(8));
+            }
+
+          } else {
+            // Desktop: fixed left rail + navbar offset.
+            this._mobileLayoutPassScheduled = false;
+            this._mobileSidebarOpen = false;
+            this._sidebar.resetHeight();
+            this._sidebar.resetMaxHeight();
+            this._sidebar.resetMaxWidth();
+            this._sidebar.setCollapsed(false);
+            setLayoutProps(this._sidebar, { left: 0, top: 0, bottom: 0, right: null });
+            this._sidebar.setZIndex(0);
+            if (this._mobileSidebarBackdrop) {
+              this._mobileSidebarBackdrop.setVisibility("excluded");
+              this._mobileSidebarBackdrop.setZIndex(0);
+            }
+            setLayoutProps(menuBar, { left: sidebarWidth, top: 0, right: 0 });
+            if (this._buttonContainer) {
+              this._buttonContainer.setWidth(400);
+              setLayoutProps(this._buttonContainer, { right: 50, top: 80, left: null, bottom: null });
+              this._buttonContainer.setVisibility("visible");
+            }
+            if (this._actionButtonsRow) {
+              this._actionButtonsRow.setLayout(new qx.ui.layout.HBox(10));
+            }
+            if (this._formActionButtons) {
+              this._formActionButtons.setLayout(new qx.ui.layout.HBox(10));
+            }
+            if (this._counterButtons) {
+              this._counterButtons.setLayout(new qx.ui.layout.HBox(10));
+            }
+          }
+        };
+
+        this._sidebar.addListener("appear", syncSidebarAndNavbarLayout, this);
+        this._sidebar.addListener("resize", syncSidebarAndNavbarLayout, this);
+        this._sidebar.addListener("changeCollapsed", syncSidebarAndNavbarLayout, this);
+        this._sidebar.addListener("toggleSidebarRequest", () => {
+          const width = window.innerWidth || 1200;
+          if (width <= this._mobileBreakpoint) {
+            this._mobileSidebarOpen = !this._mobileSidebarOpen;
+            syncSidebarAndNavbarLayout();
+            return;
+          }
+          this._sidebar.setCollapsed(!this._sidebar.isCollapsed());
+        }, this);
+        root.addListener("resize", syncSidebarAndNavbarLayout, this);
+        qx.event.Timer.once(syncSidebarAndNavbarLayout, this, 0);
+
+        this._sidebar.addListener("openWindowRequest", (e) => {
+          const key = e.getData();
+          if (this._windowManager && key) {
+            this._windowManager.openWindow(key);
+          }
+          const width = window.innerWidth || 1200;
+          if (width <= this._mobileBreakpoint) {
+            this._mobileSidebarOpen = false;
+            syncSidebarAndNavbarLayout();
+          }
+        }, this);
+
+        this._sidebar.addListener("toggleThemeRequest", () => {
+          this.toggleTheme();
+        }, this);
+
+        this._sidebar.addListener("logoutRequest", () => {
+          this._handleLogout();
+        }, this);
 
         // Create window components
         this._personalInfoWindow = new qooxdo_proj.components.Windows.PersonalInfoWindow();
@@ -133,16 +303,22 @@ qx.Class.define("qooxdo_proj.Application",
 
         // Create Form Action Buttons component
         const formActionButtons = new qooxdo_proj.components.Buttons.FormActionButtons();
+        this._formActionButtons = formActionButtons;
 
         // Create Counter Buttons component
         const counterButtons = new qooxdo_proj.components.Buttons.CounterButtons();
+        this._counterButtons = counterButtons;
 
         // Button container
         const buttonContainer = new qx.ui.container.Composite();
         buttonContainer.setLayout(new qx.ui.layout.HBox(10));
-        buttonContainer.add(formActionButtons);
-        buttonContainer.add(counterButtons);
+        buttonContainer.setAllowGrowX(true);
+        buttonContainer.setAllowShrinkX(true);
+        buttonContainer.setMinWidth(0);
+        buttonContainer.add(formActionButtons, { flex: 1 });
+        buttonContainer.add(counterButtons, { flex: 1 });
         mainContainer.add(buttonContainer);
+        this._actionButtonsRow = buttonContainer;
 
         // Status
         this._statusLabel = new qooxdo_proj.components.ui.Label("Ready");
@@ -174,6 +350,7 @@ qx.Class.define("qooxdo_proj.Application",
         
         // Store reference to main container for later use
         this._buttonContainer = mainContainer;
+        qx.event.Timer.once(syncSidebarAndNavbarLayout, this, 0);
       },
 
       _handleLoginSuccess(username) {
@@ -189,6 +366,9 @@ qx.Class.define("qooxdo_proj.Application",
         if (this._statusLabel) {
           const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
           this._statusLabel.setValue(`<span style='color: ${primaryColor};'>Welcome, ${username}!</span>`);
+        }
+        if (this._sidebar) {
+          this._sidebar.setSidebarSubtitle(`Signed in as ${username}`);
         }
       },
 
@@ -221,6 +401,9 @@ qx.Class.define("qooxdo_proj.Application",
         // Reset status label
         if (this._statusLabel) {
           this._statusLabel.setValue("Ready");
+        }
+        if (this._sidebar) {
+          this._sidebar.setSidebarSubtitle("Open forms and actions");
         }
       },
 

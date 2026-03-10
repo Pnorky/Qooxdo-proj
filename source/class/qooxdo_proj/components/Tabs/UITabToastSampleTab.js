@@ -18,13 +18,20 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
 
     const outer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
     outer.setAlignX("center");
-    this.add(outer);
+    outer.setAllowGrowX(true);
+    outer.setAllowShrinkX(true);
+    this.add(outer, { flex: 1 });
 
     const wrapper = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
     // allow wrapper to expand up to a reasonable maximum but not force a fixed width
     wrapper.setMaxWidth(800);
+    wrapper.setMinWidth(0);
+    wrapper.setAllowGrowX(true);
+    wrapper.setAllowShrinkX(true);
     wrapper.setWidth(null);
-    outer.add(wrapper);
+    outer.add(wrapper, { flex: 1 });
+    this._outer = outer;
+    this._wrapper = wrapper;
 
     const addSectionTitle = function (text) {
       const title = new qooxdo_proj.components.ui.Label(text);
@@ -119,6 +126,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     });
     toastEventBtn.setBasecoatToolTip("Dispatches basecoat:toast", "bottom", "center");
     toastButtonsRow.add(toastEventBtn);
+    this._toastButtonsRow = toastButtonsRow;
 
     wrapper.add(toastButtonsRow);
 
@@ -152,6 +160,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     });
 
     radioButtonsRow.add(radioGroup);
+    this._radioButtonsRow = radioButtonsRow;
     wrapper.add(radioButtonsRow);
 
     addSectionTitle("DropdownMenu");
@@ -182,6 +191,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
     });
 
     dropdownMenuRow.add(dropdown);
+    this._dropdownMenuRow = dropdownMenuRow;
     wrapper.add(dropdownMenuRow);
 
     addSectionTitle("Pagination");
@@ -200,6 +210,44 @@ qx.Class.define("qooxdo_proj.components.Tabs.UITabToastSampleTab", {
       });
     });
     paginationRow.add(pagination);
+    this._paginationRow = paginationRow;
     wrapper.add(paginationRow);
+
+    this.addListener("appear", this._applyResponsiveLayout, this);
+    this.addListener("resize", this._applyResponsiveLayout, this);
+    qx.event.Timer.once(this._applyResponsiveLayout, this, 0);
+  },
+
+  members: {
+    _outer: null,
+    _wrapper: null,
+    _toastButtonsRow: null,
+    _radioButtonsRow: null,
+    _dropdownMenuRow: null,
+    _paginationRow: null,
+
+    _applyResponsiveLayout: function () {
+      const width = window.innerWidth || 1200;
+      const isMobile = width <= 900;
+      if (!this._outer || !this._wrapper) return;
+
+      this._outer.setAlignX(isMobile ? "left" : "center");
+      this.setPadding(isMobile ? 8 : 10);
+      this._wrapper.setMaxWidth(isMobile ? 9999 : 800);
+
+      if (this._toastButtonsRow) {
+        this._toastButtonsRow.setLayout(isMobile ? new qx.ui.layout.VBox(6) : new qx.ui.layout.HBox(8));
+        this._toastButtonsRow.setAlignX(isMobile ? "left" : "center");
+      }
+      if (this._radioButtonsRow) {
+        this._radioButtonsRow.setAlignX(isMobile ? "left" : "center");
+      }
+      if (this._dropdownMenuRow) {
+        this._dropdownMenuRow.setAlignX(isMobile ? "left" : "center");
+      }
+      if (this._paginationRow) {
+        this._paginationRow.setAlignX(isMobile ? "left" : "center");
+      }
+    }
   }
 });

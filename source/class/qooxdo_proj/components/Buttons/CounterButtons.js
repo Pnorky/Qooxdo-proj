@@ -22,6 +22,9 @@ qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons", {
   construct: function () {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.HBox(10));
+    this.setAllowGrowX(true);
+    this.setAllowShrinkX(true);
+    this.setMinWidth(0);
 
     this._clickCount = 0;
     this._createButtons();
@@ -59,8 +62,8 @@ qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons", {
         this.fireEvent("resetCounter");
       });
 
-      this.add(this._pressMeButton);
-      this.add(this._resetCounterButton);
+      this.add(this._pressMeButton, { flex: 1 });
+      this.add(this._resetCounterButton, { flex: 1 });
     },
 
     // Public methods

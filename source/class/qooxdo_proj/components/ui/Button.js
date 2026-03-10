@@ -7,6 +7,7 @@ qx.Class.define("qooxdo_proj.components.ui.Button", {
 
   construct(label, variant = "", size = "") {
     this.base(arguments);
+    this._label = String(label || "");
 
     // set a layout so children get measured and laid out
     this._setLayout(new qx.ui.layout.Canvas());
@@ -21,7 +22,7 @@ qx.Class.define("qooxdo_proj.components.ui.Button", {
     // Add text overflow handling for long button text
     this._html = new qx.ui.embed.Html(`
       <div style="margin: 2px; min-width: 0; flex-shrink: 1;">
-        <button class="${classes.join(" ")}" style="width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; min-width: 0;">${label}</button>
+        <button class="${classes.join(" ")}" style="width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; min-width: 0;">${this._label}</button>
       </div>
     `);
 
@@ -31,12 +32,26 @@ qx.Class.define("qooxdo_proj.components.ui.Button", {
     // hook DOM click
     this._html.addListenerOnce("appear", () => {
       const btn = this._html.getContentElement().getDomElement().querySelector("button");
+      this._buttonElement = btn;
       btn.addEventListener("click", () => this.fireEvent("execute"));
     });
   },
 
   members: {
+    _label: "",
+    _buttonElement: null,
     _basecoatToolTip: null,
+
+    setLabel(label) {
+      this._label = String(label || "");
+      if (this._buttonElement) {
+        this._buttonElement.textContent = this._label;
+      }
+    },
+
+    getLabel() {
+      return this._label || "";
+    },
 
     /**
      * Convenience helper to attach/update a Basecoat tooltip.

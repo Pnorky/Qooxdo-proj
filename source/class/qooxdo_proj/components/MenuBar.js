@@ -15,6 +15,8 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
     events: {
       /** Fired when logout is requested */
       logout: "qx.event.type.Event",
+      /** Fired when mobile sidebar toggle is requested */
+      toggleSidebar: "qx.event.type.Event",
     },
 
     construct: function () {
@@ -23,56 +25,88 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       // Initialize loaded scripts tracker
       this._loadedScripts = {};
 
-      var frame = new qx.ui.container.Composite(new qx.ui.layout.Grow());
-      frame.setAllowStretchX(true);
       this.setLayout(new qx.ui.layout.Grow());
       this.setAllowStretchX(true);
 
+      var navbarCard = new qooxdo_proj.components.ui.Card("", "", false);
+      navbarCard.setFullWidth(true);
+      navbarCard.getFooter().setVisibility("excluded");
+      this._navbarCard = navbarCard;
+      this._applyNavbarCardStyles(navbarCard);
+
       var menubar = new qx.ui.menubar.MenuBar();
       menubar.setAllowGrowX(true);
-      
-      // Apply theme colors to menubar
-      menubar.addListenerOnce("appear", () => {
-        const domElement = menubar.getContentElement();
-        if (domElement) {
-          const element = domElement.getDomElement();
-          if (element) {
-            qooxdo_proj.util.Theme.styleDOMElement(element, {
-              background: "background",
-              foreground: "foreground",
-              border: false
-            });
-            // Add bottom border for menubar
-            element.style.borderBottom = "1px solid var(--border)";
-          }
-        }
+      menubar.setAllowShrinkX(true);
+      menubar.setMinWidth(0);
+      this._menuBar = menubar;
+      this._applyBasecoatMenuBarStyles(menubar);
+
+      // Mobile off-canvas toggle (shown only in compact mode)
+      this._mobileMenuButton = new qx.ui.menubar.Button("Menu");
+      this._mobileMenuButton.setVisibility("excluded");
+      this._mobileMenuButton.addListener("execute", () => {
+        this.fireEvent("toggleSidebar");
       }, this);
-      
-      frame.add(menubar);
+      menubar.add(this._mobileMenuButton);
+      this._styleMenuBarButton(this._mobileMenuButton);
+
+      var navbarRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(12));
+      navbarRow.setAlignY("middle");
+      navbarRow.setAllowGrowX(true);
+      navbarRow.setAllowShrinkX(true);
+      navbarRow.add(menubar, { flex: 1 });
+      var rightSlot = new qx.ui.container.Composite(new qx.ui.layout.HBox().set({
+        alignX: "center",
+        alignY: "middle"
+      }));
+      rightSlot.setAllowGrowX(false);
+      rightSlot.setAllowShrinkX(false);
+      rightSlot.setMinWidth(104);
+      rightSlot.setWidth(104);
+      this._rightSlot = rightSlot;
+      navbarRow.add(rightSlot);
+      navbarCard.getSection().add(navbarRow, { flex: 1 });
 
       var windowsMenu = new qx.ui.menubar.Button("Students", null, this._getWindowsMenu());
       // var viewMenu = new qx.ui.menubar.Button("View", null, this._getViewMenu());
       var windowMenu = new qx.ui.menubar.Button("Window", null, this._getWindowMenu());
       var printingMenu = new qx.ui.menubar.Button("Printing", null, this._getPrintingMenu());
       var demoMenu = new qx.ui.menubar.Button("Demo", null, this._getDemoMenu());
+      var mainMenuButtons = [windowsMenu, windowMenu, printingMenu, demoMenu];
+      this._mainMenuButtons = mainMenuButtons;
+      this._windowsMenuButton = windowsMenu;
+      this._windowMenuButton = windowMenu;
+      this._printingMenuButton = printingMenu;
+      this._demoMenuButton = demoMenu;
+      mainMenuButtons.forEach((btn) => {
+        // Use layout margins so spacing is respected by qx menubar layout.
+        btn.setMarginRight(10);
+        btn.setPaddingLeft(10);
+        btn.setPaddingRight(10);
+      });
 
       menubar.add(windowsMenu);
       // menubar.add(viewMenu);
       menubar.add(windowMenu);
       menubar.add(printingMenu);
       menubar.add(demoMenu);
+      this._styleMenuBarButton(windowsMenu);
+      this._styleMenuBarButton(windowMenu);
+      this._styleMenuBarButton(printingMenu);
+      this._styleMenuBarButton(demoMenu);
 
-      // Add logout button as a menubar button (right-aligned)
+      // Add logout button in a dedicated right slot to avoid clipping
       this._logoutButton = new qx.ui.menubar.Button("Logout");
+      this._logoutButton.setAllowGrowX(false);
+      this._logoutButton.setAllowShrinkX(false);
+      this._logoutButton.setMinWidth(96);
       this._logoutButton.addListener("execute", () => {
         this._handleLogout();
       }, this);
-      
-      // Add spacer to push logout to the right
-      menubar.addSpacer();
-      menubar.add(this._logoutButton);
+      this._styleMenuBarButton(this._logoutButton, { isLogout: true });
+      rightSlot.add(this._logoutButton);
 
-      this.add(frame);
+      this.add(navbarCard);
     },
 
     members:
@@ -86,6 +120,391 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _loadedScripts: null, // Track loaded scripts
       _feedbackToast: null,
       _feedbackDialog: null,
+      _menuBar: null,
+      _navbarCard: null,
+      _mainMenuButtons: null,
+      _rightSlot: null,
+      _windowsMenuButton: null,
+      _windowMenuButton: null,
+      _printingMenuButton: null,
+      _demoMenuButton: null,
+      _mobileMenuButton: null,
+      _isCompactMode: false,
+
+      _createMenuSeparator: function () {
+        return new qooxdo_proj.components.ui.MenuSeparator();
+      },
+
+      setCompactMode: function (compact) {
+        const isCompact = !!compact;
+        if (this._isCompactMode === isCompact) return;
+        this._isCompactMode = isCompact;
+
+        if (this._windowsMenuButton) this._windowsMenuButton.setLabel(isCompact ? "Forms" : "Students");
+        if (this._windowMenuButton) this._windowMenuButton.setLabel(isCompact ? "Layout" : "Window");
+        if (this._printingMenuButton) this._printingMenuButton.setLabel(isCompact ? "Print" : "Printing");
+        if (this._demoMenuButton) this._demoMenuButton.setLabel("Demo");
+
+        if (this._mainMenuButtons) {
+          this._mainMenuButtons.forEach((btn) => {
+            btn.setMarginRight(isCompact ? 6 : 10);
+            btn.setPaddingLeft(isCompact ? 6 : 10);
+            btn.setPaddingRight(isCompact ? 6 : 10);
+          });
+        }
+
+        if (this._rightSlot) {
+          const width = isCompact ? 84 : 104;
+          this._rightSlot.setMinWidth(width);
+          this._rightSlot.setWidth(width);
+        }
+        if (this._mobileMenuButton) {
+          this._mobileMenuButton.setVisibility(isCompact ? "visible" : "excluded");
+        }
+
+        const menuEl = this._menuBar && this._menuBar.getContentElement
+          ? this._menuBar.getContentElement().getDomElement()
+          : null;
+        if (menuEl) {
+          menuEl.style.gap = isCompact ? "10px" : "28px";
+          menuEl.style.padding = isCompact ? "8px 10px 8px 8px" : "8px 22px 8px 16px";
+          menuEl.style.overflowX = isCompact ? "auto" : "visible";
+          menuEl.style.scrollbarWidth = isCompact ? "thin" : "auto";
+        }
+      },
+
+      _applyClassesToElement: function (element, classes) {
+        if (!element || !classes || !classes.length) return;
+        classes.forEach((name) => {
+          if (name) element.classList.add(name);
+        });
+      },
+
+      _applyNavbarCardStyles: function (card) {
+        if (!card) return;
+        card.addListenerOnce("appear", () => {
+          const contentElement = card.getContentElement();
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+          this._applyClassesToElement(element, ["card"]);
+          element.style.background = "var(--card)";
+          element.style.color = "var(--card-foreground)";
+          element.style.border = "1px solid var(--border)";
+          element.style.borderRadius = "0";
+          element.style.padding = "0";
+          element.style.margin = "0";
+          element.style.width = "100%";
+          element.style.maxWidth = "100%";
+          element.style.boxShadow = "none";
+          element.style.borderLeft = "none";
+          element.style.borderRight = "none";
+          element.style.borderTop = "none";
+        }, this);
+      },
+
+      _applyBasecoatMenuBarStyles: function (menubar) {
+        if (!menubar) return;
+        menubar.addListenerOnce("appear", () => {
+          const contentElement = menubar.getContentElement();
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+
+          qooxdo_proj.util.Theme.styleDOMElement(element, {
+            foreground: "card-foreground",
+            border: false
+          });
+          element.style.display = "flex";
+          element.style.alignItems = "center";
+          element.style.gap = "28px";
+          element.style.padding = "8px 22px 8px 16px";
+          element.style.minHeight = "46px";
+          element.style.backgroundColor = "transparent";
+          element.style.border = "none";
+          element.style.boxShadow = "none";
+          element.style.justifyContent = "flex-start";
+          element.style.overflow = "visible";
+        }, this);
+      },
+
+      _styleMenuBarButton: function (button, options) {
+        if (!button || button.__basecoatMenuStyled) return;
+        button.__basecoatMenuStyled = true;
+        const isLogout = !!(options && options.isLogout);
+
+        button.addListener("appear", () => {
+          const contentElement = button.getContentElement();
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+
+          this._applyClassesToElement(element, ["btn-sm-ghost"]);
+          element.style.width = "auto";
+          element.style.minWidth = "max-content";
+          element.style.padding = "0 18px";
+          element.style.height = "32px";
+          element.style.display = "inline-flex";
+          element.style.alignItems = "center";
+          element.style.flexShrink = "0";
+          element.style.whiteSpace = "nowrap";
+          element.style.overflow = "visible";
+          element.style.textOverflow = "clip";
+          element.style.border = "1px solid transparent";
+          if (isLogout) {
+            element.style.color = "var(--destructive)";
+            element.style.marginLeft = "0";
+            element.style.marginRight = "0";
+            element.style.padding = "0 14px";
+            element.style.maxWidth = "none";
+            element.style.setProperty("min-width", "88px");
+            element.style.justifyContent = "center";
+            element.style.textAlign = "center";
+          } else {
+            element.style.marginRight = "0";
+          }
+
+          const labels = element.querySelectorAll("span, label, div");
+          labels.forEach((node) => {
+            node.style.whiteSpace = "nowrap";
+            node.style.overflow = "visible";
+            node.style.textOverflow = "clip";
+            node.style.fontSize = "var(--text-sm)";
+            node.style.lineHeight = "var(--text-sm--line-height)";
+            if (isLogout) {
+              node.style.textAlign = "center";
+              node.style.justifyContent = "center";
+              node.style.display = "inline-flex";
+              node.style.width = "100%";
+            }
+          });
+        }, this);
+
+        button.addListener("mouseover", () => {
+          const contentElement = button.getContentElement();
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+          if (isLogout) {
+            element.style.backgroundColor = "color-mix(in oklab, var(--destructive) 10%, transparent)";
+            element.style.borderColor = "color-mix(in oklab, var(--destructive) 20%, var(--border))";
+          }
+        }, this);
+
+        button.addListener("mouseout", () => {
+          const contentElement = button.getContentElement();
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+          if (isLogout) {
+            element.style.backgroundColor = "transparent";
+            element.style.borderColor = "transparent";
+          }
+        }, this);
+      },
+
+      _stylePopupMenuItem: function (menuItem) {
+        if (!menuItem || menuItem.__basecoatMenuItemStyled) return;
+        menuItem.__basecoatMenuItemStyled = true;
+
+        const applyItemState = (active) => {
+          const contentElement = menuItem.getContentElement ? menuItem.getContentElement() : null;
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+
+          const bg = active ? "var(--accent)" : "transparent";
+          const fg = active ? "var(--accent-foreground)" : "var(--popover-foreground)";
+          element.style.setProperty("background", bg, "important");
+          element.style.setProperty("background-color", bg, "important");
+          element.style.setProperty("background-image", "none", "important");
+          element.style.setProperty("color", fg, "important");
+          element.style.setProperty("text-shadow", "none", "important");
+          element.style.setProperty("border", "none", "important");
+          element.style.setProperty("border-top", "none", "important");
+          element.style.setProperty("box-shadow", "none", "important");
+          element.style.setProperty("outline", "none", "important");
+          element.style.setProperty("text-decoration", "none", "important");
+          element.style.setProperty("width", "calc(100% - 8px)", "important");
+          element.style.setProperty("max-width", "calc(100% - 8px)", "important");
+          element.style.setProperty("justify-content", "flex-start", "important");
+          element.style.setProperty("text-align", "left", "important");
+
+          // Some qooxdoo themes paint active borders/underlines on inner nodes.
+          // Strip those decorations so only our basecoat state is visible.
+          const innerNodes = element.querySelectorAll("*");
+          innerNodes.forEach((node) => {
+            node.style.setProperty("border", "none", "important");
+            node.style.setProperty("border-top", "none", "important");
+            node.style.setProperty("border-bottom", "none", "important");
+            node.style.setProperty("outline", "none", "important");
+            node.style.setProperty("box-shadow", "none", "important");
+            node.style.setProperty("text-decoration", "none", "important");
+            node.style.setProperty("background-image", "none", "important");
+          });
+        };
+
+        const applyMenuItemStyles = () => {
+          const contentElement = menuItem.getContentElement ? menuItem.getContentElement() : null;
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (!element) return;
+
+          element.style.borderRadius = "8px";
+          element.style.margin = "2px 4px";
+          element.style.padding = "6px 12px";
+          element.style.transition = "background-color .12s ease, color .12s ease";
+          element.style.cursor = "pointer";
+          element.style.fontSize = "var(--text-sm)";
+          element.style.lineHeight = "var(--text-sm--line-height)";
+          element.style.fontWeight = "500";
+          element.style.overflow = "visible";
+          element.style.minHeight = "32px";
+          element.style.height = "32px";
+          element.style.boxSizing = "border-box";
+          element.style.display = "flex";
+          element.style.alignItems = "center";
+          element.style.justifyContent = "flex-start";
+          element.style.width = "calc(100% - 8px)";
+          element.style.maxWidth = "calc(100% - 8px)";
+          element.style.border = "1px solid transparent";
+          element.style.borderTop = "none";
+          element.style.boxShadow = "none";
+          element.style.outline = "none";
+          applyItemState(false);
+          const labels = element.querySelectorAll("span, label, div");
+          labels.forEach((node) => {
+            node.style.fontSize = "var(--text-sm)";
+            node.style.lineHeight = "var(--text-sm--line-height)";
+            node.style.fontWeight = "500";
+            node.style.whiteSpace = "nowrap";
+            node.style.overflow = "visible";
+            node.style.textOverflow = "clip";
+            node.style.display = "block";
+            node.style.maxWidth = "100%";
+            node.style.width = "auto";
+            node.style.textAlign = "left";
+            node.style.color = "inherit";
+            node.style.textShadow = "none";
+            node.style.textDecoration = "none";
+            node.style.border = "none";
+            node.style.boxShadow = "none";
+          });
+        };
+
+        menuItem.addListener("appear", applyMenuItemStyles, this);
+        menuItem.addListener("changeVisibility", (e) => {
+          if (e.getData() === "visible") {
+            applyMenuItemStyles();
+          }
+        }, this);
+
+        menuItem.addListener("mouseover", () => {
+          applyItemState(true);
+        }, this);
+
+        menuItem.addListener("mouseout", () => {
+          applyItemState(false);
+        }, this);
+
+        // Qooxdoo may mark the first item as selected on open; neutralize it.
+        menuItem.addListener("appear", () => {
+          qx.event.Timer.once(() => applyItemState(false), this, 0);
+        }, this);
+      },
+
+      _stylePopupMenu: function (menu) {
+        if (!menu || menu.__basecoatPopupStyled) return;
+        menu.__basecoatPopupStyled = true;
+
+        const applyPopupStyles = () => {
+          const contentElement = menu.getContentElement ? menu.getContentElement() : null;
+          const element = contentElement ? contentElement.getDomElement() : null;
+          if (element) {
+            this._applyClassesToElement(element, ["card"]);
+            this._applyClassesToElement(element, ["basecoat-menubar-popup"]);
+            element.style.backgroundColor = "var(--popover)";
+            element.style.color = "var(--popover-foreground)";
+            element.style.border = "1px solid var(--border)";
+            element.style.borderRadius = "calc(var(--radius) + 2px)";
+            element.style.padding = "calc(var(--spacing) * 1.5)";
+            element.style.boxShadow = "var(--shadow-sm)";
+            element.style.minWidth = "300px";
+            element.style.maxWidth = "min(92vw, 440px)";
+            element.style.width = "auto";
+            element.style.boxSizing = "border-box";
+          }
+
+          const children = menu.getChildren ? menu.getChildren() : [];
+          const isSeparatorChild = (entry) => {
+            if (!entry) return false;
+            const entryClassName = entry.classname || "";
+            return entry instanceof qooxdo_proj.components.ui.MenuSeparator
+              || entryClassName.indexOf("qx.ui.menu.Separator") !== -1;
+          };
+
+          children.forEach((child) => {
+            const className = child.classname || "";
+            const isCustomSeparator = child instanceof qooxdo_proj.components.ui.MenuSeparator;
+            const isQxSeparator = className.indexOf("qx.ui.menu.Separator") !== -1;
+            if (isCustomSeparator || isQxSeparator) {
+              const separatorEl = child.getContentElement ? child.getContentElement().getDomElement() : null;
+              if (separatorEl) {
+                // Force a visible, full-width divider regardless of widget/theme internals.
+                separatorEl.style.setProperty("display", "block", "important");
+                separatorEl.style.setProperty("box-sizing", "border-box", "important");
+                separatorEl.style.setProperty("height", "2px", "important");
+                separatorEl.style.setProperty("min-height", "2px", "important");
+                separatorEl.style.setProperty("max-height", "2px", "important");
+                separatorEl.style.setProperty("width", "calc(100% + 12px)", "important");
+                separatorEl.style.setProperty("max-width", "none", "important");
+                separatorEl.style.setProperty("margin", "1px -6px", "important");
+                separatorEl.style.setProperty("padding", "0", "important");
+                separatorEl.style.setProperty("border", "none", "important");
+                separatorEl.style.setProperty("border-top", "none", "important");
+                separatorEl.style.setProperty("background", "var(--popover-foreground)", "important");
+                separatorEl.style.setProperty("background-color", "var(--popover-foreground)", "important");
+                separatorEl.style.setProperty("opacity", "0.24", "important");
+                separatorEl.style.setProperty("visibility", "visible", "important");
+              }
+              return;
+            }
+            this._stylePopupMenuItem(child);
+
+            const childIndex = children.indexOf(child);
+            const prevIsSeparator = isSeparatorChild(children[childIndex - 1]);
+            const nextIsSeparator = isSeparatorChild(children[childIndex + 1]);
+            if (prevIsSeparator || nextIsSeparator) {
+              const childEl = child.getContentElement ? child.getContentElement().getDomElement() : null;
+              if (childEl) {
+                if (prevIsSeparator) {
+                  childEl.style.setProperty("margin-top", "0", "important");
+                }
+                if (nextIsSeparator) {
+                  childEl.style.setProperty("margin-bottom", "0", "important");
+                }
+              }
+            }
+          });
+
+          // Keep submenu width stable across opens by sizing to the widest item text.
+          qx.event.Timer.once(() => {
+            if (!element) return;
+            let widest = 0;
+            children.forEach((child) => {
+              const className = child.classname || "";
+              const isCustomSeparator = child instanceof qooxdo_proj.components.ui.MenuSeparator;
+              const isQxSeparator = className.indexOf("qx.ui.menu.Separator") !== -1;
+              if (isCustomSeparator || isQxSeparator) return;
+              const childEl = child.getContentElement ? child.getContentElement().getDomElement() : null;
+              if (!childEl) return;
+              widest = Math.max(widest, childEl.scrollWidth || 0);
+            });
+            const target = Math.min(Math.max(300, widest + 28), 440);
+            element.style.minWidth = `${target}px`;
+          }, this, 0);
+        };
+
+        menu.addListener("appear", applyPopupStyles, this);
+        menu.addListener("changeVisibility", (e) => {
+          if (e.getData() === "visible") {
+            applyPopupStyles();
+          }
+        }, this);
+      },
 
       /**
        * Handle logout button click
@@ -204,6 +623,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           }
         }, this);
 
+        this._stylePopupMenu(menu);
         return menu;
       },
 
@@ -217,9 +637,9 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
 
         menu.add(cascadeWindowsButton);
         menu.add(tileWindowsButton);
-        menu.addSeparator();
+        menu.add(this._createMenuSeparator());
         menu.add(closeAllButton);
-        menu.addSeparator();
+        menu.add(this._createMenuSeparator());
         menu.add(toggleThemeButton);
 
         // Event handlers
@@ -261,6 +681,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           }
         }, this);
 
+        this._stylePopupMenu(menu);
         return menu;
       },
 
@@ -281,6 +702,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           this._generateExcelReport();
         }, this);
 
+        this._stylePopupMenu(menu);
         return menu;
       },
 
@@ -306,6 +728,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           }
         }, this);
 
+        this._stylePopupMenu(menu);
         return menu;
       },
 
@@ -330,7 +753,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         const script = document.createElement("script");
         script.type = "text/javascript";
         script.src = cdnUrl;
-        
+
         script.onload = () => {
           // Mark as loaded
           this._loadedScripts[cdnUrl] = true;
@@ -339,7 +762,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             callback();
           }
         };
-        
+
         script.onerror = () => {
           console.error("Failed to load script from CDN:", cdnUrl);
           // If error callback is provided, call it
@@ -374,14 +797,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         const currentUrl = window.location.href;
         const urlObj = new URL(currentUrl);
         const fullPath = urlObj.origin + "/node_modules/" + modulePath;
-        
+
         console.log("Loading script from node_modules:", fullPath);
 
         // Create script element and load dynamically
         const script = document.createElement("script");
         script.type = "text/javascript";
         script.src = fullPath;
-        
+
         script.onload = () => {
           // Mark as loaded
           this._loadedScripts[scriptKey] = true;
@@ -390,7 +813,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             callback();
           }
         };
-        
+
         script.onerror = () => {
           console.error("Failed to load script from node_modules:", fullPath);
           // If error callback is provided, call it
@@ -427,14 +850,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         let fullPath;
         const currentUrl = window.location.href;
         const urlObj = new URL(currentUrl);
-        
+
         try {
           // Use toUri with the complete resource path
           const resourceManager = qx.util.ResourceManager.getInstance();
           fullPath = resourceManager.toUri("qooxdo_proj/lib/" + scriptPath);
-          
+
           console.log("ResourceManager returned:", fullPath);
-          
+
           // If toUri returns a relative path, make it absolute
           if (!fullPath.startsWith("http://") && !fullPath.startsWith("https://")) {
             // Make it absolute by prepending origin
@@ -450,7 +873,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           console.error("Error getting resource path from ResourceManager:", e);
           // Fallback: construct path manually
           const pathname = urlObj.pathname;
-          
+
           if (pathname.includes("/compiled/")) {
             const compiledIndex = pathname.indexOf("/compiled/");
             fullPath = urlObj.origin + pathname.substring(0, compiledIndex) + "/resource/qooxdo_proj/lib/" + scriptPath;
@@ -459,14 +882,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             fullPath = urlObj.origin + "/resource/qooxdo_proj/lib/" + scriptPath;
           }
         }
-        
+
         console.log("Loading script from:", fullPath);
 
         // Create script element and load dynamically
         const script = document.createElement("script");
         script.type = "text/javascript";
         script.src = fullPath;
-        
+
         script.onload = () => {
           // Mark as loaded
           this._loadedScripts[scriptPath] = true;
@@ -475,7 +898,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             callback();
           }
         };
-        
+
         script.onerror = () => {
           console.error("Failed to load script:", fullPath);
           console.error("Attempted URL:", script.src);
@@ -505,7 +928,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         const hours = String(now.getHours()).padStart(2, "0");
         const minutes = String(now.getMinutes()).padStart(2, "0");
         const seconds = String(now.getSeconds()).padStart(2, "0");
-        
+
         const datetime = `${year}${month}${day}_${hours}${minutes}${seconds}`;
         return `${baseName}_${datetime}.${extension}`;
       },
@@ -516,7 +939,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
        */
       _getStudentData: function (callback) {
         console.log("[PDF] _getStudentData called");
-        
+
         // First, try to get data from the open window
         if (this._windowManager) {
           console.log("[PDF] Window manager available, checking for student table window...");
@@ -553,25 +976,25 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             "Content-Type": "application/json"
           }
         })
-        .then(response => {
-          console.log("[PDF] API response status:", response.status);
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(students => {
-          console.log("[PDF] API returned", students ? students.length : 0, "students");
-          // Return all student fields - no need to transform/limit
-          console.log("[PDF] Returning", students.length, "students with all fields");
-          callback(students || []);
-        })
-        .catch(error => {
-          console.error("[PDF] Failed to load students from REST API:", error);
-          console.error("[PDF] Error details:", error.message, error.stack);
-          this._notifyError("Failed to load student data", error.message);
-          callback([]);
-        });
+          .then(response => {
+            console.log("[PDF] API response status:", response.status);
+            if (!response.ok) {
+              throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(students => {
+            console.log("[PDF] API returned", students ? students.length : 0, "students");
+            // Return all student fields - no need to transform/limit
+            console.log("[PDF] Returning", students.length, "students with all fields");
+            callback(students || []);
+          })
+          .catch(error => {
+            console.error("[PDF] Failed to load students from REST API:", error);
+            console.error("[PDF] Error details:", error.message, error.stack);
+            this._notifyError("Failed to load student data", error.message);
+            callback([]);
+          });
       },
 
       /**
@@ -579,12 +1002,12 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
        */
       _generatePDFReport: function () {
         console.log("[PDF] _generatePDFReport called");
-        
+
         // Get student data (from window or API)
         console.log("[PDF] Fetching student data...");
         this._getStudentData((students) => {
           console.log("[PDF] Student data received, count:", students.length);
-          
+
           if (students.length === 0) {
             console.warn("[PDF] No student data available");
             this._notifyInfo("No data available", "No student data available to generate PDF report.");
@@ -593,7 +1016,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
 
           // Try to use pdfmake - check if already loaded
           let pdfMake = null;
-          
+
           // First, check if pdfmake and vfs are already available on window
           if (typeof window !== "undefined" && window.pdfMake && window.pdfMake.vfs) {
             pdfMake = window.pdfMake;
@@ -601,12 +1024,12 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             this._createPDFDocument(students, pdfMake);
             return;
           }
-          
+
           // If not available, load from CDN (since Qooxdoo dev server doesn't serve node_modules)
           console.log("[PDF] Loading pdfmake from CDN...");
           const pdfMakeUrl = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/pdfmake.min.js";
           const vfsFontsUrl = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js";
-          
+
           // Load pdfmake first
           this._loadScriptFromCDN(pdfMakeUrl, () => {
             console.log("[PDF] pdfmake loaded successfully from CDN");
@@ -663,7 +1086,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
        */
       _getPDFColumnConfig: function (reportType) {
         reportType = reportType || "full";
-        
+
         // Default columns matching the Student Information Table display
         // Widths optimized for portrait A4 (page width: 595pt, margins: 40pt each = 80pt, usable: ~510pt)
         // Total: 20 + 60 + 70 + 70 + 220 + 40 = 480pt (leaves buffer for padding/borders)
@@ -674,7 +1097,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           { key: "program", label: "Program", width: 220, align: "left", category: "academic" },
           { key: "yearLevel", label: "Year Level", width: 40, align: "center", category: "academic" }
         ];
-        
+
         // Extended column configurations for other report types
         const allColumns = [
           ...defaultColumns,
@@ -742,15 +1165,15 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
        */
       _normalizeYearLevel: function (yearLevel) {
         if (!yearLevel) return "";
-        
+
         // If it's already a number, convert to string
         if (typeof yearLevel === 'number') {
           return String(yearLevel);
         }
-        
+
         const str = String(yearLevel).trim();
         if (!str) return "";
-        
+
         // Extract the last digit from the string
         const match = str.match(/(\d+)/);
         if (match) {
@@ -760,7 +1183,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             return String(num);
           }
         }
-        
+
         return str; // Return original if no valid number found
       },
 
@@ -774,12 +1197,12 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         if (value === null || value === undefined || value === "") {
           return "-";
         }
-        
+
         // Normalize yearLevel to numeric string
         if (key === "yearLevel" && value) {
           return this._normalizeYearLevel(value);
         }
-        
+
         // Format dates
         if (key === "dateOfBirth" && value) {
           try {
@@ -789,7 +1212,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             return String(value);
           }
         }
-        
+
         return String(value);
       },
 
@@ -846,22 +1269,22 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
        */
       _createPDFDocument: function (students, pdfMakeInstance) {
         console.log("[PDF] _createPDFDocument called with", students ? students.length : 0, "students");
-        
+
         // Use provided instance or fall back to window.pdfMake
         const pdfMake = pdfMakeInstance || (typeof window !== 'undefined' ? window.pdfMake : undefined);
-        
+
         if (!pdfMake || typeof pdfMake === "undefined") {
           console.error("[PDF] pdfMake is undefined - library not loaded");
           this._notifyError("PDF library failed to load", "Please refresh the page.");
           return;
         }
-        
+
         console.log("[PDF] pdfMake is available:", typeof pdfMake);
         console.log("[PDF] pdfMake.vfs available:", !!pdfMake.vfs);
 
         // Get PDF configuration
         const pdfConfig = this._getPDFConfig();
-        
+
         // Get column configuration and filter by available data
         const allColumns = this._getPDFColumnConfig(pdfConfig.reportType);
         const columnConfig = this._filterColumnsByAvailableData(allColumns, students);
@@ -870,7 +1293,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         // Build table structure dynamically
         console.log("[PDF] Building table structure...");
         const tableStructure = this._buildPDFTable(students, columnConfig);
-        
+
         console.log("[PDF] Table built with", tableStructure.body.length, "rows (1 header +", students.length, "data rows)");
 
         // Generate report metadata
@@ -974,7 +1397,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
 
         // Generate and download PDF
         console.log("[PDF] Starting PDF generation process...");
-        
+
         try {
           if (typeof pdfMake === "undefined") {
             console.error("[PDF] pdfMake is undefined in try block");
@@ -985,10 +1408,10 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
           // Generate filename with datetime
           const filename = this._generateFileName("StudentReport", "pdf");
           console.log("[PDF] Generated filename:", filename);
-          
+
           console.log("[PDF] Creating PDF document with docDefinition...");
           console.log("[PDF] DocDefinition preview:", JSON.stringify(docDefinition).substring(0, 200) + "...");
-          
+
           // Create PDF document
           let pdfDoc;
           try {
@@ -1001,7 +1424,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             this._notifyError("Error creating PDF", createError.message);
             return;
           }
-          
+
           // Open PDF in new window for preview (user can then download from browser's PDF viewer)
           console.log("[PDF] Opening PDF in new window for preview...");
           try {
@@ -1075,7 +1498,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _createExcelDocument: function (students) {
         // Check for ExcelJS in different possible locations
         const ExcelJS = window.ExcelJS || window.Excel || (typeof require !== "undefined" && require("exceljs"));
-        
+
         if (!ExcelJS) {
           this._notifyError("Excel library failed to load", "Please refresh the page.");
           return;
@@ -1109,7 +1532,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
             const normalizedYearLevel = this._normalizeYearLevel(student.yearLevel);
             // Convert yearLevel to number for Excel (not text)
             const yearLevelNumber = normalizedYearLevel ? parseInt(normalizedYearLevel, 10) : null;
-            
+
             const row = worksheet.addRow({
               number: index + 1,
               studentId: student.studentId || "",
@@ -1118,7 +1541,7 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
               program: student.program || "",
               yearLevel: yearLevelNumber !== null && !isNaN(yearLevelNumber) ? yearLevelNumber : ""
             });
-            
+
             // Ensure yearLevel cell is formatted as number
             if (yearLevelNumber !== null && !isNaN(yearLevelNumber)) {
               const yearLevelCell = row.getCell('yearLevel');
