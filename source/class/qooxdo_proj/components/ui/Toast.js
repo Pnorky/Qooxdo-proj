@@ -93,12 +93,16 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
 
     this.__documentToastListener = (evt) => {
       if (this.isDisposed()) return;
+      // Stop Basecoat's own native handler from also firing (it errors when
+      // the toaster is inside a qooxdoo widget tree rather than bare HTML).
+      evt.stopImmediatePropagation();
       const detail = evt && evt.detail ? evt.detail : {};
       const config = detail.config || {};
       this.show(config);
     };
 
-    document.addEventListener("basecoat:toast", this.__documentToastListener);
+    // Use capture phase so our handler runs before Basecoat's bubble-phase handler
+    document.addEventListener("basecoat:toast", this.__documentToastListener, true);
   },
 
   members: {
@@ -285,7 +289,7 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
             <div style="flex-shrink: 0;">${this._getCategoryIcon(category)}</div>
             <section style="flex: 1; min-width: 0;">
               <h2 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">${title}</h2>
-              <p style="margin: 0; font-size: 14px; color: #6b7280;">${description}</p>
+              <p style="margin: 0; font-size: 14px; color: var(--muted-foreground);">${description}</p>
             </section>
             ${footerHtml}
           </div>
@@ -373,7 +377,7 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
   destruct() {
     this.clear();
     if (this.__documentToastListener) {
-      document.removeEventListener("basecoat:toast", this.__documentToastListener);
+      document.removeEventListener("basecoat:toast", this.__documentToastListener, true);
       this.__documentToastListener = null;
     }
     this.__timers = null;

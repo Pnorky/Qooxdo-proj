@@ -87,22 +87,21 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     this._selectedItem = null;
 
     this._buildTrigger();
-    this._buildMenu();
 
-    // Use popup for the dropdown menu
-    this._popup = new qx.ui.popup.Popup(new qx.ui.layout.Grow()).set({
+    // Popup — no child widgets; we inject HTML directly into the popup's own DOM
+    this._popup = new qx.ui.popup.Popup(new qx.ui.layout.Canvas()).set({
       autoHide: true,
       keepActive: true,
       offset: 4,
-      position: "bottom-left"
+      position: "bottom-left",
+      minWidth: 224,
+      minHeight: 32
     });
-    this._popup.add(this._menuContainer);
 
     this._popup.addListener("appear", () => {
       this._syncAria(true);
       this.fireEvent("open");
-      // Re-render menu when popup appears to ensure DOM is ready
-      this._renderMenu();
+      this._injectMenuIntoPopupDom();
     }, this);
     this._popup.addListener("disappear", () => {
       this._syncAria(false);
@@ -117,15 +116,14 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
 
     this._triggerHtml.addListenerOnce("appear", () => {
       this._applyTriggerLabel(this.getTriggerLabel());
-      this._applyMenuSizing();
     });
   },
 
   members: {
     _triggerHtml: null,
-    _menuContainer: null,
-    _menuHtml: null,
     _popup: null,
+    _popupDom: null,       // direct reference to the popup's DOM element
+    _menuDom: null,        // direct reference to the injected menu div
     _dropdownId: null,
     _triggerId: null,
     _popoverId: null,
@@ -145,21 +143,45 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       this._add(this._triggerHtml, { edge: 0 });
     },
 
-    _buildMenu() {
-      this._menuContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(0));
-      this._menuContainer.setMinWidth(224); // min-w-56 = 224px
+    // Injects the menu HTML directly into the popup's own DOM element.
+    // This is reliable because the popup DOM is always ready when "appear" fires.
+    _injectMenuIntoPopupDom() {
+      const popupContentEl = this._popup.getContentElement
+        ? this._popup.getContentElement()
+        : null;
+      if (!popupContentEl) return;
 
-      this._menuHtml = new qx.ui.embed.Html(`
-        <div id="${this._popoverId}" data-popover aria-hidden="true" class="min-w-56" 
-          style="background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius); box-shadow: var(--shadow-lg); width:14rem; box-sizing:border-box; overflow:hidden;">
-          <div role="menu" id="${this._menuId}" aria-labelledby="${this._triggerId}" style="padding:0.25rem;"></div>
-        </div>
-      `);
-      this._menuContainer.add(this._menuHtml);
+      const popupDom = popupContentEl.getDomElement
+        ? popupContentEl.getDomElement()
+        : null;
+      if (!popupDom) return;
 
-      this._menuHtml.addListenerOnce("appear", () => {
-        this._applyMenuSizing();
-      });
+      this._popupDom = popupDom;
+
+      // Style the popup container itself
+      popupDom.style.background = "var(--popover)";
+      popupDom.style.color = "var(--popover-foreground)";
+      popupDom.style.border = "1px solid var(--border)";
+      popupDom.style.borderRadius = "var(--radius)";
+      popupDom.style.boxShadow = "var(--shadow-lg)";
+      popupDom.style.overflow = "hidden";
+      popupDom.style.boxSizing = "border-box";
+      popupDom.style.padding = "0";
+
+      // Create or reuse the menu div inside the popup
+      let menuDiv = popupDom.querySelector("#" + this._menuId);
+      if (!menuDiv) {
+        menuDiv = document.createElement("div");
+        menuDiv.setAttribute("role", "menu");
+        menuDiv.id = this._menuId;
+        menuDiv.setAttribute("aria-labelledby", this._triggerId);
+        menuDiv.style.padding = "0.25rem";
+        popupDom.appendChild(menuDiv);
+      }
+      this._menuDom = menuDiv;
+
+      this._renderMenu();
+      qx.event.Timer.once(() => this._sizePopupToContent(), this, 20);
     },
 
     _escapeHtml(text) {
@@ -176,16 +198,12 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     },
 
     _getMenuElement() {
-      if (!this._menuHtml || !this._menuHtml.getContentElement()) return null;
-      const host = this._menuHtml.getContentElement().getDomElement();
-      return host ? host.querySelector("#" + this._menuId) : null;
+      return this._menuDom || null;
     },
 
     _syncAria(open) {
       const trigger = this._getTriggerElement();
-      const menu = this._getMenuElement();
       if (trigger) trigger.setAttribute("aria-expanded", open ? "true" : "false");
-      if (menu) menu.parentElement.setAttribute("aria-hidden", open ? "false" : "true");
     },
 
     _applyTriggerLabel(value) {
@@ -229,20 +247,26 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
 
     _applyMenuSizing() {
       const sizing = this._resolveMenuSizing();
-      const popover = this._getMenuElement()?.parentElement;
-      if (popover) {
-        popover.classList.remove("min-w-56", "min-w-48", "min-w-64");
-        popover.classList.add(sizing.className || "min-w-56");
-        popover.style.width = sizing.cssWidth || (sizing.px + "px");
-      }
       const width = sizing.px || 224;
-      
-      if (this._menuContainer) {
-        this._menuContainer.setMinWidth(width);
-      }
       if (this._popup) {
         this._popup.setMinWidth(width);
         this._popup.setWidth(width);
+      }
+      if (this._popupDom) {
+        this._popupDom.style.width = width + "px";
+        this._popupDom.style.minWidth = width + "px";
+      }
+    },
+
+    _sizePopupToContent() {
+      if (!this._menuDom || !this._popup) return;
+      const h = this._menuDom.scrollHeight || this._menuDom.offsetHeight;
+      if (h > 4) {
+        this._popup.setMinHeight(h);
+        this._popup.setHeight(h);
+        if (this._popupDom) {
+          this._popupDom.style.height = h + "px";
+        }
       }
     },
 
@@ -311,14 +335,21 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       for (let i = 0; i < this._menuItems.length; i++) {
         const item = this._menuItems[i];
 
-        // Handle separator
+        // separator:true means "add a divider line BEFORE this item, then render the item"
         if (item.separator) {
+          // Close any open group first
+          if (currentGroup !== null) {
+            html += `</div>`;
+            currentGroup = null;
+          }
           html += `<hr role="separator" style="margin:0.25rem 0;border:0;border-top:1px solid var(--border);" />`;
-          continue;
         }
 
         // Handle group header
         if (item.group && item.group !== currentGroup) {
+          if (currentGroup !== null) {
+            html += `</div>`;
+          }
           currentGroup = item.group;
           const groupId = "group-" + item.group;
           html += `
@@ -331,51 +362,44 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
 
         // Build menu item HTML
         const isSelected = this._selectedItem && this._selectedItem.value === item.value;
-        const isDisabled = item.disabled ? "aria-disabled=\"true\" style=\"opacity:0.5;pointer-events:none;\"" : "";
-        
+        const disabledAttrs = item.disabled ? `aria-disabled="true" style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;font-size:0.875rem;line-height:1.25;cursor:default;border-radius:var(--radius);opacity:0.5;pointer-events:none;"` : "";
+        const activeStyle = isSelected ? "background:var(--accent);color:var(--accent-foreground);" : "";
+
         let itemHtml = `
-          <div role="menuitem" 
+          <div role="menuitem"
             data-value="${this._escapeHtml(item.value)}"
             tabindex="${item.disabled ? -1 : 0}"
-            ${isDisabled}
-            style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;font-size:0.875rem;line-height:1.25;cursor:pointer;border-radius:var(--radius);${isSelected ? 'background:var(--accent);color:var(--accent-foreground);' : ''}"
+            ${disabledAttrs || `style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;font-size:0.875rem;line-height:1.25;cursor:pointer;border-radius:var(--radius);${activeStyle}"`}
           >
             <span>${this._escapeHtml(item.label)}</span>
         `;
 
-        // Add shortcut if present
         if (item.shortcut) {
-          itemHtml += `
-            <span class="text-muted-foreground ml-auto text-xs tracking-widest" style="color:var(--muted-foreground);margin-left:auto;font-size:0.75rem;">
-              ${this._escapeHtml(item.shortcut)}
-            </span>
-          `;
+          itemHtml += `<span style="color:var(--muted-foreground);margin-left:auto;font-size:0.75rem;">${this._escapeHtml(item.shortcut)}</span>`;
         }
 
         itemHtml += `</div>`;
         html += itemHtml;
 
-        // Close group div if next item is different group or at end
-        if (i < this._menuItems.length - 1) {
-          const nextItem = this._menuItems[i + 1];
-          if (nextItem.group !== currentGroup && currentGroup !== null) {
-            html += `</div>`;
-          }
-        } else if (currentGroup !== null) {
+        // Close open group at last item
+        if (i === this._menuItems.length - 1 && currentGroup !== null) {
           html += `</div>`;
         }
       }
 
       menu.innerHTML = html;
 
-      // Add click listeners to menu items
-      const menuItems = menu.querySelectorAll('[role="menuitem"][data-value]');
-      menuItems.forEach((el) => {
-        el.addEventListener("click", (e) => {
-          const value = el.getAttribute("data-value");
-          this._selectItem(value);
+      // Add click listeners
+      menu.querySelectorAll('[role="menuitem"][data-value]').forEach((el) => {
+        el.addEventListener("click", () => {
+          this._selectItem(el.getAttribute("data-value"));
         });
       });
+
+      // Re-fit popup height whenever menu is re-rendered while open
+      if (this._popup && this._popup.isVisible()) {
+        qx.event.Timer.once(() => this._sizePopupToContent(), this, 20);
+      }
     },
 
     _selectItem(value) {
@@ -398,11 +422,6 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
     show(e) {
       if (!this._popup) return;
       if (this._popup.isVisible()) return;
-
-      // Ensure size is set before showing
-      const width = this._menuContainer.getMinWidth() || 224;
-      this._popup.setMinWidth(width);
-      this._popup.setWidth(width);
 
       if (this._popup.placeToWidget) {
         this._popup.placeToWidget(this._triggerHtml, true);
@@ -445,6 +464,8 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
   },
 
   destruct() {
-    this._disposeObjects("_popup", "_triggerHtml", "_menuContainer", "_menuHtml");
+    this._popupDom = null;
+    this._menuDom = null;
+    this._disposeObjects("_popup", "_triggerHtml");
   }
 });

@@ -237,8 +237,8 @@ qx.Class.define("qooxdo_proj.components.ui.Card", {
       dom.setAttribute("data-intent", intent);
 
       if (intent === "warning") {
-        dom.style.borderColor = "var(--warning, #f59e0b)";
-        dom.style.background = "color-mix(in srgb, var(--warning, #f59e0b) 8%, var(--card))";
+        dom.style.borderColor = "var(--warning)";
+        dom.style.background = "color-mix(in srgb, var(--warning) 8%, var(--card))";
       } else if (intent === "destructive") {
         dom.style.borderColor = "var(--destructive)";
         dom.style.background = "color-mix(in srgb, var(--destructive) 8%, var(--card))";

@@ -17,6 +17,14 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
       check: ["left", "center", "right", "justify"],
       init: "left",
       apply: "_applyTextAlign"
+    },
+    /** Font style for section headers: "bold", "italic", or null (does not conflict with theme font) */
+    fontStyle: {
+      check: ["bold", "italic"],
+      nullable: true,
+      init: null,
+      apply: "_applyFontStyle",
+      event: "changeFontStyle"
     }
   },
 
@@ -44,19 +52,13 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
     // Add child with layout properties
     this._add(this._html, { edge: 0 });
 
-    // Listen to font property changes
-    this.addListener("changeFont", (e) => {
-      this._applyFont(e.getData());
-    }, this);
-
     // Hook DOM updates after the element appears
     this._html.addListenerOnce("appear", () => {
       // Now apply properties via property system to sync state
       if (this._initialValue) {
         this.setValue(this._initialValue);
       }
-      // Apply font (handles null values)
-      this._applyFont(this.getFont());
+      this._applyFontStyle(this.getFontStyle());
       this._applyTextAlign(this.getTextAlign());
     });
   },
@@ -134,20 +136,19 @@ qx.Class.define("qooxdo_proj.components.ui.Label", {
     },
 
     /**
-     * Apply font styling
-     * @param {String|null} font - Font style (e.g., "bold", "italic") or null
+     * Apply font style (bold/italic) for section headers
+     * @param {String|null} fontStyle - "bold", "italic", or null
      */
-    _applyFont(font) {
+    _applyFontStyle(fontStyle) {
       const label = this._getLabelElement();
       if (label) {
-        if (font === "bold") {
+        if (fontStyle === "bold") {
           label.style.fontWeight = "bold";
           label.style.fontStyle = "";
-        } else if (font === "italic") {
+        } else if (fontStyle === "italic") {
           label.style.fontStyle = "italic";
           label.style.fontWeight = "";
         } else {
-          // Clear font styling for null or other values
           label.style.fontWeight = "";
           label.style.fontStyle = "";
         }

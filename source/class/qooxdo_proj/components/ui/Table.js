@@ -77,31 +77,31 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     this._html = new qx.ui.embed.Html(`
       <div class="table-container" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
         <div class="overflow-x-auto" style="flex: 1; overflow: auto;">
-          <table class="table" id="${this._tableId}" style="border: 1px solid rgba(0, 0, 0, 0.15); border-collapse: collapse; width: 100%;">
+          <table class="table" id="${this._tableId}" style="border: 1px solid var(--border); border-collapse: collapse; width: 100%;">
             <caption></caption>
             <thead></thead>
             <tbody></tbody>
             <tfoot></tfoot>
           </table>
         </div>
-        <nav role="navigation" aria-label="pagination" class="pagination-container mx-auto flex w-full justify-center" style="display: none; padding: 16px 0; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.1);">
-          <ul class="pagination-pages-list flex flex-row items-center gap-1" style="display: flex; flex-direction: row; list-style: none; margin: 0; padding: 0; gap: 4px;">
-            <li>
-              <a href="#" class="btn-ghost pagination-prev" tabindex="0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+        <nav role="navigation" aria-label="pagination" class="pagination-container mx-auto flex w-full justify-center" style="display: none; padding: 16px 0; margin-top: 8px; border-top: 1px solid var(--border); overflow: visible; flex-shrink: 0; min-height: 60px;">
+          <ul class="pagination-pages-list flex flex-row items-center gap-1" style="display: flex; flex-direction: row; flex-wrap: nowrap; list-style: none; margin: 0; padding: 0; gap: 4px; overflow: visible; align-items: center;">
+            <li style="flex-shrink: 0;">
+              <a href="#" class="btn-ghost pagination-prev" tabindex="0" style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: visible; width: auto; min-width: max-content; padding: 0 10px; height: 36px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m15 18-6-6 6-6" /></svg>
                 <span>Previous</span>
               </a>
             </li>
-            <li class="pagination-pages"></li>
+            <li class="pagination-pages" style="display: flex; flex-direction: row; flex-wrap: nowrap;"></li>
             <li>
               <div class="pagination-ellipsis size-9 flex items-center justify-center" style="display: none;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
               </div>
             </li>
-            <li>
-              <a href="#" class="btn-ghost pagination-next" tabindex="0">
+            <li style="flex-shrink: 0;">
+              <a href="#" class="btn-ghost pagination-next" tabindex="0" style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: visible; width: auto; min-width: max-content; padding: 0 10px; height: 36px;">
                 <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m9 18 6-6-6-6" /></svg>
               </a>
             </li>
           </ul>
@@ -139,7 +139,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
 
       // Ensure table has visible border and auto layout for automatic column width adjustment
       if (this._tableElement) {
-        this._tableElement.style.border = "1px solid rgba(0, 0, 0, 0.15)";
+        this._tableElement.style.border = "1px solid var(--border)";
         this._tableElement.style.borderCollapse = "collapse";
         // Use auto layout to allow columns to adjust based on content
         this._tableElement.style.tableLayout = "auto";
@@ -436,11 +436,11 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
 
         const isActive = page === currentPage;
         const btnStyle = isActive
-          ? "background-color: transparent; border: 1px solid rgba(0,0,0,0.2); color: inherit;"
+          ? "background-color: transparent; border: 1px solid var(--border); color: inherit;"
           : "background-color: transparent; border: none; color: inherit;";
         html += `
           <li style="display: inline-block;">
-            <a href="#" class="pagination-page-btn ${isActive ? 'btn-icon-outline' : 'btn-icon-ghost'}" data-page="${page}" tabindex="0" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; ${btnStyle} text-decoration: none; border-radius: 4px; cursor: pointer;">
+            <a href="#" class="pagination-page-btn ${isActive ? 'btn-icon-outline' : 'btn-icon-ghost'}" data-page="${page}" tabindex="0" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; ${btnStyle} text-decoration: none; border-radius: var(--radius); cursor: pointer;">
               ${page}
             </a>
           </li>
@@ -761,7 +761,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         this._theadElement.innerHTML = "";
         const headerRow = document.createElement("tr");
         // Ensure header row has visible border and proper height
-        headerRow.style.borderBottom = "1px solid rgba(0, 0, 0, 0.1)";
+        headerRow.style.borderBottom = "1px solid var(--border)";
         headerRow.style.minHeight = "44px"; // Consistent header height
         headerRow.style.height = "auto"; // Allow height to adjust
         this._headers.forEach((headerText, index) => {
@@ -779,8 +779,8 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
           }
           
           // Add cell borders
-          th.style.borderRight = "1px solid rgba(0, 0, 0, 0.1)";
-          th.style.borderBottom = "1px solid rgba(0, 0, 0, 0.1)";
+          th.style.borderRight = "1px solid var(--border)";
+          th.style.borderBottom = "1px solid var(--border)";
           th.style.position = "relative";
           
           // Set content directly
@@ -815,13 +815,13 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             // Add hover effect - highlight the border
             resizeHandle.addEventListener("mouseenter", () => {
               if (!this._isResizing) {
-                th.style.borderRight = "2px solid rgba(0, 0, 0, 0.3)";
-                resizeHandle.style.backgroundColor = "rgba(0, 0, 0, 0.05)";
+                th.style.borderRight = "2px solid var(--border)";
+                resizeHandle.style.backgroundColor = "var(--muted)";
               }
             });
             resizeHandle.addEventListener("mouseleave", () => {
               if (!this._isResizing) {
-                th.style.borderRight = "1px solid rgba(0, 0, 0, 0.1)";
+                th.style.borderRight = "1px solid var(--border)";
                 resizeHandle.style.backgroundColor = "transparent";
               }
             });
@@ -860,7 +860,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
           // Add hover effect for clickable rows
           tr.style.cursor = "pointer";
           tr.addEventListener("mouseenter", () => {
-            tr.style.backgroundColor = "rgba(0, 0, 0, 0.05)";
+            tr.style.backgroundColor = "var(--muted)";
           });
           tr.addEventListener("mouseleave", () => {
             tr.style.backgroundColor = "";
@@ -882,8 +882,8 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             }
             
             // Add cell borders
-            td.style.borderRight = "1px solid rgba(0, 0, 0, 0.1)";
-            td.style.borderBottom = "1px solid rgba(0, 0, 0, 0.1)";
+            td.style.borderRight = "1px solid var(--border)";
+            td.style.borderBottom = "1px solid var(--border)";
             // Remove right border from last cell
             if (index === row.cells.length - 1) {
               td.style.borderRight = "none";
@@ -957,8 +957,8 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
             }
             
             // Add cell borders
-            td.style.borderRight = "1px solid rgba(0, 0, 0, 0.1)";
-            td.style.borderBottom = "1px solid rgba(0, 0, 0, 0.1)";
+            td.style.borderRight = "1px solid var(--border)";
+            td.style.borderBottom = "1px solid var(--border)";
             // Remove right border from last cell (unless it has colspan)
             if (index === row.cells.length - 1 && (!cell.colspan || cell.colspan === 1)) {
               td.style.borderRight = "none";
@@ -1068,8 +1068,8 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
         this._resizeStartWidth = th.offsetWidth;
 
         // Add visual feedback - highlight border during resize
-        th.style.borderRight = "2px solid rgba(0, 0, 0, 0.4)";
-        handle.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+        th.style.borderRight = "2px solid var(--border)";
+        handle.style.backgroundColor = "var(--muted)";
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
 
@@ -1097,7 +1097,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
 
           // Remove visual feedback - restore normal border
           if (th) {
-            th.style.borderRight = "1px solid rgba(0, 0, 0, 0.1)";
+            th.style.borderRight = "1px solid var(--border)";
           }
           if (handle) {
             handle.style.backgroundColor = "transparent";

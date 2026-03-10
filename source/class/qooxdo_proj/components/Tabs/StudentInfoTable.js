@@ -89,7 +89,7 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
 
         // Enable pagination with basecoat styling
         this._table.setPagination(true);
-        this._table.setPageSize(10); // Show 10 rows per page
+        this._table.setPageSize(10); // Show 10 rows per page 
 
         // Set table size
         this._table.set({
@@ -121,8 +121,8 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
         this._editWindow.setSize("lg");
         this._editWindow.setDialogMaxWidth("700px");
         this._editWindow.setDialogMaxHeight("80vh");
-        this._editWindow.setCancelLabel("Cancel");
         this._editWindow.setSaveLabel("Save Student");
+        this._editWindow.setCancelLabel("Cancel");
         this._editWindow.setSaveIntent("primary");
         this._editWindow.addListener("save", () => {
           if (!this._currentStudent || this._currentStudent.id == null) {
@@ -519,12 +519,20 @@ qx.Class.define("qooxdo_proj.components.Tabs.StudentInfoTable",
           return response.json();
         })
         .then(result => {
-          // Reload students to refresh the table
           this.loadStudents();
+          this._ensureFeedbackUI();
+          if (this._feedbackToast) {
+            this._feedbackToast.show({
+              category: "success",
+              title: "Student deleted",
+              description: "The student record was permanently removed.",
+              cancel: { label: "Dismiss" }
+            });
+          }
         })
         .catch(error => {
           console.error("Failed to delete student:", error);
-            this._showErrorFeedback("Failed to delete student", error.message);
+          this._showErrorFeedback("Failed to delete student", error.message);
         });
       },
 

@@ -83,18 +83,19 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
     this._add(this._triggerHtml, { edge: 0 });
 
     this._panelHtml = new qx.ui.embed.Html(`
-      <div id="${this._panelId}" aria-hidden="true" class="w-80 qx-popover-panel"
-        style="background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem; box-shadow: var(--shadow-lg); width:20rem; max-width:24rem; box-sizing:border-box;">
-        <div class="grid gap-4">
-          <header class="grid gap-1.5">
-            <h4 class="leading-none font-medium popover-title">${titleEsc}</h4>
-            <p class="text-muted-foreground text-sm popover-description">${descEsc}</p>
-          </header>
-          <div class="popover-section-content" style="display:block; width:100%; max-width:none; white-space:normal; word-break:break-word; overflow-wrap:anywhere; line-height:1.35;"></div>
+      <div id="${this._panelId}" aria-hidden="true" class="qx-popover-panel"
+        style="background:var(--popover); color:var(--popover-foreground); border:1px solid var(--border); border-radius:var(--radius); padding:0.75rem; box-shadow: var(--shadow-lg); width:320px; max-width:320px; min-width:320px; box-sizing:border-box; overflow:hidden;">
+        <div style="display:block; width:100%; box-sizing:border-box;">
+          <div style="display:block; margin-bottom:0.75rem;">
+            <h4 class="font-medium popover-title" style="margin:0 0 0.375rem 0; font-weight:600; line-height:1.5; white-space:normal; word-break:break-word; overflow-wrap:break-word; width:100%; max-width:100%; display:block;">${titleEsc}</h4>
+            <p class="text-muted-foreground popover-description" style="margin:0; font-size:0.875rem; color:var(--muted-foreground); line-height:1.5; white-space:normal; word-break:break-word; overflow-wrap:break-word; width:100%; max-width:100%; display:block;">${descEsc}</p>
+          </div>
+          <div class="popover-section-content" style="display:block; width:100%; max-width:100%; white-space:normal; word-break:break-word; overflow-wrap:break-word; line-height:1.5; box-sizing:border-box;"></div>
         </div>
       </div>
     `);
     this._panelHtml.setAllowGrowX(true);
+    this._panelHtml.setAllowGrowY(true);
 
     this._popup = new qx.ui.popup.Popup(new qx.ui.layout.Grow()).set({
       autoHide: true,
@@ -133,6 +134,15 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
       this._applyDescription(this.getDescription());
       this._applyPopoverSizing();
       this._renderSectionContent();
+      // Patch qooxdoo's own wrapper div so it doesn't clip the panel
+      const wrapperDom = this._panelHtml.getContentElement
+        ? this._panelHtml.getContentElement().getDomElement()
+        : null;
+      if (wrapperDom) {
+        wrapperDom.style.overflow = "visible";
+        wrapperDom.style.width = "320px";
+        wrapperDom.style.maxWidth = "320px";
+      }
     }, this);
   },
 
@@ -237,24 +247,35 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
     _applyPopoverSizing() {
       const sizing = this._resolvePopoverSizing();
       const panel = this._getPanelElement();
-      const widthClass = sizing.className || "w-80";
       const widthPx = sizing.px || 320;
       if (panel) {
-        panel.classList.remove("w-64", "w-72", "w-80", "w-96");
-        panel.classList.add(widthClass);
         panel.style.width = widthPx + "px";
-        panel.style.maxWidth = sizing.maxWidth;
+        panel.style.minWidth = widthPx + "px";
+        panel.style.maxWidth = widthPx + "px";
+        panel.style.boxSizing = "border-box";
+        panel.style.overflow = "hidden";
       }
 
       if (this._panelHtml) {
         this._panelHtml.setMinWidth(widthPx);
         this._panelHtml.setWidth(widthPx);
+        this._panelHtml.setMinHeight(50);
+        // Patch the qooxdoo wrapper div width too
+        const wrapperDom = this._panelHtml.getContentElement
+          ? this._panelHtml.getContentElement().getDomElement()
+          : null;
+        if (wrapperDom) {
+          wrapperDom.style.overflow = "visible";
+          wrapperDom.style.width = widthPx + "px";
+          wrapperDom.style.maxWidth = widthPx + "px";
+        }
       }
 
       // Also size the qx popup widget itself so qooxdoo doesn't clip inner HTML.
       if (this._popup) {
         this._popup.setMinWidth(widthPx);
         this._popup.setWidth(widthPx);
+        this._popup.setMinHeight(50);
       }
     },
 
