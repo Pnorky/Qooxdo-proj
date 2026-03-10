@@ -75,6 +75,16 @@ qx.Class.define("qooxdo_proj.Application",
             syncSidebarAndNavbarLayout();
           }
         }, this);
+        menuBar.addListener("toggleQuickActions", () => {
+          if (!this._buttonContainer) return;
+          if (this._buttonContainer.isVisible && this._buttonContainer.isVisible()) {
+            this._buttonContainer.close();
+          } else {
+            this._buttonContainer.open();
+            this._buttonContainer.setVisibility("visible");
+            syncSidebarAndNavbarLayout();
+          }
+        }, this);
         
         rootContainer.add(menuBar, { left: 0, top: 0, right: 0 });
 
@@ -104,6 +114,8 @@ qx.Class.define("qooxdo_proj.Application",
           const rootBounds = rootContainer.getBounds ? rootContainer.getBounds() : null;
           const viewportWidth = (rootBounds && rootBounds.width) || window.innerWidth || 1200;
           const isMobile = viewportWidth <= this._mobileBreakpoint;
+          const isMainScreenVisible =
+            !!this._mainContainer && this._mainContainer.getVisibility && this._mainContainer.getVisibility() === "visible";
 
           const sidebarBounds = this._sidebar.getBounds ? this._sidebar.getBounds() : null;
           const sidebarWidth = (sidebarBounds && sidebarBounds.width) || this._sidebar.getWidth() || 280;
@@ -145,14 +157,16 @@ qx.Class.define("qooxdo_proj.Application",
             }
 
             if (this._buttonContainer) {
-              this._buttonContainer.resetWidth();
-              setLayoutProps(this._buttonContainer, {
-                left: 12,
-                right: 12,
-                top: 72,
-                bottom: null
-              });
-              this._buttonContainer.setVisibility(this._mobileSidebarOpen ? "excluded" : "visible");
+              const mobilePanelWidth = Math.max(280, viewportWidth - 24);
+              this._buttonContainer.setWidth(mobilePanelWidth);
+              if (this._buttonContainer.moveTo) {
+                this._buttonContainer.moveTo(12, 72);
+              }
+              if (this._buttonContainer.isVisible && this._buttonContainer.isVisible()) {
+                this._buttonContainer.setVisibility(
+                  isMainScreenVisible && !this._mobileSidebarOpen ? "visible" : "excluded"
+                );
+              }
             }
             if (this._actionButtonsRow) {
               this._actionButtonsRow.setLayout(new qx.ui.layout.VBox(8));
@@ -168,10 +182,13 @@ qx.Class.define("qooxdo_proj.Application",
             // Desktop: fixed left rail + navbar offset.
             this._mobileLayoutPassScheduled = false;
             this._mobileSidebarOpen = false;
+            const desktopSidebarWidth = Math.max(280, Math.min(360, Math.round(viewportWidth * 0.2)));
+            if (this._sidebar && this._sidebar.setExpandedWidth) {
+              this._sidebar.setExpandedWidth(desktopSidebarWidth);
+            }
             this._sidebar.resetHeight();
             this._sidebar.resetMaxHeight();
             this._sidebar.resetMaxWidth();
-            this._sidebar.setCollapsed(false);
             setLayoutProps(this._sidebar, { left: 0, top: 0, bottom: 0, right: null });
             this._sidebar.setZIndex(0);
             if (this._mobileSidebarBackdrop) {
@@ -181,8 +198,13 @@ qx.Class.define("qooxdo_proj.Application",
             setLayoutProps(menuBar, { left: sidebarWidth, top: 0, right: 0 });
             if (this._buttonContainer) {
               this._buttonContainer.setWidth(400);
-              setLayoutProps(this._buttonContainer, { right: 50, top: 80, left: null, bottom: null });
-              this._buttonContainer.setVisibility("visible");
+              const quickActionsX = Math.max(12, viewportWidth - 400 - 50);
+              if (this._buttonContainer.moveTo) {
+                this._buttonContainer.moveTo(quickActionsX, 80);
+              }
+              if (this._buttonContainer.isVisible && this._buttonContainer.isVisible()) {
+                this._buttonContainer.setVisibility(isMainScreenVisible ? "visible" : "excluded");
+              }
             }
             if (this._actionButtonsRow) {
               this._actionButtonsRow.setLayout(new qx.ui.layout.HBox(10));
@@ -283,11 +305,10 @@ qx.Class.define("qooxdo_proj.Application",
           this._studentInfoTableWindow.loadStudents();
         }, this);
 
-        // Main container for buttons and status
+        // Main panel content for the quick actions window
         const mainContainer = new qx.ui.container.Composite();
         mainContainer.setLayout(new qx.ui.layout.VBox(10));
         mainContainer.setPadding(20);
-        // Apply theme card colors
         qooxdo_proj.util.Theme.styleContainer(mainContainer, {
           background: "card",
           foreground: "card-foreground",
@@ -344,12 +365,24 @@ qx.Class.define("qooxdo_proj.Application",
           this._statusLabel.setValue("Counter reset to 0");
         });
 
-        mainContainer.setWidth(400);
-        // Position the main container in the bottom right area to avoid overlapping with windows
-        rootContainer.add(mainContainer, { right: 50, top: 80 });
+        const mainPanelWindow = new qx.ui.window.Window("Quick Actions");
+        mainPanelWindow.setLayout(new qx.ui.layout.Grow());
+        mainPanelWindow.setShowClose(true);
+        mainPanelWindow.setAllowClose(true);
+        mainPanelWindow.setShowMaximize(false);
+        mainPanelWindow.setAllowMaximize(false);
+        mainPanelWindow.setShowMinimize(true);
+        mainPanelWindow.setAllowMinimize(true);
+        mainPanelWindow.setMovable(true);
+        mainPanelWindow.setResizable(false);
+        mainPanelWindow.setWidth(400);
+        mainPanelWindow.setMinWidth(340);
+        mainPanelWindow.add(mainContainer);
+        root.add(mainPanelWindow, { right: 50, top: 80 });
+        mainPanelWindow.close();  
         
-        // Store reference to main container for later use
-        this._buttonContainer = mainContainer;
+        // Store reference to the window for responsive positioning
+        this._buttonContainer = mainPanelWindow;
         qx.event.Timer.once(syncSidebarAndNavbarLayout, this, 0);
       },
 
@@ -367,6 +400,9 @@ qx.Class.define("qooxdo_proj.Application",
           const primaryColor = qooxdo_proj.util.Theme.getCSSVariable("primary");
           this._statusLabel.setValue(`<span style='color: ${primaryColor};'>Welcome, ${username}!</span>`);
         }
+        if (this._buttonContainer) {
+          this._buttonContainer.close();
+        }
         if (this._sidebar) {
           this._sidebar.setSidebarSubtitle(`Signed in as ${username}`);
         }
@@ -380,6 +416,9 @@ qx.Class.define("qooxdo_proj.Application",
         
         // Hide main application
         this._mainContainer.setVisibility("hidden");
+        if (this._buttonContainer) {
+          this._buttonContainer.close();
+        }
         
         // Show login page
         this._loginPage.setVisibility("visible");

@@ -222,7 +222,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
       return `
         <div id="${this._popoverId}" data-popover aria-hidden="true" class="min-w-56" 
           style="background:var(--popover, #ffffff); color:var(--popover-foreground, #111827); border:1px solid var(--border, #e5e7eb); border-radius:var(--radius, 0.5rem); box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.14)); width:14rem; box-sizing:border-box; overflow:hidden;">
-          <div role="menu" id="${this._menuId}" aria-labelledby="${this._triggerId}" style="display:block; width:100%; padding:0.25rem; color:var(--popover-foreground, #111827); box-sizing:border-box;">
+          <div role="menu" id="${this._menuId}" aria-labelledby="${this._triggerId}" style="display:block; width:100%; padding:0.25rem; color:var(--popover-foreground, #111827); box-sizing:border-box; max-height:min(22rem, calc(100vh - 2rem)); overflow-y:auto;">
             ${itemsHtml || ""}
           </div>
         </div>
@@ -349,20 +349,14 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
      * Render the menu items
      */
     _renderMenu() {
-      const menu = this._getMenuElement();
-      if (!menu) {
-        if (!this._renderRetryScheduled) {
-          this._renderRetryScheduled = true;
-          qx.event.Timer.once(() => {
-            this._renderRetryScheduled = false;
-            this._renderMenu();
-          }, this, 0);
-        }
-        return;
-      }
-
       let html = "";
       let currentGroup = null;
+      const closeCurrentGroup = () => {
+        if (currentGroup !== null) {
+          html += `</div>`;
+          currentGroup = null;
+        }
+      };
 
       for (let i = 0; i < this._menuItems.length; i++) {
         const item = this._menuItems[i];
@@ -390,6 +384,8 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
                 ${this._escapeHtml(item.groupLabel || item.group)}
               </div>
           `;
+        } else {
+          closeCurrentGroup();
         }
 
         // Build menu item HTML
@@ -418,19 +414,33 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
           html += `</div>`;
         }
       }
+      closeCurrentGroup();
 
-      if (this._menuHtml && this._menuHtml.setHtml) {
-        this._menuHtml.setHtml(this._composeMenuHtml(html));
-      }
       const renderedMenu = this._getMenuElement();
-      if (!renderedMenu) return;
+      if (!renderedMenu) {
+        if (!this._renderRetryScheduled) {
+          this._renderRetryScheduled = true;
+          qx.event.Timer.once(() => {
+            this._renderRetryScheduled = false;
+            this._renderMenu();
+          }, this, 0);
+        }
+        return;
+      }
 
-      // Add click listeners
-      menu.querySelectorAll('[role="menuitem"][data-value]').forEach((el) => {
-        el.addEventListener("click", () => {
-          this._selectItem(el.getAttribute("data-value"));
-        });
-      });
+      renderedMenu.innerHTML = html;
+      renderedMenu.onclick = (ev) => {
+        const target = ev.target;
+        const itemEl = target && target.closest
+          ? target.closest('[role="menuitem"][data-value]')
+          : null;
+        if (!itemEl) return;
+        const value = itemEl.getAttribute("data-value");
+        if (value != null) {
+          this._selectItem(value);
+        }
+      };
+      this._applyMenuSizing();
 
       // Re-fit popup height whenever menu is re-rendered while open
       if (this._popup && this._popup.isVisible()) {

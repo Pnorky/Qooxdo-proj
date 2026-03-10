@@ -17,6 +17,8 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       logout: "qx.event.type.Event",
       /** Fired when mobile sidebar toggle is requested */
       toggleSidebar: "qx.event.type.Event",
+      /** Fired to toggle the Quick Actions window */
+      toggleQuickActions: "qx.event.type.Event",
     },
 
     construct: function () {
@@ -630,11 +632,14 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
       _getWindowMenu: function () {
         var menu = new qx.ui.menu.Menu();
 
+        var quickActionsButton = new qx.ui.menu.Button("Quick Actions");
         var cascadeWindowsButton = new qx.ui.menu.Button("Cascade Windows");
         var tileWindowsButton = new qx.ui.menu.Button("Tile Windows");
         var closeAllButton = new qx.ui.menu.Button("Close All Windows");
         var toggleThemeButton = new qx.ui.menu.Button("Toggle Dark Mode");
 
+        menu.add(quickActionsButton);
+        menu.add(this._createMenuSeparator());
         menu.add(cascadeWindowsButton);
         menu.add(tileWindowsButton);
         menu.add(this._createMenuSeparator());
@@ -643,6 +648,10 @@ qx.Class.define("qooxdo_proj.components.MenuBar",
         menu.add(toggleThemeButton);
 
         // Event handlers
+        quickActionsButton.addListener("execute", () => {
+          this.fireEvent("toggleQuickActions");
+        }, this);
+
         cascadeWindowsButton.addListener("execute", () => {
           if (this._windowManager) {
             this._windowManager.cascadeWindows();

@@ -55,6 +55,13 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
     _expandedWidth: 280,
     _collapsedWidth: 72,
 
+    setExpandedWidth: function (width) {
+      const nextWidth = Math.max(240, Math.round(Number(width) || this._expandedWidth));
+      if (nextWidth === this._expandedWidth) return;
+      this._expandedWidth = nextWidth;
+      this._applyCollapsed(this.isCollapsed());
+    },
+
     _buildUi: function () {
       this._card = new qooxdo_proj.components.ui.Card("Quick Access", "Open forms and actions", true);
       this._card.setFullWidth(true);
@@ -122,6 +129,28 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
             }
             .qoox-sidebar nav h3 {
               color: var(--muted-foreground) !important;
+            }
+            @media (min-width: 901px) {
+              .qoox-sidebar nav h3 {
+                font-size: 1.02rem !important;
+                font-weight: 700 !important;
+              }
+              .qoox-sidebar nav ul li > a,
+              .qoox-sidebar nav ul li > details > summary {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                min-height: 2.7rem;
+                font-size: 1.02rem !important;
+                font-weight: 600 !important;
+                padding: 0.58rem 0.9rem !important;
+                border-radius: 0.5rem !important;
+              }
+              .qoox-sidebar .nav-icon {
+                width: 1.35rem !important;
+                margin-right: 0.28rem !important;
+                font-size: 1rem !important;
+              }
             }
             .qoox-sidebar.is-collapsed nav h3,
             .qoox-sidebar.is-collapsed .nav-text {
