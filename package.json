@@ -20,11 +20,15 @@
     "compile": "npm run build:tailwind && qx compile",
     "serve": "npm run build:tailwind && qx serve",
     "server": "node backend/server.js",
-    "watch": "qx watch"
+    "watch": "qx watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:phase2": "tsc -p tsconfig.phase2.json --noEmit",
+    "typecheck:phase3": "tsc -p tsconfig.phase3.json --noEmit"
   },
   "devDependencies": {
     "@qooxdoo/compiler": "^1.0.5",
-    "@qooxdoo/framework": "^6.0.4"
+    "@qooxdoo/framework": "^6.0.4",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",

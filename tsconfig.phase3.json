@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.phase2.json",
+  "compilerOptions": {
+    "strict": true
+  }
+}
