@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -40,7 +39,7 @@ qx.Class.define("qooxdo_proj.components.ui.CheckBox", {
   },
 
   construct(label = "") {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     this._setLayout(new qx.ui.layout.Canvas());
 
@@ -66,33 +65,33 @@ qx.Class.define("qooxdo_proj.components.ui.CheckBox", {
   },
 
   members: {
-    _html: null,
-    _initialLabel: null,
+    _html: null as any,
+    _initialLabel: null as string | null,
 
-    _escapeHtml(text) {
+    _escapeHtml(text: string | null | undefined): string {
       if (!text) return "";
       const div = document.createElement("div");
       div.textContent = text;
       return div.innerHTML;
     },
 
-    _getRootElement() {
+    _getRootElement(): HTMLLabelElement | null {
       if (!this._html || !this._html.getContentElement()) return null;
-      const dom = this._html.getContentElement().getDomElement();
+      const dom = this._html.getContentElement().getDomElement() as HTMLElement | null;
       return dom ? dom.querySelector("label") : null;
     },
 
-    _getInputElement() {
+    _getInputElement(): HTMLInputElement | null {
       const root = this._getRootElement();
       return root ? root.querySelector('input[type="checkbox"]') : null;
     },
 
-    _getLabelTextElement() {
+    _getLabelTextElement(): HTMLSpanElement | null {
       const root = this._getRootElement();
       return root ? root.querySelector(".checkbox-label-text") : null;
     },
 
-    _attachInputListener() {
+    _attachInputListener(): void {
       const input = this._getInputElement();
       if (!input) return;
       input.addEventListener("change", () => {
@@ -101,14 +100,14 @@ qx.Class.define("qooxdo_proj.components.ui.CheckBox", {
       });
     },
 
-    _applyLabel(value) {
+    _applyLabel(value: string): void {
       const span = this._getLabelTextElement();
       if (span) {
         span.textContent = value || "";
       }
     },
 
-    _applyValue(value) {
+    _applyValue(value: boolean): void {
       const input = this._getInputElement();
       if (input) {
         input.checked = !!value;

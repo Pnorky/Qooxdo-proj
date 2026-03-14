@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @asset(qooxdo_proj/*)
  */
@@ -8,27 +7,29 @@ qx.Class.define("qooxdo_proj.Application",
 
     members:
     {
-      _windowManager: null,
-      _personalInfoWindow: null,
-      _contactInfoWindow: null,
-      _academicInfoWindow: null,
-      _studentInfoTableWindow: null,
-      _uiDemoWindow: null,
-      _statusLabel: null,
-      _loginPage: null,
-      _mainContainer: null,
-      _sidebar: null,
-      _menuBar: null,
+      _windowManager: null as any,
+      _personalInfoWindow: null as any,
+      _contactInfoWindow: null as any,
+      _academicInfoWindow: null as any,
+      _studentInfoTableWindow: null as any,
+      _uiDemoWindow: null as any,
+      _uiTabToastDemoWindow: null as any,
+      _statusLabel: null as any,
+      _loginPage: null as any,
+      _mainContainer: null as any,
+      _sidebar: null as any,
+      _menuBar: null as any,
+      _buttonContainer: null as any,
       _mobileBreakpoint: 900,
-      _actionButtonsRow: null,
-      _formActionButtons: null,
-      _counterButtons: null,
+      _actionButtonsRow: null as any,
+      _formActionButtons: null as any,
+      _counterButtons: null as any,
       _mobileLayoutPassScheduled: false,
       _mobileSidebarOpen: false,
-      _mobileSidebarBackdrop: null,
+      _mobileSidebarBackdrop: null as any,
 
-      main() {
-        this.base(arguments);
+      main(): void {
+        (this as any).base(arguments);
 
         const root = this.getRoot();
         
@@ -52,7 +53,7 @@ qx.Class.define("qooxdo_proj.Application",
         this._initializeMainApplication();
       },
 
-      _initializeMainApplication() {
+      _initializeMainApplication(): void {
         const rootContainer = this._mainContainer;
         const root = this.getRoot();
         
@@ -387,7 +388,7 @@ qx.Class.define("qooxdo_proj.Application",
         qx.event.Timer.once(syncSidebarAndNavbarLayout, this, 0);
       },
 
-      _handleLoginSuccess(username) {
+      _handleLoginSuccess(username: string): void {
         // Hide login page
         this._loginPage.setVisibility("hidden");
         
@@ -409,7 +410,7 @@ qx.Class.define("qooxdo_proj.Application",
         }
       },
 
-      _handleLogout() {
+      _handleLogout(): void {
         // Close all windows
         if (this._windowManager) {
           this._windowManager.closeAllWindows();
@@ -447,7 +448,7 @@ qx.Class.define("qooxdo_proj.Application",
         }
       },
 
-      _handleSubmit() {
+      _handleSubmit(): void {
         // Validate all forms
         const destructiveColor = qooxdo_proj.util.Theme.getCSSVariable("destructive");
         const personalValidation = this._personalInfoWindow.validate();
@@ -480,7 +481,7 @@ qx.Class.define("qooxdo_proj.Application",
         const academicData = this._academicInfoWindow.getData();
 
         // Helper function to normalize yearLevel
-        const normalizeYearLevel = (yearLevel) => {
+        const normalizeYearLevel = (yearLevel: string | number | null | undefined): string => {
           if (!yearLevel) return "";
           if (typeof yearLevel === 'number') return String(yearLevel);
           const str = String(yearLevel).trim();
@@ -561,7 +562,7 @@ qx.Class.define("qooxdo_proj.Application",
         });
       },
 
-      _handleCancel() {
+      _handleCancel(): void {
         this._personalInfoWindow.clear();
         this._contactInfoWindow.clear();
         this._academicInfoWindow.clear();
@@ -569,12 +570,12 @@ qx.Class.define("qooxdo_proj.Application",
       },
 
       // Public method to get window manager (for menu bar access)
-      getWindowManager() {
+      getWindowManager(): any {
         return this._windowManager;
       },
 
       // Toggle dark mode theme
-      toggleTheme() {
+      toggleTheme(): void {
         document.documentElement.classList.toggle("dark");
       }
     }

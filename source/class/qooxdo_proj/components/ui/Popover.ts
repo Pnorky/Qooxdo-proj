@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -62,10 +61,10 @@ qx.Class.define("qooxdo_proj.components.ui.Popover", {
   },
 
   construct(triggerLabel = "Open popover", title = "", description = "") {
-    this.base(arguments);
+    (this as any).base(arguments);
     this._setLayout(new qx.ui.layout.Canvas());
 
-    this._popoverId = "popover-" + qx.core.Id.getInstance().toHashCode(this);
+    this._popoverId = "popover-" + this.toHashCode();
     this._triggerId = this._popoverId + "-trigger";
     this._panelId = this._popoverId + "-panel";
     this._pendingSectionContent = "";

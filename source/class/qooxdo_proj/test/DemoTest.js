@@ -1,13 +1,13 @@
+// @ts-nocheck
 /* ************************************************************************
 
-   Copyright: 2026 
+   Copyright: 2026
 
    License: MIT license
 
-   Authors: 
+   Authors:
 
 ************************************************************************ */
-
 /**
  * This class demonstrates how to define unit tests for your application.
  *
@@ -20,36 +20,29 @@
  * i.e. using deeper namespaces and a corresponding file structure within the
  * <tt>test</tt> folder.
  */
-qx.Class.define("qooxdo_proj.test.DemoTest",
-{
-  extend : qx.dev.unit.TestCase,
-
-  members :
-  {
-    /*
-    ---------------------------------------------------------------------------
-      TESTS
-    ---------------------------------------------------------------------------
-    */
-
-    /**
-     * Here are some simple tests
-     */
-    testSimple()
-    {
-      this.assertEquals(4, 3+1, "This should never fail!");
-      this.assertFalse(false, "Can false be true?!");
-    },
-
-    /**
-     * Here are some more advanced tests
-     */
-    testAdvanced()
-    {
-      let a = 3;
-      let b = a;
-      this.assertIdentical(a, b, "A rose by any other name is still a rose");
-      this.assertInRange(3, 1, 10, "You must be kidding, 3 can never be outside [1,10]!");
+qx.Class.define("qooxdo_proj.test.DemoTest", {
+    extend: qx.dev.unit.TestCase,
+    members: {
+        /*
+        ---------------------------------------------------------------------------
+          TESTS
+        ---------------------------------------------------------------------------
+        */
+        /**
+         * Here are some simple tests
+         */
+        testSimple() {
+            this.assertEquals(4, 3 + 1, "This should never fail!");
+            this.assertFalse(false, "Can false be true?!");
+        },
+        /**
+         * Here are some more advanced tests
+         */
+        testAdvanced() {
+            let a = 3;
+            let b = a;
+            this.assertIdentical(a, b, "A rose by any other name is still a rose");
+            this.assertInRange(3, 1, 10, "You must be kidding, 3 can never be outside [1,10]!");
+        }
     }
-  }
 });

@@ -1,4 +1,3 @@
-// @ts-nocheck
 qx.Class.define("qooxdo_proj.components.ui.Table", {
   extend: qx.ui.core.Widget,
 
@@ -52,7 +51,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
   },
 
   construct(caption = "") {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     // Set a layout so children get measured and laid out
     this._setLayout(new qx.ui.layout.Canvas());
@@ -72,7 +71,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
     this._paginationEnabled = false;
 
     // Generate unique ID for the table
-    this._tableId = `table-${qx.core.Id.getInstance().toHashCode(this)}`;
+    this._tableId = `table-${this.toHashCode()}`;
 
     // Create HTML with Basecoat table class and pagination
     this._html = new qx.ui.embed.Html(`

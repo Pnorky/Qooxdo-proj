@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -40,7 +39,7 @@ qx.Class.define("qooxdo_proj.components.ui.TabPage", {
   },
 
   construct(label = "", content = "", richContent = false) {
-    this.base(arguments);
+    (this as any).base(arguments);
     this.setLabel(String(label || ""));
     this.setContent(String(content || ""));
     this.setRichContent(!!richContent);

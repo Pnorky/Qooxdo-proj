@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -56,7 +55,7 @@ qx.Class.define("qooxdo_proj.components.ui.ToolTip", {
   },
 
   construct(text = "", side = "top", align = "center") {
-    this.base(arguments);
+    (this as any).base(arguments);
     this.__targets = [];
     this.setText(String(text || ""));
     this.setSide(side || "top");

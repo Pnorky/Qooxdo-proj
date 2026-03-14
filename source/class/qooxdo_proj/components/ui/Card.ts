@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -66,7 +65,7 @@ qx.Class.define("qooxdo_proj.components.ui.Card", {
   },
 
   construct(title = "", subtitle = "", sectionGrows = true) {
-    this.base(arguments);
+    (this as any).base(arguments);
     this.setLayout(new qx.ui.layout.VBox(0));
     this._title = title;
     this._subtitle = subtitle;

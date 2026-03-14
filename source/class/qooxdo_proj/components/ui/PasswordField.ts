@@ -1,4 +1,3 @@
-// @ts-nocheck
 qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
   extend: qx.ui.core.Widget,
 
@@ -27,7 +26,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
   },
 
   construct(placeholder = "") {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     // Set a layout so children get measured and laid out
     this._setLayout(new qx.ui.layout.Canvas());
@@ -36,7 +35,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
     this._initialPlaceholder = placeholder;
 
     // Generate unique name for the input element
-    this._inputName = `input-${qx.core.Id.getInstance().toHashCode(this)}`;
+    this._inputName = `input-${this.toHashCode()}`;
 
     // Create HTML with Basecoat class - let Basecoat handle all styling
     this._html = new qx.ui.embed.Html(`
@@ -55,7 +54,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
     this._add(this._html, { edge: 0 });
 
     // Listen to enabled property changes
-    this.addListener("changeEnabled", (e) => {
+    this.addListener("changeEnabled", (e: any) => {
       this._applyEnabled(e.getData());
     }, this);
 
@@ -75,7 +74,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
         const domElement = contentElement.getDomElement();
         if (domElement) {
           // When widget receives focus, delegate to input
-          domElement.addEventListener("focusin", (e) => {
+          domElement.addEventListener("focusin", (e: FocusEvent) => {
             const input = this._getInputElement();
             if (input && e.target === domElement) {
               input.focus();
@@ -87,16 +86,16 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
   },
 
   members: {
-    _html: null,
-    _inputName: null,
-    _inputElement: null,
-    _initialPlaceholder: null,
+    _html: null as any,
+    _inputName: null as string | null,
+    _inputElement: null as HTMLInputElement | null,
+    _initialPlaceholder: null as string | null,
 
     /**
      * Setup event listeners on the input element
      */
-    _setupInputEvents() {
-      const container = this._html.getContentElement().getDomElement();
+    _setupInputEvents(): void {
+      const container = this._html.getContentElement().getDomElement() as HTMLElement;
       this._inputElement = container.querySelector("input");
       
       if (!this._inputElement) {
@@ -127,7 +126,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
       // Native inputs are focusable by default - no tabindex needed
 
       // Handle Tab key to prevent widget wrapper from interfering
-      this._inputElement.addEventListener("keydown", (e) => {
+      this._inputElement.addEventListener("keydown", (e: KeyboardEvent) => {
         if (e.key === "Tab") {
           // Allow Tab to work normally - don't prevent default
           // This ensures tab navigation works properly
@@ -136,19 +135,20 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
       });
 
       // Listen to input events (fires on every keystroke)
-      this._inputElement.addEventListener("input", (e) => {
-        const value = e.target.value;
+      this._inputElement.addEventListener("input", (e: Event) => {
+        const target = e.target as HTMLInputElement | null;
+        const value = target ? target.value : "";
         // Update property (qooxdoo will skip apply if value hasn't changed)
         this.setValue(value);
         this.fireDataEvent("input", value);
       });
 
       // Listen to change events (fires on blur if value changed)
-      this._inputElement.addEventListener("change", (e) => {
-        const value = e.target.value;
+      this._inputElement.addEventListener("change", (e: Event) => {
+        const target = e.target as HTMLInputElement | null;
+        const value = target ? target.value : "";
         // Update property (qooxdoo will skip apply if value hasn't changed)
         this.setValue(value);
-        this.fireDataEvent("changeValue", value);
       });
     },
 
@@ -156,13 +156,13 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
      * Get the actual DOM input element
      * @return {Element|null} The input element or null if not available
      */
-    _getInputElement() {
+    _getInputElement(): HTMLInputElement | null {
       if (this._inputElement) {
         return this._inputElement;
       }
       
       if (this._html && this._html.getContentElement()) {
-        const container = this._html.getContentElement().getDomElement();
+        const container = this._html.getContentElement().getDomElement() as HTMLElement | null;
         this._inputElement = container ? container.querySelector("input") : null;
         return this._inputElement;
       }
@@ -175,7 +175,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
      * @param {String} value - The new value
      * @param {Boolean} oldValue - The old value
      */
-    _applyValue(value, oldValue) {
+    _applyValue(value: string, _oldValue: string): void {
       const input = this._getInputElement();
       if (input && input.value !== value) {
         input.value = value || "";
@@ -186,7 +186,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
      * Apply placeholder changes to the DOM input
      * @param {String} placeholder - The new placeholder
      */
-    _applyPlaceholder(placeholder) {
+    _applyPlaceholder(placeholder: string): void {
       const input = this._getInputElement();
       if (input) {
         input.placeholder = placeholder || "";
@@ -200,7 +200,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
      * Apply enabled state changes to the DOM input
      * @param {Boolean} enabled - Whether the field is enabled
      */
-    _applyEnabled(enabled) {
+    _applyEnabled(enabled: boolean): void {
       const input = this._getInputElement();
       if (input) {
         input.disabled = !enabled;
@@ -211,7 +211,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
      * Get the current value from the input field
      * @return {String} The current value
      */
-    getValue() {
+    getValue(): string {
       const input = this._getInputElement();
       return input ? input.value : this.getProperty("value") || "";
     },
@@ -219,7 +219,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
     /**
      * Set focus on the input field
      */
-    focus() {
+    focus(): void {
       const input = this._getInputElement();
       if (input) {
         input.focus();
@@ -229,7 +229,7 @@ qx.Class.define("qooxdo_proj.components.ui.PasswordField", {
     /**
      * Remove focus from the input field
      */
-    blur() {
+    blur(): void {
       const input = this._getInputElement();
       if (input) {
         input.blur();

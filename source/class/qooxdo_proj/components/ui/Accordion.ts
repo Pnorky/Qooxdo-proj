@@ -27,7 +27,7 @@ qx.Class.define("qooxdo_proj.components.ui.Accordion", {
     (this as any).base(arguments);
     this._setLayout(new qx.ui.layout.Canvas());
     this._items = [];
-    this._accordionId = `accordion-${qx.core.Id.getInstance().toHashCode()}`;
+    this._accordionId = `accordion-${this.toHashCode()}`;
     this._html = new qx.ui.embed.Html(`<section class="accordion clients-accordion-theme" id="${this._accordionId}" style="width:100%;"></section>`);
     this._add(this._html, { edge: 0 });
     this._html.addListenerOnce("appear", () => {
@@ -103,7 +103,7 @@ qx.Class.define("qooxdo_proj.components.ui.Accordion", {
       const section = this._getSectionElement();
       if (!section) return;
       section.innerHTML = "";
-      this._items!.forEach((item, index) => {
+      this._items!.forEach((item: { summary: string; content: string }, index: number) => {
         section.appendChild(this._buildItemFragment(item, index));
       });
       this._scheduleUpdateHeight();

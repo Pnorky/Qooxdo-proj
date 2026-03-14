@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -76,10 +75,10 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
   },
 
   construct(triggerLabel = "Open") {
-    this.base(arguments);
+    (this as any).base(arguments);
     this._setLayout(new qx.ui.layout.Canvas());
 
-    this._dropdownId = "dropdown-" + qx.core.Id.getInstance().toHashCode(this);
+    this._dropdownId = "dropdown-" + this.toHashCode();
     this._triggerId = this._dropdownId + "-trigger";
     this._popoverId = this._dropdownId + "-popover";
     this._menuId = this._dropdownId + "-menu";
@@ -318,7 +317,7 @@ qx.Class.define("qooxdo_proj.components.ui.DropdownMenu", {
      * @param {String} value - Internal value
      * @param {Object} options - Additional options (icon, shortcut, disabled, separator)
      */
-    addItem(label, value, options = {}) {
+    addItem(label, value, options: any = {}) {
       const item = {
         label: label,
         value: value,

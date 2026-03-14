@@ -1,18 +1,14 @@
+// @ts-nocheck
 /* ************************************************************************
 
-   Copyright: 2026 
+   Copyright: 2026
 
    License: MIT license
 
-   Authors: 
+   Authors:
 
 ************************************************************************ */
-
-qx.Theme.define("qooxdo_proj.theme.Font",
-{
-  extend : qx.theme.indigo.Font,
-
-  fonts :
-  {
-  }
+qx.Theme.define("qooxdo_proj.theme.Font", {
+    extend: qx.theme.indigo.Font,
+    fonts: {}
 });

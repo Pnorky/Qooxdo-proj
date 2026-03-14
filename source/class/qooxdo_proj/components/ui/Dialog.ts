@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -83,11 +82,11 @@ qx.Class.define("qooxdo_proj.components.ui.Dialog", {
   },
 
   construct(title = "", description = "") {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     this._setLayout(new qx.ui.layout.Canvas());
 
-    this._dialogId = "dialog-" + qx.core.Id.getInstance().toHashCode(this);
+    this._dialogId = "dialog-" + this.toHashCode();
     this._titleId = this._dialogId + "-title";
     this._descriptionId = this._dialogId + "-description";
 

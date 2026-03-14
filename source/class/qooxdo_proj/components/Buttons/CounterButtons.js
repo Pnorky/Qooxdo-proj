@@ -1,87 +1,66 @@
+// @ts-nocheck
 /* ************************************************************************
 
-   Copyright: 2026 
+   Copyright: 2026
 
    License: MIT license
 
-   Authors: 
+   Authors:
 
 ************************************************************************ */
-
 qx.Class.define("qooxdo_proj.components.Buttons.CounterButtons", {
-  extend: qx.ui.container.Composite,
-
-  events: {
-    /** Fired when press me button is clicked. Data: {count: number} */
-    pressMe: "qx.event.type.Data",
-
-    /** Fired when reset counter button is clicked */
-    resetCounter: "qx.event.type.Event",
-  },
-
-  construct: function () {
-    this.base(arguments);
-    this.setLayout(new qx.ui.layout.HBox(10));
-    this.setAllowGrowX(true);
-    this.setAllowShrinkX(true);
-    this.setMinWidth(0);
-
-    this._clickCount = 0;
-    this._createButtons();
-  },
-
-  members: {
-    _pressMeButton: null,
-    _resetCounterButton: null,
-    _clickCount: 0,
-
-    _createButtons: function () {
-      // this._pressMeButton = new qx.ui.form.Button("Press Me");
-      this._pressMeButton = new qooxdo_proj.components.ui.Button(
-        "Press Me",
-        "primary",
-        "sm",
-      );
-      // this._resetCounterButton = new qx.ui.form.Button("Reset Counter");
-      this._resetCounterButton = new qooxdo_proj.components.ui.Button(
-        "Reset",
-        "secondary",
-        "sm",
-      );
-
-      this._pressMeButton.addListener("execute", () => {
-        this._clickCount++;
-        this.fireDataEvent("pressMe", {
-          count: this._clickCount,
-          message: `Button clicked ${this._clickCount} time${this._clickCount !== 1 ? "s" : ""}`,
-        });
-      });
-
-      this._resetCounterButton.addListener("execute", () => {
+    extend: qx.ui.container.Composite,
+    events: {
+        /** Fired when press me button is clicked. Data: {count: number} */
+        pressMe: "qx.event.type.Data",
+        /** Fired when reset counter button is clicked */
+        resetCounter: "qx.event.type.Event",
+    },
+    construct: function () {
+        this.base(arguments);
+        this.setLayout(new qx.ui.layout.HBox(10));
+        this.setAllowGrowX(true);
+        this.setAllowShrinkX(true);
+        this.setMinWidth(0);
         this._clickCount = 0;
-        this.fireEvent("resetCounter");
-      });
-
-      this.add(this._pressMeButton, { flex: 1 });
-      this.add(this._resetCounterButton, { flex: 1 });
+        this._createButtons();
     },
-
-    // Public methods
-    getCount: function () {
-      return this._clickCount;
+    members: {
+        _pressMeButton: null,
+        _resetCounterButton: null,
+        _clickCount: 0,
+        _createButtons: function () {
+            // this._pressMeButton = new qx.ui.form.Button("Press Me");
+            this._pressMeButton = new qooxdo_proj.components.ui.Button("Press Me", "primary", "sm");
+            // this._resetCounterButton = new qx.ui.form.Button("Reset Counter");
+            this._resetCounterButton = new qooxdo_proj.components.ui.Button("Reset", "secondary", "sm");
+            this._pressMeButton.addListener("execute", () => {
+                this._clickCount++;
+                this.fireDataEvent("pressMe", {
+                    count: this._clickCount,
+                    message: `Button clicked ${this._clickCount} time${this._clickCount !== 1 ? "s" : ""}`,
+                });
+            });
+            this._resetCounterButton.addListener("execute", () => {
+                this._clickCount = 0;
+                this.fireEvent("resetCounter");
+            });
+            this.add(this._pressMeButton, { flex: 1 });
+            this.add(this._resetCounterButton, { flex: 1 });
+        },
+        // Public methods
+        getCount: function () {
+            return this._clickCount;
+        },
+        resetCount: function () {
+            this._clickCount = 0;
+        },
+        // Get button references if needed
+        getPressMeButton: function () {
+            return this._pressMeButton;
+        },
+        getResetCounterButton: function () {
+            return this._resetCounterButton;
+        },
     },
-
-    resetCount: function () {
-      this._clickCount = 0;
-    },
-
-    // Get button references if needed
-    getPressMeButton: function () {
-      return this._pressMeButton;
-    },
-
-    getResetCounterButton: function () {
-      return this._resetCounterButton;
-    },
-  },
 });

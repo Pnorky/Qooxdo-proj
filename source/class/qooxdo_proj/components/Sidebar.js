@@ -1,87 +1,81 @@
+// @ts-nocheck
 /* ************************************************************************
    Sidebar built with the custom Card component.
 ************************************************************************ */
-
 qx.Class.define("qooxdo_proj.components.Sidebar", {
-  extend: qx.ui.container.Composite,
-
-  properties: {
-    collapsed: {
-      check: "Boolean",
-      init: false,
-      apply: "_applyCollapsed",
-      event: "changeCollapsed"
+    extend: qx.ui.container.Composite,
+    properties: {
+        collapsed: {
+            check: "Boolean",
+            init: false,
+            apply: "_applyCollapsed",
+            event: "changeCollapsed"
+        },
+        mobileMode: {
+            check: "Boolean",
+            init: false,
+            apply: "_applyMobileMode"
+        }
     },
-    mobileMode: {
-      check: "Boolean",
-      init: false,
-      apply: "_applyMobileMode"
-    }
-  },
-
-  events: {
-    /** Fires with window key (e.g. "personalInfo") */
-    openWindowRequest: "qx.event.type.Data",
-    toggleSidebarRequest: "qx.event.type.Event",
-    toggleThemeRequest: "qx.event.type.Event",
-    logoutRequest: "qx.event.type.Event"
-  },
-
-  construct: function () {
-    this.base(arguments);
-
-    this.setLayout(new qx.ui.layout.VBox(0));
-    this.addListenerOnce("appear", () => {
-      const el = this.getContentElement ? this.getContentElement() : null;
-      const dom = el ? el.getDomElement() : null;
-      if (!dom) return;
-      dom.style.background = "var(--sidebar)";
-      dom.style.borderRight = "1px solid var(--border)";
-      dom.style.boxSizing = "border-box";
-      dom.style.padding = "10px";
-      dom.style.overflow = "hidden";
-      dom.style.borderRadius = "0";
-      dom.style.outline = "none";
-      dom.style.boxShadow = "none";
-    }, this);
-    this._buildUi();
-  },
-
-  members: {
-    _card: null,
-    _sidebarNavHtml: null,
-    _sidebarClickHandler: null,
-    _expandedSubtitle: "Open forms and actions",
-    _expandedWidth: 280,
-    _collapsedWidth: 72,
-
-    setExpandedWidth: function (width) {
-      const nextWidth = Math.max(240, Math.round(Number(width) || this._expandedWidth));
-      if (nextWidth === this._expandedWidth) return;
-      this._expandedWidth = nextWidth;
-      this._applyCollapsed(this.isCollapsed());
+    events: {
+        /** Fires with window key (e.g. "personalInfo") */
+        openWindowRequest: "qx.event.type.Data",
+        toggleSidebarRequest: "qx.event.type.Event",
+        toggleThemeRequest: "qx.event.type.Event",
+        logoutRequest: "qx.event.type.Event"
     },
-
-    _buildUi: function () {
-      this._card = new qooxdo_proj.components.ui.Card("Quick Access", "Open forms and actions", true);
-      this._card.setFullWidth(true);
-      this._card.addListenerOnce("appear", () => {
-        const cardEl = this._card.getContentElement ? this._card.getContentElement().getDomElement() : null;
-        if (!cardEl) return;
-        // Use explicit card colors for the main Quick Access card surface.
-        cardEl.style.background = "var(--card)";
-        cardEl.style.color = "var(--card-foreground)";
-        cardEl.style.borderColor = "var(--border)";
-        cardEl.style.borderRadius = "0";
-        cardEl.style.boxShadow = "none";
-        cardEl.style.outline = "none";
-      }, this);
-
-      const section = this._card.getSection();
-      section.setLayout(new qx.ui.layout.Grow());
-
-      // Basecoat-style sidebar markup embedded inside the card body.
-      this._sidebarNavHtml = new qx.ui.embed.Html(`
+    construct: function () {
+        this.base(arguments);
+        this.setLayout(new qx.ui.layout.VBox(0));
+        this.addListenerOnce("appear", () => {
+            const el = this.getContentElement ? this.getContentElement() : null;
+            const dom = el ? el.getDomElement() : null;
+            if (!dom)
+                return;
+            dom.style.background = "var(--sidebar)";
+            dom.style.borderRight = "1px solid var(--border)";
+            dom.style.boxSizing = "border-box";
+            dom.style.padding = "10px";
+            dom.style.overflow = "hidden";
+            dom.style.borderRadius = "0";
+            dom.style.outline = "none";
+            dom.style.boxShadow = "none";
+        }, this);
+        this._buildUi();
+    },
+    members: {
+        _card: null,
+        _sidebarNavHtml: null,
+        _sidebarClickHandler: null,
+        _expandedSubtitle: "Open forms and actions",
+        _expandedWidth: 280,
+        _collapsedWidth: 72,
+        setExpandedWidth: function (width) {
+            const nextWidth = Math.max(240, Math.round(Number(width) || this._expandedWidth));
+            if (nextWidth === this._expandedWidth)
+                return;
+            this._expandedWidth = nextWidth;
+            this._applyCollapsed(this.isCollapsed());
+        },
+        _buildUi: function () {
+            this._card = new qooxdo_proj.components.ui.Card("Quick Access", "Open forms and actions", true);
+            this._card.setFullWidth(true);
+            this._card.addListenerOnce("appear", () => {
+                const cardEl = this._card.getContentElement ? this._card.getContentElement().getDomElement() : null;
+                if (!cardEl)
+                    return;
+                // Use explicit card colors for the main Quick Access card surface.
+                cardEl.style.background = "var(--card)";
+                cardEl.style.color = "var(--card-foreground)";
+                cardEl.style.borderColor = "var(--border)";
+                cardEl.style.borderRadius = "0";
+                cardEl.style.boxShadow = "none";
+                cardEl.style.outline = "none";
+            }, this);
+            const section = this._card.getSection();
+            section.setLayout(new qx.ui.layout.Grow());
+            // Basecoat-style sidebar markup embedded inside the card body.
+            this._sidebarNavHtml = new qx.ui.embed.Html(`
         <aside class="qoox-sidebar" data-side="left" aria-hidden="false" style="position: static; display: block; overflow: hidden; border: 0; --sidebar: var(--card); --sidebar-foreground: var(--card-foreground); --sidebar-border: var(--border); --sidebar-accent: var(--muted); --sidebar-accent-foreground: var(--card-foreground);">
           <style>
             .qoox-sidebar .sidebar-toggle-row {
@@ -245,115 +239,111 @@ qx.Class.define("qooxdo_proj.components.Sidebar", {
           </nav>
         </aside>
       `);
-      section.add(this._sidebarNavHtml);
-
-      this._sidebarNavHtml.addListenerOnce("appear", () => {
-        const host = this._sidebarNavHtml.getContentElement
-          ? this._sidebarNavHtml.getContentElement().getDomElement()
-          : null;
-        if (!host) return;
-
-        this._sidebarClickHandler = (ev) => {
-          const target = ev.target;
-          const link = target && target.closest ? target.closest("[data-action]") : null;
-          if (!link) return;
-          ev.preventDefault();
-
-          const action = link.getAttribute("data-action");
-          if (!action) return;
-
-          if (action === "toggleSidebar") {
+            section.add(this._sidebarNavHtml);
+            this._sidebarNavHtml.addListenerOnce("appear", () => {
+                const host = this._sidebarNavHtml.getContentElement
+                    ? this._sidebarNavHtml.getContentElement().getDomElement()
+                    : null;
+                if (!host)
+                    return;
+                this._sidebarClickHandler = (ev) => {
+                    const target = ev.target;
+                    const link = target && target.closest ? target.closest("[data-action]") : null;
+                    if (!link)
+                        return;
+                    ev.preventDefault();
+                    const action = link.getAttribute("data-action");
+                    if (!action)
+                        return;
+                    if (action === "toggleSidebar") {
+                        if (this.isMobileMode()) {
+                            this.fireEvent("toggleSidebarRequest");
+                        }
+                        else {
+                            this.setCollapsed(!this.isCollapsed());
+                        }
+                        return;
+                    }
+                    if (action === "toggleTheme") {
+                        this.fireEvent("toggleThemeRequest");
+                        return;
+                    }
+                    if (action === "logout") {
+                        this.fireEvent("logoutRequest");
+                        return;
+                    }
+                    this.fireDataEvent("openWindowRequest", action);
+                };
+                host.addEventListener("click", this._sidebarClickHandler);
+            }, this);
+            this.add(this._card, { flex: 1 });
+            this._applyCollapsed(this.isCollapsed());
+        },
+        _applyCollapsed: function (collapsed) {
             if (this.isMobileMode()) {
-              this.fireEvent("toggleSidebarRequest");
-            } else {
-              this.setCollapsed(!this.isCollapsed());
+                this.setWidth(this._expandedWidth);
+                this.setMinWidth(this._expandedWidth);
+                this.resetMaxWidth();
+                this.setAllowGrowX(true);
+                this.setAllowShrinkX(true);
             }
-            return;
-          }
-          if (action === "toggleTheme") {
-            this.fireEvent("toggleThemeRequest");
-            return;
-          }
-          if (action === "logout") {
-            this.fireEvent("logoutRequest");
-            return;
-          }
-
-          this.fireDataEvent("openWindowRequest", action);
-        };
-
-        host.addEventListener("click", this._sidebarClickHandler);
-      }, this);
-
-      this.add(this._card, { flex: 1 });
-      this._applyCollapsed(this.isCollapsed());
+            else {
+                this.setWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+                this.setMinWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
+                this.resetMaxWidth();
+            }
+            if (this._card) {
+                const hideLabels = collapsed && !this.isMobileMode();
+                this._card.setTitle(hideLabels ? "" : "Quick Access");
+                this._card.setSubtitle(hideLabels ? "" : this._expandedSubtitle);
+            }
+            if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement)
+                return;
+            const host = this._sidebarNavHtml.getContentElement().getDomElement();
+            if (!host)
+                return;
+            const aside = host.querySelector(".qoox-sidebar");
+            if (!aside)
+                return;
+            aside.classList.toggle("is-collapsed", !!collapsed);
+            const toggleBtn = host.querySelector(".sidebar-toggle");
+            if (toggleBtn) {
+                toggleBtn.textContent = collapsed ? "▶" : "◀";
+                toggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+            }
+        },
+        _applyMobileMode: function (mobileMode) {
+            if (mobileMode && this.isCollapsed()) {
+                this.setCollapsed(false);
+            }
+            this._applyCollapsed(this.isCollapsed());
+            if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement)
+                return;
+            const host = this._sidebarNavHtml.getContentElement().getDomElement();
+            if (!host)
+                return;
+            const aside = host.querySelector(".qoox-sidebar");
+            if (!aside)
+                return;
+            aside.classList.toggle("is-mobile", !!mobileMode);
+        },
+        /**
+         * Updates the subtitle text (e.g. show logged in user).
+         * @param {String} subtitle
+         */
+        setSidebarSubtitle: function (subtitle) {
+            this._expandedSubtitle = String(subtitle || "");
+            if (this._card) {
+                this._card.setSubtitle(this.isCollapsed() ? "" : this._expandedSubtitle);
+            }
+        }
     },
-
-    _applyCollapsed: function (collapsed) {
-      if (this.isMobileMode()) {
-        this.setWidth(this._expandedWidth);
-        this.setMinWidth(this._expandedWidth);
-        this.resetMaxWidth();
-        this.setAllowGrowX(true);
-        this.setAllowShrinkX(true);
-      } else {
-        this.setWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
-        this.setMinWidth(collapsed ? this._collapsedWidth : this._expandedWidth);
-        this.resetMaxWidth();
-      }
-
-      if (this._card) {
-        const hideLabels = collapsed && !this.isMobileMode();
-        this._card.setTitle(hideLabels ? "" : "Quick Access");
-        this._card.setSubtitle(hideLabels ? "" : this._expandedSubtitle);
-      }
-
-      if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement) return;
-      const host = this._sidebarNavHtml.getContentElement().getDomElement();
-      if (!host) return;
-      const aside = host.querySelector(".qoox-sidebar");
-      if (!aside) return;
-      aside.classList.toggle("is-collapsed", !!collapsed);
-
-      const toggleBtn = host.querySelector(".sidebar-toggle");
-      if (toggleBtn) {
-        toggleBtn.textContent = collapsed ? "▶" : "◀";
-        toggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
-      }
-    },
-
-    _applyMobileMode: function (mobileMode) {
-      if (mobileMode && this.isCollapsed()) {
-        this.setCollapsed(false);
-      }
-      this._applyCollapsed(this.isCollapsed());
-
-      if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement) return;
-      const host = this._sidebarNavHtml.getContentElement().getDomElement();
-      if (!host) return;
-      const aside = host.querySelector(".qoox-sidebar");
-      if (!aside) return;
-      aside.classList.toggle("is-mobile", !!mobileMode);
-    },
-
-    /**
-     * Updates the subtitle text (e.g. show logged in user).
-     * @param {String} subtitle
-     */
-    setSidebarSubtitle: function (subtitle) {
-      this._expandedSubtitle = String(subtitle || "");
-      if (this._card) {
-        this._card.setSubtitle(this.isCollapsed() ? "" : this._expandedSubtitle);
-      }
+    destruct: function () {
+        if (this._sidebarNavHtml && this._sidebarClickHandler && this._sidebarNavHtml.getContentElement) {
+            const host = this._sidebarNavHtml.getContentElement().getDomElement();
+            if (host) {
+                host.removeEventListener("click", this._sidebarClickHandler);
+            }
+        }
     }
-  },
-
-  destruct: function () {
-    if (this._sidebarNavHtml && this._sidebarClickHandler && this._sidebarNavHtml.getContentElement) {
-      const host = this._sidebarNavHtml.getContentElement().getDomElement();
-      if (host) {
-        host.removeEventListener("click", this._sidebarClickHandler);
-      }
-    }
-  }
 });

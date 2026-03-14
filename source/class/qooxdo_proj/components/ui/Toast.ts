@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -80,10 +79,10 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
   },
 
   construct() {
-    this.base(arguments);
+    (this as any).base(arguments);
     this._setLayout(new qx.ui.layout.Canvas());
 
-    this.__toasterId = "toaster-" + qx.core.Id.getInstance().toHashCode(this);
+    this.__toasterId = "toaster-" + this.toHashCode();
     this.__timers = {};
     this.__removeTimers = {};
 
@@ -219,12 +218,12 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
       const toaster = this._getToasterElement();
       if (!toaster) return;
 
-      const visibleToasts = Array.from(toaster.querySelectorAll(".toast"));
+      const visibleToasts = Array.from(toaster.querySelectorAll(".toast")) as HTMLElement[];
       if (visibleToasts.length <= limit) return;
 
       // Newest toast is inserted first; remove oldest extras at the end.
       const toRemove = visibleToasts.slice(limit);
-      toRemove.forEach((node) => {
+      toRemove.forEach((node: HTMLElement) => {
         const id = node.id;
         if (id) {
           this._clearToastTimers(id);
@@ -243,7 +242,7 @@ qx.Class.define("qooxdo_proj.components.ui.Toast", {
      * @param {Map?} config
      * @return {String|null} toast id
      */
-    show(config = {}) {
+    show(config: any = {}) {
       // Wait for the toaster element to be available if not yet in DOM
       const tryShow = () => {
         const toaster = this._getToasterElement();

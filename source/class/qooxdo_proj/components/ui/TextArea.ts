@@ -1,4 +1,3 @@
-// @ts-nocheck
 qx.Class.define("qooxdo_proj.components.ui.TextArea", {
     extend: qx.ui.core.Widget,
 
@@ -32,7 +31,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
     },
 
     construct(placeholder = "") {
-        this.base(arguments);
+        (this as any).base(arguments);
 
         // Set a layout so children get measured and laid out
         this._setLayout(new qx.ui.layout.Canvas());
@@ -41,7 +40,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
         this._initialPlaceholder = placeholder;
 
         // Generate unique name for the textarea element
-        this._textareaName = `textarea-${qx.core.Id.getInstance().toHashCode(this)}`;
+        this._textareaName = `textarea-${this.toHashCode()}`;
 
         // Create HTML with Basecoat class - override only display property
         this._html = new qx.ui.embed.Html(`
@@ -65,7 +64,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
         this._add(this._html, { edge: 0 });
 
         // Listen to enabled property changes
-        this.addListener("changeEnabled", (e) => {
+        this.addListener("changeEnabled", (e: any) => {
             this._applyEnabled(e.getData());
         }, this);
 
@@ -98,7 +97,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
             }
             
             // Listen to dimension changes
-            this.addListener("changeWidth", (e) => {
+            this.addListener("changeWidth", (e: any) => {
                 const textarea = this._getTextAreaElement();
                 if (textarea) {
                     const width = e.getData();
@@ -106,7 +105,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
                 }
             }, this);
             
-            this.addListener("changeHeight", (e) => {
+            this.addListener("changeHeight", (e: any) => {
                 const textarea = this._getTextAreaElement();
                 if (textarea) {
                     const height = e.getData();
@@ -130,7 +129,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
                 const domElement = contentElement.getDomElement();
                 if (domElement) {
                     // When widget receives focus, delegate to textarea
-                    domElement.addEventListener("focusin", (e) => {
+                    domElement.addEventListener("focusin", (e: FocusEvent) => {
                         const textarea = this._getTextAreaElement();
                         if (textarea && e.target === domElement) {
                             textarea.focus();
@@ -142,16 +141,16 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
     },
 
     members: {
-        _html: null,
-        _textareaName: null,
-        _textareaElement: null,
-        _initialPlaceholder: null,
+        _html: null as any,
+        _textareaName: null as string | null,
+        _textareaElement: null as HTMLTextAreaElement | null,
+        _initialPlaceholder: null as string | null,
 
         /**
          * Setup event listeners on the textarea element
          */
-        _setupTextAreaEvents() {
-            const container = this._html.getContentElement().getDomElement();
+        _setupTextAreaEvents(): void {
+            const container = this._html.getContentElement().getDomElement() as HTMLElement;
             this._textareaElement = container.querySelector("textarea");
 
             if (!this._textareaElement) {
@@ -182,7 +181,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
             // Native textareas are focusable by default - no tabindex needed
 
             // Handle Tab key to prevent widget wrapper from interfering
-            this._textareaElement.addEventListener("keydown", (e) => {
+            this._textareaElement.addEventListener("keydown", (e: KeyboardEvent) => {
                 if (e.key === "Tab") {
                     // Allow Tab to work normally - don't prevent default
                     // This ensures tab navigation works properly
@@ -191,19 +190,20 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
             });
 
             // Listen to input events (fires on every keystroke)
-            this._textareaElement.addEventListener("input", (e) => {
-                const value = e.target.value;
+            this._textareaElement.addEventListener("input", (e: Event) => {
+                const target = e.target as HTMLTextAreaElement | null;
+                const value = target ? target.value : "";
                 // Update property (qooxdoo will skip apply if value hasn't changed)
                 this.setValue(value);
                 this.fireDataEvent("input", value);
             });
 
             // Listen to change events (fires on blur if value changed)
-            this._textareaElement.addEventListener("change", (e) => {
-                const value = e.target.value;
+            this._textareaElement.addEventListener("change", (e: Event) => {
+                const target = e.target as HTMLTextAreaElement | null;
+                const value = target ? target.value : "";
                 // Update property (qooxdoo will skip apply if value hasn't changed)
                 this.setValue(value);
-                this.fireDataEvent("changeValue", value);
             });
         },
 
@@ -211,13 +211,13 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
          * Get the actual DOM textarea element
          * @return {Element|null} The textarea element or null if not available
          */
-        _getTextAreaElement() {
+        _getTextAreaElement(): HTMLTextAreaElement | null {
             if (this._textareaElement) {
                 return this._textareaElement;
             }
 
             if (this._html && this._html.getContentElement()) {
-                const container = this._html.getContentElement().getDomElement();
+                const container = this._html.getContentElement().getDomElement() as HTMLElement | null;
                 this._textareaElement = container ? container.querySelector("textarea") : null;
                 return this._textareaElement;
             }
@@ -230,7 +230,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
          * @param {String} value - The new value
          * @param {Boolean} oldValue - The old value
          */
-        _applyValue(value, oldValue) {
+        _applyValue(value: string, _oldValue: string): void {
             const textarea = this._getTextAreaElement();
             if (textarea && textarea.value !== value) {
                 textarea.value = value || "";
@@ -241,7 +241,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
          * Apply placeholder changes to the DOM textarea
          * @param {String} placeholder - The new placeholder
          */
-        _applyPlaceholder(placeholder) {
+        _applyPlaceholder(placeholder: string): void {
             const textarea = this._getTextAreaElement();
             if (textarea) {
                 textarea.placeholder = placeholder || "";
@@ -255,7 +255,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
          * Apply wrap setting to the DOM textarea
          * @param {Boolean} wrap - Whether text should wrap
          */
-        _applyWrap(wrap) {
+        _applyWrap(wrap: boolean): void {
             const textarea = this._getTextAreaElement();
             if (textarea) {
                 textarea.wrap = wrap ? "soft" : "off";
@@ -266,7 +266,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
          * Apply enabled state changes to the DOM textarea
          * @param {Boolean} enabled - Whether the field is enabled
          */
-        _applyEnabled(enabled) {
+        _applyEnabled(enabled: boolean): void {
             const textarea = this._getTextAreaElement();
             if (textarea) {
                 textarea.disabled = !enabled;
@@ -277,7 +277,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
          * Get the current value from the textarea field
          * @return {String} The current value
          */
-        getValue() {
+        getValue(): string {
             const textarea = this._getTextAreaElement();
             return textarea ? textarea.value : this.getProperty("value") || "";
         },
@@ -285,7 +285,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
         /**
          * Set focus on the textarea field
          */
-        focus() {
+        focus(): void {
             const textarea = this._getTextAreaElement();
             if (textarea) {
                 textarea.focus();
@@ -295,7 +295,7 @@ qx.Class.define("qooxdo_proj.components.ui.TextArea", {
         /**
          * Remove focus from the textarea field
          */
-        blur() {
+        blur(): void {
             const textarea = this._getTextAreaElement();
             if (textarea) {
                 textarea.blur();

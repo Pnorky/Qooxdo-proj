@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Project: qooxdo_proj
@@ -43,10 +42,10 @@ qx.Class.define("qooxdo_proj.components.ui.Pagination", {
   },
 
   construct() {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     this._setLayout(new qx.ui.layout.Canvas());
-    this._paginationId = "pagination-" + qx.core.Id.getInstance().toHashCode(this);
+    this._paginationId = "pagination-" + this.toHashCode();
 
     this._html = new qx.ui.embed.Html(`
       <nav role="navigation" aria-label="pagination" class="pagination-container mx-auto flex w-full justify-center" id="${this._paginationId}" style="display: flex; flex-shrink: 0; padding: 16px 0; margin-top: 0; border-top: 1px solid var(--border); width: 100%; min-width: 0; overflow: visible;">

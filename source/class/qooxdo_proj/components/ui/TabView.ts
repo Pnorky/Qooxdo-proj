@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Copyright: 2026
@@ -32,11 +31,11 @@ qx.Class.define("qooxdo_proj.components.ui.TabView", {
   },
 
   construct() {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     this._setLayout(new qx.ui.layout.Canvas());
 
-    this._tabsId = "tabs-" + qx.core.Id.getInstance().toHashCode(this);
+    this._tabsId = "tabs-" + this.toHashCode();
     this._tabs = [];
     this._activeIndex = -1;
 
@@ -408,5 +407,16 @@ qx.Class.define("qooxdo_proj.components.ui.TabView", {
       if (!panels) return null;
       return panels.querySelector(`[data-panel-index="${index}"]`);
     }
+  }
+  ,
+
+  destruct() {
+    if (this._tabs && this._tabs.length) {
+      this._tabs.forEach(tab => this._unbindPageListeners(tab));
+    }
+    this._tabs = null;
+    this._html = null;
+    this._tabsId = null;
+    this._activeIndex = -1;
   }
 });

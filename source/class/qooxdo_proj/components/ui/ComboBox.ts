@@ -1,4 +1,3 @@
-// @ts-nocheck
 qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
   extend: qx.ui.core.Widget,
 
@@ -22,7 +21,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
   },
 
   construct() {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     // Set a layout so children get measured and laid out
     this._setLayout(new qx.ui.layout.Canvas());
@@ -34,7 +33,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
     this._selectedItem = null;
 
     // Generate unique ID for the component
-    this._comboId = `select-${qx.core.Id.getInstance().toHashCode(this)}`;
+    this._comboId = `select-${this.toHashCode()}`;
 
     // Create HTML with Basecoat select structure
     this._html = new qx.ui.embed.Html(`
@@ -71,7 +70,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
     this._add(this._html, { edge: 0 });
 
     // Listen to enabled property changes
-    this.addListener("changeEnabled", (e) => {
+    this.addListener("changeEnabled", (e: any) => {
       this._applyEnabled(e.getData());
     }, this);
 
@@ -99,7 +98,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
         const domElement = widgetElement.getDomElement();
         if (domElement) {
           // When widget receives focus, delegate to button
-          domElement.addEventListener("focusin", (e) => {
+          domElement.addEventListener("focusin", (e: FocusEvent) => {
             const button = this._buttonElement;
             if (button && e.target === domElement) {
               button.focus();
@@ -111,18 +110,19 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
   },
 
   members: {
-    _html: null,
-    _comboId: null,
-    _buttonElement: null,
-    _popoverElement: null,
-    _listboxElement: null,
-    _valueSpan: null,
-    _items: null,
-    _itemMap: null,
-    _isOpen: null,
-    _selectedItem: null,
-    _popoverContainer: null, // Container for popover when moved to body
-    _updatePositionHandler: null, // Handler for position updates
+    _html: null as any,
+    _comboId: null as string | null,
+    _buttonElement: null as HTMLButtonElement | null,
+    _popoverElement: null as HTMLElement | null,
+    _listboxElement: null as HTMLElement | null,
+    _valueSpan: null as HTMLElement | null,
+    _items: null as any[] | null,
+    _itemMap: null as Map<string, any> | null,
+    _isOpen: null as boolean | null,
+    _selectedItem: null as any,
+    _popoverContainer: null as HTMLElement | null, // Container for popover when moved to body
+    _updatePositionHandler: null as ((...args: any[]) => void) | null, // Handler for position updates
+    _clickHandler: null as ((...args: any[]) => void) | null,
     _mobileSidePadding: 12,
     _getViewportWidth() {
       return window.innerWidth || document.documentElement.clientWidth || 1200;
@@ -133,7 +133,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * Setup event listeners for the dropdown
      */
     _setupDropdownEvents() {
-      const container = this._html.getContentElement().getDomElement();
+      const container = this._html.getContentElement().getDomElement() as HTMLElement;
       this._buttonElement = container.querySelector(`#${this._comboId}-trigger`);
       this._popoverElement = container.querySelector(`#${this._comboId}-popover`);
       this._listboxElement = container.querySelector(`#${this._comboId}-listbox`);
@@ -167,7 +167,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       // Native buttons are focusable by default - no tabindex needed
 
       // Toggle dropdown on button click
-      this._buttonElement.addEventListener("click", (e) => {
+      this._buttonElement.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (this.getEnabled()) {
@@ -176,8 +176,9 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       }, true); // Use capture phase to ensure it fires
 
       // Close dropdown when clicking outside
-      const clickHandler = (e) => {
-        if (this._isOpen && !container.contains(e.target)) {
+      const clickHandler = (e: Event) => {
+        const target = e.target as Node | null;
+        if (this._isOpen && target && !container.contains(target)) {
           this._closeDropdown();
         }
       };
@@ -185,7 +186,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       this._clickHandler = clickHandler;
 
       // Handle keyboard navigation on button
-      this._buttonElement.addEventListener("keydown", (e) => {
+      this._buttonElement.addEventListener("keydown", (e: KeyboardEvent) => {
         if (e.key === "Tab") {
           // Allow Tab to work normally - don't prevent default
           // This ensures tab navigation works properly
@@ -203,8 +204,9 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       });
 
       // Handle option selection and keyboard navigation in listbox
-      this._listboxElement.addEventListener("click", (e) => {
-        const option = e.target.closest("[role='option']");
+      this._listboxElement.addEventListener("click", (e: Event) => {
+        const target = e.target as HTMLElement | null;
+        const option = target && target.closest ? target.closest("[role='option']") : null;
         if (option) {
           const value = option.getAttribute("data-value");
           this._selectValue(value);
@@ -212,8 +214,8 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
         }
       });
 
-      this._listboxElement.addEventListener("keydown", (e) => {
-        const options = Array.from(this._listboxElement.querySelectorAll("[role='option']"));
+      this._listboxElement.addEventListener("keydown", (e: KeyboardEvent) => {
+        const options = Array.from(this._listboxElement!.querySelectorAll("[role='option']")) as HTMLElement[];
         const currentIndex = options.findIndex(opt => opt === document.activeElement);
         
         if (e.key === "ArrowDown") {
@@ -244,9 +246,9 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * Get the container element
      * @return {Element|null} The container element or null if not available
      */
-    _getContainerElement() {
+    _getContainerElement(): HTMLElement | null {
       if (this._html && this._html.getContentElement()) {
-        return this._html.getContentElement().getDomElement();
+        return this._html.getContentElement().getDomElement() as HTMLElement | null;
       }
       return null;
     },
@@ -429,12 +431,14 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * Select a value
      * @param {String} value - The value to select
      */
-    _selectValue(value) {
+    _selectValue(value: string | null) {
+      if (!value) {
+        return;
+      }
       const item = this._itemMap.get(value);
       if (item) {
         this._selectedItem = item;
         this.setValue(value);
-        this.fireDataEvent("changeValue", value);
         this.fireDataEvent("changeSelection", value);
       }
     },
@@ -451,7 +455,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       this._listboxElement.innerHTML = "";
 
       // Add all stored items with proper Basecoat styling
-      this._items.forEach(item => {
+      this._items.forEach((item: any) => {
         const option = document.createElement("div");
         option.setAttribute("role", "option");
         option.setAttribute("data-value", item._value);
@@ -484,7 +488,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
       // Update selected state in options
       if (this._listboxElement) {
         const options = this._listboxElement.querySelectorAll("[role='option']");
-        options.forEach(option => {
+        options.forEach((option: Element) => {
           const value = option.getAttribute("data-value");
           if (this._selectedItem && value === this._selectedItem._value) {
             option.setAttribute("aria-selected", "true");
@@ -499,7 +503,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * Add an item to the combo box
      * @param {qx.ui.form.ListItem|String} item - The item to add (ListItem or string)
      */
-    add(item) {
+    add(item: any) {
       let label, value;
       
       // Handle both ListItem objects and plain strings
@@ -562,7 +566,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * @param {String} value - The new value
      * @param {String} oldValue - The old value
      */
-    _applyValue(value, oldValue) {
+    _applyValue(value: string, _oldValue: string) {
       if (value) {
         const item = this._itemMap.get(value);
         if (item) {
@@ -578,7 +582,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * Apply enabled state changes to the DOM
      * @param {Boolean} enabled - Whether the field is enabled
      */
-    _applyEnabled(enabled) {
+    _applyEnabled(enabled: boolean) {
       if (this._buttonElement) {
         this._buttonElement.disabled = !enabled;
         if (!enabled && this._isOpen) {
@@ -600,7 +604,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
      * Compatible with qooxdoo's ComboBox which accepts label strings
      * @param {String} valueOrLabel - The value or label to select
      */
-    setValue(valueOrLabel) {
+    setValue(valueOrLabel: string) {
       if (!valueOrLabel) {
         // Clear selection
         if (this._value !== "") {
@@ -692,7 +696,7 @@ qx.Class.define("qooxdo_proj.components.ui.ComboBox", {
         this._popoverContainer = null;
       }
       
-      this.base(arguments);
+      (this as any).base(arguments);
     }
   }
 });

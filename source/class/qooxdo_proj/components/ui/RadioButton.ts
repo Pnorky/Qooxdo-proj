@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* ************************************************************************
 
    Project: qooxdo_proj
@@ -52,7 +51,7 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButton", {
   },
 
   construct(label = "") {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     this._setLayout(new qx.ui.layout.HBox(8).set({ alignY: "middle" }));
 
@@ -205,6 +204,7 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButtonGroup", {
     /** Selected value */
     value: {
       check: "String",
+      nullable: true,
       init: null,
       apply: "_applyValue",
       event: "changeValue"
@@ -217,7 +217,7 @@ qx.Class.define("qooxdo_proj.components.ui.RadioButtonGroup", {
   },
 
   construct() {
-    this.base(arguments);
+    (this as any).base(arguments);
 
     this._setLayout(new qx.ui.layout.VBox(12).set({ alignX: "left" }));
 

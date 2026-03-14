@@ -6,7 +6,7 @@ qx.Class.define("qooxdo_proj.components.WindowManager", {
   extend: qx.core.Object,
 
   members: {
-    _windows: null as Record<string, any>,
+    _windows: null as Record<string, any> | null,
     _root: null as any,
     _mobileBreakpoint: 900,
 

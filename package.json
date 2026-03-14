@@ -17,10 +17,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:tailwind": "npx @tailwindcss/cli -i ./tailwind-basecoat.css -o ./source/resource/qooxdo_proj/compiled.css",
-    "compile": "npm run build:tailwind && qx compile",
-    "serve": "npm run build:tailwind && qx serve",
+    "build:ts": "tsc -p tsconfig.json",
+    "compile": "npm run build:tailwind && npm run build:ts && qx compile",
+    "serve": "npm run build:tailwind && npm run build:ts && qx serve",
     "server": "node backend/server.js",
-    "watch": "qx watch",
+    "watch": "npm run build:ts && qx watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:phase2": "tsc -p tsconfig.phase2.json --noEmit",
     "typecheck:phase3": "tsc -p tsconfig.phase3.json --noEmit"

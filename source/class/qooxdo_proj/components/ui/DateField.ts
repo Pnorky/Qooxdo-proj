@@ -1,4 +1,3 @@
-// @ts-nocheck
 qx.Class.define("qooxdo_proj.components.ui.DateField", {
     extend: qx.ui.core.Widget,
 
@@ -21,13 +20,13 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
     },
 
     construct() {
-        this.base(arguments);
+        (this as any).base(arguments);
 
         // Set a layout so children get measured and laid out
         this._setLayout(new qx.ui.layout.Canvas());
 
         // Generate unique ID for the component
-        this._dateId = `date-${qx.core.Id.getInstance().toHashCode(this)}`;
+        this._dateId = `date-${this.toHashCode()}`;
         this._isOpen = false;
         this._currentMonth = new Date().getMonth();
         this._currentYear = new Date().getFullYear();
@@ -99,7 +98,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         this._add(this._html, { edge: 0 });
 
         // Listen to enabled property changes
-        this.addListener("changeEnabled", (e) => {
+        this.addListener("changeEnabled", (e: any) => {
             this._applyEnabled(e.getData());
         }, this);
 
@@ -131,7 +130,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
                 const domElement = widgetElement.getDomElement();
                 if (domElement) {
                     // When widget receives focus, delegate to input
-                    domElement.addEventListener("focusin", (e) => {
+                    domElement.addEventListener("focusin", (e: FocusEvent) => {
                         const input = this._inputElement;
                         if (input && e.target === domElement) {
                             input.focus();
@@ -143,20 +142,20 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
     },
 
     members: {
-        _html: null,
-        _dateId: null,
-        _inputElement: null,
-        _iconButton: null,
-        _popoverElement: null,
-        _calendarElement: null,
-        _isOpen: null,
-        _currentMonth: null,
-        _currentYear: null,
-        _selectedDate: null,
-        _popoverContainer: null,
-        _updatePositionHandler: null,
-        _clickHandler: null,
-        _calendarClickHandler: null,
+        _html: null as any,
+        _dateId: null as string | null,
+        _inputElement: null as HTMLInputElement | null,
+        _iconButton: null as HTMLButtonElement | null,
+        _popoverElement: null as HTMLElement | null,
+        _calendarElement: null as HTMLElement | null,
+        _isOpen: null as boolean | null,
+        _currentMonth: null as number | null,
+        _currentYear: null as number | null,
+        _selectedDate: null as Date | null,
+        _popoverContainer: null as HTMLElement | null,
+        _updatePositionHandler: null as ((...args: any[]) => void) | null,
+        _clickHandler: null as ((...args: any[]) => void) | null,
+        _calendarClickHandler: null as ((...args: any[]) => void) | null,
         _mobileSidePadding: 12,
 
         _getViewportWidth() {
@@ -203,7 +202,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             // Native inputs are focusable by default - no tabindex needed
 
             // Handle Tab key to prevent widget wrapper from interfering
-            this._inputElement.addEventListener("keydown", (e) => {
+            this._inputElement.addEventListener("keydown", (e: KeyboardEvent) => {
                 if (e.key === "Tab") {
                     // Allow Tab to work normally - don't prevent default
                     // This ensures tab navigation works properly
@@ -215,13 +214,17 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             // The calendar icon button will handle opening the calendar
 
             // Handle direct date input with strict formatting
-            this._inputElement.addEventListener("input", (e) => {
-                this._formatDateInput(e.target);
-                this._handleDateInput(e.target.value);
+            this._inputElement.addEventListener("input", (e: Event) => {
+                const target = e.target as HTMLInputElement | null;
+                if (!target) {
+                    return;
+                }
+                this._formatDateInput(target);
+                this._handleDateInput(target.value);
             });
 
             // Prevent invalid characters (only digits and slashes)
-            this._inputElement.addEventListener("keypress", (e) => {
+            this._inputElement.addEventListener("keypress", (e: KeyboardEvent) => {
                 const char = String.fromCharCode(e.which || e.keyCode);
                 // Allow digits, slashes, and control keys
                 if (!/[0-9/]/.test(char) && !/[0-8]/.test(e.key) && 
@@ -234,9 +237,9 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             });
 
             // Prevent paste of invalid content
-            this._inputElement.addEventListener("paste", (e) => {
+            this._inputElement.addEventListener("paste", (e: ClipboardEvent) => {
                 e.preventDefault();
-                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                const pastedText = e.clipboardData ? e.clipboardData.getData("text") : "";
                 // Remove all non-digit characters except slashes
                 const cleaned = pastedText.replace(/[^\d/]/g, '');
                 // Format the cleaned input
@@ -247,7 +250,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
 
             // Icon button click to toggle calendar
             if (this._iconButton) {
-                this._iconButton.addEventListener("click", (e) => {
+                this._iconButton.addEventListener("click", (e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (this.getEnabled()) {
@@ -260,14 +263,14 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             const prevBtn = container.querySelector(`#${this._dateId}-prev-month`);
             const nextBtn = container.querySelector(`#${this._dateId}-next-month`);
             if (prevBtn) {
-                prevBtn.addEventListener("click", (e) => {
+                prevBtn.addEventListener("click", (e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
                     this._changeMonth(-1);
                 });
             }
             if (nextBtn) {
-                nextBtn.addEventListener("click", (e) => {
+                nextBtn.addEventListener("click", (e: MouseEvent) => {
                     e.preventDefault();
                     e.stopPropagation();
                     this._changeMonth(1);
@@ -275,10 +278,13 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             }
 
             // Click outside to close
-            this._clickHandler = (e) => {
+            this._clickHandler = (e: MouseEvent) => {
                 if (!this._isOpen) return;
 
-                const target = e.target;
+                const target = e.target as Node | null;
+                if (!target) {
+                    return;
+                }
 
                 // Check if click is on navigation buttons - if so, don't close
                 const prevBtn = this._popoverElement?.querySelector(`#${this._dateId}-prev-month`);
@@ -301,9 +307,9 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Get the container DOM element
          */
-        _getContainerElement() {
+        _getContainerElement(): HTMLElement | null {
             if (this._html && this._html.getContentElement()) {
-                return this._html.getContentElement().getDomElement();
+                return this._html.getContentElement().getDomElement() as HTMLElement | null;
             }
             return null;
         },
@@ -398,8 +404,8 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
                 }
 
                 // Add new event delegation handler
-                this._calendarClickHandler = (e) => {
-                    let target = e.target;
+                this._calendarClickHandler = (e: MouseEvent) => {
+                    let target = e.target as HTMLElement | null;
 
                     // Traverse up to find the button if clicking on SVG or path
                     while (target && target !== this._calendarElement) {
@@ -475,10 +481,9 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
                 this._updatePositionHandler = null;
             }
 
-            // Remove document click listener
+            // Remove document click listener; keep handler function for future opens
             if (this._clickHandler) {
                 document.removeEventListener("click", this._clickHandler, true);
-                this._clickHandler = null;
             }
 
             // Remove calendar click handler
@@ -502,7 +507,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Change month
          */
-        _changeMonth(delta) {
+        _changeMonth(delta: number) {
             this._currentMonth += delta;
             if (this._currentMonth < 0) {
                 this._currentMonth = 11;
@@ -561,7 +566,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             for (let day = 1; day <= daysInMonth; day++) {
                 const cell = document.createElement("button");
                 cell.type = "button";
-                cell.textContent = day;
+                cell.textContent = String(day);
                 cell.style.cssText = `
           aspect-ratio: 1;
           display: flex;
@@ -620,7 +625,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Select a date
          */
-        _selectDate(date) {
+        _selectDate(date: Date) {
             this._selectedDate = date;
             this.setValue(date);
             this._updateDisplay();
@@ -646,7 +651,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Handle direct date input from user
          */
-        _handleDateInput(value) {
+        _handleDateInput(value: string) {
             if (!value || value.trim() === "") {
                 this._selectedDate = null;
                 this.setValue(null);
@@ -670,7 +675,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Format date string to MM/DD/YYYY format
          */
-        _formatDateString(digits) {
+        _formatDateString(digits: string): string {
             let formatted = '';
             if (digits.length > 0) {
                 formatted = digits.substring(0, 2);
@@ -687,9 +692,9 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Format date input as user types (strict MM/DD/YYYY)
          */
-        _formatDateInput(input) {
+        _formatDateInput(input: HTMLInputElement): void {
             let value = input.value;
-            const cursorPos = input.selectionStart;
+            const cursorPos = input.selectionStart ?? input.value.length;
             
             // Remove all non-digit characters
             let digits = value.replace(/[^\d]/g, '');
@@ -736,7 +741,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             if (input.value !== formatted) {
                 input.value = formatted;
                 // Adjust cursor position after formatting
-                let newCursorPos = cursorPos;
+                let newCursorPos: number = cursorPos;
                 const oldLength = value.length;
                 const newLength = formatted.length;
                 
@@ -760,7 +765,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Parse MM/DD/YYYY string to Date object
          */
-        _parseDateInput(value) {
+        _parseDateInput(value: string): Date | null {
             if (!value) return null;
             
             // Remove any non-digit characters except slashes
@@ -790,7 +795,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Convert Date object to YYYY-MM-DD string
          */
-        _dateToString(date) {
+        _dateToString(date: Date | null): string {
             if (!date || !(date instanceof Date)) {
                 return "";
             }
@@ -803,7 +808,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Apply value changes
          */
-        _applyValue(value, oldValue) {
+        _applyValue(value: Date | null, _oldValue: Date | null): void {
             if (value && value instanceof Date) {
                 this._selectedDate = value;
                 this._currentMonth = value.getMonth();
@@ -821,7 +826,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
         /**
          * Apply enabled state
          */
-        _applyEnabled(enabled) {
+        _applyEnabled(enabled: boolean): void {
             if (this._inputElement) {
                 this._inputElement.disabled = !enabled;
             }
@@ -873,7 +878,7 @@ qx.Class.define("qooxdo_proj.components.ui.DateField", {
             if (this._popoverContainer && this._popoverContainer.parentNode) {
                 this._popoverContainer.parentNode.removeChild(this._popoverContainer);
             }
-            this.base(arguments);
+            (this as any).base(arguments);
         }
     }
 });
