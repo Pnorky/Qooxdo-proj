@@ -67,6 +67,77 @@ qx.Class.define("qooxdo_proj.components.WindowManager", {
             if (win)
                 win.close();
         },
+        closeAllWindows: function () {
+            const windows = this._windows || {};
+            Object.keys(windows).forEach((windowId) => {
+                const win = windows[windowId];
+                if (win && win.close) {
+                    win.close();
+                }
+            });
+        },
+        cascadeWindows: function () {
+            const windows = this._windows || {};
+            const openWindows = Object.keys(windows)
+                .map((windowId) => windows[windowId])
+                .filter((win) => win && win.isVisible && win.isVisible());
+            if (!openWindows.length)
+                return;
+            const startX = 48;
+            const startY = 72;
+            const step = 28;
+            openWindows.forEach((win, index) => {
+                if (win.moveTo) {
+                    win.moveTo(startX + (index * step), startY + (index * step));
+                }
+                if (win.toFront) {
+                    win.toFront();
+                }
+            });
+        },
+        tileWindows: function () {
+            const windows = this._windows || {};
+            const openWindows = Object.keys(windows)
+                .map((windowId) => windows[windowId])
+                .filter((win) => win && win.isVisible && win.isVisible());
+            const count = openWindows.length;
+            if (!count)
+                return;
+            let rootWidth = window.innerWidth || 1200;
+            let rootHeight = window.innerHeight || 800;
+            try {
+                const innerSize = this._root && this._root.getInnerSize
+                    ? this._root.getInnerSize()
+                    : null;
+                if (innerSize) {
+                    rootWidth = innerSize.width || rootWidth;
+                    rootHeight = innerSize.height || rootHeight;
+                }
+            }
+            catch (_e) { }
+            const topOffset = 64;
+            const margin = 10;
+            const availableWidth = Math.max(320, rootWidth - (margin * 2));
+            const availableHeight = Math.max(240, rootHeight - topOffset - margin);
+            const cols = Math.max(1, Math.ceil(Math.sqrt(count)));
+            const rows = Math.max(1, Math.ceil(count / cols));
+            const cellWidth = Math.max(220, Math.floor(availableWidth / cols));
+            const cellHeight = Math.max(180, Math.floor(availableHeight / rows));
+            openWindows.forEach((win, index) => {
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                const x = margin + (col * cellWidth);
+                const y = topOffset + (row * cellHeight);
+                if (win.setWidth)
+                    win.setWidth(cellWidth - 8);
+                if (win.setHeight)
+                    win.setHeight(cellHeight - 8);
+                if (win.moveTo)
+                    win.moveTo(x, y);
+                if (win.toFront)
+                    win.toFront();
+            });
+        },
         getAllWindows: function () {
             return this._windows || {};
         }

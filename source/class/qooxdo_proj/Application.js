@@ -42,6 +42,7 @@ qx.Class.define("qooxdo_proj.Application", {
             root.add(this._mainContainer, { edge: 0 });
             // Initialize main application (but it will be hidden until login)
             this._initializeMainApplication();
+            this._runTsUsageCheck();
         },
         _initializeMainApplication() {
             const rootContainer = this._mainContainer;
@@ -481,6 +482,63 @@ qx.Class.define("qooxdo_proj.Application", {
             this._contactInfoWindow.clear();
             this._academicInfoWindow.clear();
             this._statusLabel.setValue("All form fields cleared");
+        },
+        _runTsUsageCheck() {
+            const expectedClasses = [
+                "qooxdo_proj.pages.Login",
+                "qooxdo_proj.util.Theme",
+                "qooxdo_proj.components.WindowManager",
+                "qooxdo_proj.components.MenuBar",
+                "qooxdo_proj.components.Sidebar",
+                "qooxdo_proj.components.Buttons.FormActionButtons",
+                "qooxdo_proj.components.Buttons.CounterButtons",
+                "qooxdo_proj.components.Windows.PersonalInfoWindow",
+                "qooxdo_proj.components.Windows.ContactInfoWindow",
+                "qooxdo_proj.components.Windows.AcademicInfoWindow",
+                "qooxdo_proj.components.Windows.StudentInfoTableWindow",
+                "qooxdo_proj.components.Windows.UIDemoWindow",
+                "qooxdo_proj.components.Windows.UITabToastDemoWindow",
+                "qooxdo_proj.components.Windows.RegistrationWindow",
+                "qooxdo_proj.components.Tabs.PersonalInfoTab",
+                "qooxdo_proj.components.Tabs.ContactInfoTab",
+                "qooxdo_proj.components.Tabs.AcademicInfoTab",
+                "qooxdo_proj.components.Tabs.StudentInfoTable",
+                "qooxdo_proj.components.Tabs.UISampleTab",
+                "qooxdo_proj.components.Tabs.UITabToastSampleTab",
+                "qooxdo_proj.components.ui.Button",
+                "qooxdo_proj.components.ui.Label",
+                "qooxdo_proj.components.ui.CheckBox",
+                "qooxdo_proj.components.ui.ComboBox",
+                "qooxdo_proj.components.ui.DateField",
+                "qooxdo_proj.components.ui.Dialog",
+                "qooxdo_proj.components.ui.DropdownMenu",
+                "qooxdo_proj.components.ui.PasswordField",
+                "qooxdo_proj.components.ui.Popover",
+                "qooxdo_proj.components.ui.RadioButton",
+                "qooxdo_proj.components.ui.TabView",
+                "qooxdo_proj.components.ui.TabPage",
+                "qooxdo_proj.components.ui.Table",
+                "qooxdo_proj.components.ui.TextArea",
+                "qooxdo_proj.components.ui.TextField",
+                "qooxdo_proj.components.ui.Toast",
+                "qooxdo_proj.components.ui.ToolTip",
+                "qooxdo_proj.components.ui.Accordion",
+                "qooxdo_proj.components.ui.Card",
+                "qooxdo_proj.components.ui.Pagination",
+                "qooxdo_proj.components.ui.MenuSeparator"
+            ];
+            const qxClass = qx && qx["Class"] ? qx["Class"] : null;
+            const missing = expectedClasses.filter(className => {
+                if (!qxClass || !qxClass.getByName) {
+                    return true;
+                }
+                return !qxClass.getByName(className);
+            });
+            if (missing.length > 0) {
+                console.warn("[TS Usage Check] Missing/unloaded classes:", missing);
+                return;
+            }
+            console.info(`[TS Usage Check] All ${expectedClasses.length} tracked TypeScript classes are loaded.`);
         },
         // Public method to get window manager (for menu bar access)
         getWindowManager() {

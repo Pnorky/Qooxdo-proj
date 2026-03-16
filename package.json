@@ -21,7 +21,7 @@
     "compile": "npm run build:tailwind && npm run build:ts && qx compile",
     "serve": "npm run build:tailwind && npm run build:ts && qx serve",
     "server": "node backend/server.js",
-    "watch": "npm run build:ts && qx watch",
+    "watch": "npm run build:tailwind && npm run build:ts && qx serve",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:phase2": "tsc -p tsconfig.phase2.json --noEmit",
     "typecheck:phase3": "tsc -p tsconfig.phase3.json --noEmit"

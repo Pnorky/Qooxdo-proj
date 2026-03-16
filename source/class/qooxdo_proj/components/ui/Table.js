@@ -690,6 +690,7 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
                 const headerRow = document.createElement("tr");
                 // Ensure header row has visible border and proper height
                 headerRow.style.borderBottom = "1px solid var(--border)";
+            headerRow.style.backgroundColor = "var(--secondary)";
                 headerRow.style.minHeight = "44px"; // Consistent header height
                 headerRow.style.height = "auto"; // Allow height to adjust
                 this._headers.forEach((headerText, index) => {
@@ -709,6 +710,9 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
                     th.style.borderRight = "1px solid var(--border)";
                     th.style.borderBottom = "1px solid var(--border)";
                     th.style.position = "relative";
+                th.style.backgroundColor = "var(--secondary)";
+                th.style.color = "var(--secondary-foreground)";
+                th.style.fontWeight = "600";
                     // Set content directly
                     th.textContent = this._escapeHtml(headerText);
                     // Add auto-adjusting padding for proper spacing
@@ -799,6 +803,8 @@ qx.Class.define("qooxdo_proj.components.ui.Table", {
                         // Add cell borders
                         td.style.borderRight = "1px solid var(--border)";
                         td.style.borderBottom = "1px solid var(--border)";
+                    td.style.backgroundColor = "var(--card)";
+                    td.style.color = "var(--card-foreground)";
                         // Remove right border from last cell
                         if (index === row.cells.length - 1) {
                             td.style.borderRight = "none";

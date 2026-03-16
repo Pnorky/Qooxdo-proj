@@ -4,6 +4,27 @@
 qx.Class.define("qooxdo_proj.util.Theme", {
     type: "static",
     statics: {
+        styleDOMElement(element, options = {}) {
+            if (!element || !element.style)
+                return;
+            const { background = "background", foreground = "foreground", border = false } = options;
+            element.style.backgroundColor = `var(--${background})`;
+            element.style.color = `var(--${foreground})`;
+            element.style.border = border ? "1px solid var(--border)" : "none";
+        },
+        styleContainer(widget, options = {}) {
+            if (!widget)
+                return;
+            const { background = "background", foreground = "foreground", border = false, padding } = options;
+            qooxdo_proj.util.Theme.applyBackground(widget, background);
+            qooxdo_proj.util.Theme.applyForeground(widget, foreground);
+            if (border) {
+                qooxdo_proj.util.Theme.applyBorder(widget);
+            }
+            if (typeof padding === "number" && widget.setPadding) {
+                widget.setPadding(padding);
+            }
+        },
         applyBackground(widget, variant = "background") {
             const colorVar = `var(--${variant})`;
             const applyStyle = () => {

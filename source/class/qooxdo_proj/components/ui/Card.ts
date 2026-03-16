@@ -80,7 +80,7 @@ qx.Class.define("qooxdo_proj.components.ui.Card", {
     _footerComposite: null,
 
     _init() {
-      // Apply Basecoat "card" and "w-full"; theme.css .card rule uses variables so it adapts automatically
+      // Apply Basecoat "card" and "w-full"; compiled.css provides the token-based styling.
       this.addListenerOnce("appear", () => {
         this._applyCardClasses(this, ["card"]);
         this._applyFullWidth(this.getFullWidth());
