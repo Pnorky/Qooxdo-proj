@@ -1,0 +1,59 @@
+// @ts-nocheck
+/* ************************************************************************
+
+   Copyright: 2026
+
+   License: MIT license
+
+   Authors:
+
+************************************************************************ */
+qx.Class.define("myapp.components.Buttons.FormActionButtons", {
+    extend: qx.ui.container.Composite,
+    events: {
+        /** Fired when submit button is clicked */
+        submit: "qx.event.type.Event",
+        /** Fired when cancel button is clicked */
+        cancel: "qx.event.type.Event",
+    },
+    construct: function () {
+        this.base(arguments);
+        this.setLayout(new qx.ui.layout.HBox(10));
+        this.setAllowGrowX(true);
+        this.setAllowShrinkX(true);
+        this.setMinWidth(0);
+        this._createButtons();
+    },
+    members: {
+        _submitButton: null,
+        _cancelButton: null,
+        _createButtons: function () {
+            //this._submitButton = new qx.ui.form.Button("Submit");
+            this._submitButton = new myapp.components.ui.Button("Submit", "primary", "sm");
+            // this._cancelButton = new qx.ui.form.Button("Cancel");
+            this._cancelButton = new myapp.components.ui.Button("Cancel", "secondary", "sm");
+            this._submitButton.addListener("execute", () => {
+                this.fireEvent("submit");
+            });
+            this._cancelButton.addListener("execute", () => {
+                this.fireEvent("cancel");
+            });
+            this.add(this._submitButton, { flex: 1 });
+            this.add(this._cancelButton, { flex: 1 });
+        },
+        // Public methods to enable/disable buttons
+        setSubmitEnabled: function (enabled) {
+            this._submitButton.setEnabled(enabled);
+        },
+        setCancelEnabled: function (enabled) {
+            this._cancelButton.setEnabled(enabled);
+        },
+        // Get button references if needed
+        getSubmitButton: function () {
+            return this._submitButton;
+        },
+        getCancelButton: function () {
+            return this._cancelButton;
+        },
+    },
+});

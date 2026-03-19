@@ -1,0 +1,30 @@
+{
+  "name": "myapp",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "scripts": {
+    "build:tailwind": "npx @tailwindcss/cli -i ../tailwind-basecoat.css -o ./source/resource/myapp/compiled.css",
+    "build:ts": "tsc -p tsconfig.json",
+    "compile": "npm run build:tailwind && npm run build:ts && qx compile",
+    "serve": "npm run build:tailwind && npm run build:ts && qx serve",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@qooxdoo/compiler": "^1.0.5",
+    "@qooxdoo/framework": "^6.0.4",
+    "@tailwindcss/cli": "^4.1.18",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "basecoat-css": "^0.3.10",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "pdfmake": "^0.2.23",
+    "sqlite3": "^5.0.2",
+    "tailwindcss": "^4.1.18"
+  }
+}
+

@@ -1,4 +1,4 @@
-qx.Class.define("qooxdo_proj.components.ui.Table", {
+qx.Class.define("myapp.components.ui.Table", {
     extend: qx.ui.core.Widget,
     properties: {
         caption: {
