@@ -124,8 +124,19 @@ qx.Class.define("myapp.components.Windows.RegistrationWindow", {
             // Set submitting flag and disable register button
             this._isSubmitting = true;
             this._registerButton.setEnabled(false);
+            // Local / demo mode: no backend
+            if (!myapp.Config.USE_API) {
+                this._showError('<span style="color: green;">Registration successful! (demo mode — no server)</span>');
+                qx.event.Timer.once(() => {
+                    this.fireDataEvent("registrationSuccess", { username: username.trim() });
+                    this._registerButton.setEnabled(true);
+                    this._isSubmitting = false;
+                    this.close();
+                }, this, 1200);
+                return;
+            }
             // Send registration request to REST API
-            fetch("http://localhost:3000/api/auth/register", {
+            fetch(myapp.Config.getApiUrl("/api/auth/register"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

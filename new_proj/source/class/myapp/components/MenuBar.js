@@ -36,13 +36,24 @@ qx.Class.define("myapp.components.MenuBar", {
         this._menuBar = menubar;
         this._applyBasecoatMenuBarStyles(menubar);
         // Mobile off-canvas toggle (shown only in compact mode)
-        this._mobileMenuButton = new qx.ui.menubar.Button("Menu");
+        this._mobileMenuButton = new qx.ui.menubar.Button("\u2630");
+        this._mobileMenuButton.setToolTipText("Open menu");
         this._mobileMenuButton.setVisibility("excluded");
         this._mobileMenuButton.addListener("execute", () => {
             this.fireEvent("toggleSidebar");
         }, this);
         menubar.add(this._mobileMenuButton);
         this._styleMenuBarButton(this._mobileMenuButton);
+        this._mobileMenuButton.addListenerOnce("appear", () => {
+            const el = this._mobileMenuButton.getContentElement
+                ? this._mobileMenuButton.getContentElement().getDomElement()
+                : null;
+            if (el) {
+                el.style.fontSize = "1.25rem";
+                el.style.lineHeight = "1";
+                el.style.fontWeight = "600";
+            }
+        }, this);
         var navbarRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(12));
         navbarRow.setAlignY("middle");
         navbarRow.setAllowGrowX(true);
@@ -899,9 +910,14 @@ qx.Class.define("myapp.components.MenuBar", {
             else {
                 console.log("[PDF] Window manager not available");
             }
+            if (!myapp.Config.USE_API) {
+                console.log("[PDF] API disabled — no REST fetch");
+                callback([]);
+                return;
+            }
             // If no data in window, load from REST API
             console.log("[PDF] Loading student data from REST API...");
-            fetch("http://localhost:3000/api/students", {
+            fetch(myapp.Config.getApiUrl("/api/students"), {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"

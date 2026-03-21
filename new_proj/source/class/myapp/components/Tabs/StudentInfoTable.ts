@@ -1,4 +1,4 @@
-﻿/* ************************************************************************
+/* ************************************************************************
 
    Copyright: 2026 
 
@@ -403,6 +403,23 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
         };
       },
 
+      _rebuildTableFromStudentsData: function () {
+        const students = this._studentsData || [];
+        const rows = students.map((student, index) => {
+          return [
+            index + 1,
+            student.studentId || "",
+            { text: student.firstName || "", classes: "font-medium" },
+            { text: student.lastName || "", classes: "font-medium" },
+            student.program || "",
+            this._normalizeYearLevel(student.yearLevel) || ""
+          ];
+        });
+        this._studentRowNumber = students.length;
+        this._table.setRows(rows);
+        this._table.setTotalRows(rows.length);
+      },
+
       _saveStudent: function (studentId, studentData) {
         // Update with all existing fields
         const updateData = {
@@ -410,7 +427,29 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
           ...studentData
         };
 
-        fetch(`http://localhost:3000/api/students/${studentId}`, {
+        if (!myapp.Config.USE_API) {
+          const idx = this._studentsData.findIndex((s) => String(s.id) === String(studentId));
+          if (idx >= 0) {
+            this._studentsData[idx] = {
+              ...this._studentsData[idx],
+              ...updateData,
+              id: this._studentsData[idx].id
+            };
+            this._rebuildTableFromStudentsData();
+            this._ensureFeedbackUI();
+            if (this._feedbackToast) {
+              this._feedbackToast.show({
+                category: "success",
+                title: "Student updated",
+                description: "Changes saved locally (demo mode).",
+                cancel: { label: "Dismiss" }
+              });
+            }
+          }
+          return;
+        }
+
+        fetch(myapp.Config.getApiUrl(`/api/students/${studentId}`), {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -506,7 +545,24 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
       },
 
       _deleteStudent: function (studentId) {
-        fetch(`http://localhost:3000/api/students/${studentId}`, {
+        if (!myapp.Config.USE_API) {
+          this._studentsData = (this._studentsData || []).filter(
+            (s) => String(s.id) !== String(studentId)
+          );
+          this._rebuildTableFromStudentsData();
+          this._ensureFeedbackUI();
+          if (this._feedbackToast) {
+            this._feedbackToast.show({
+              category: "success",
+              title: "Student deleted",
+              description: "Removed locally (demo mode).",
+              cancel: { label: "Dismiss" }
+            });
+          }
+          return;
+        }
+
+        fetch(myapp.Config.getApiUrl(`/api/students/${studentId}`), {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json"
@@ -538,6 +594,9 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
 
       // Public method to add a student to the table
       addStudent: function (studentData) {
+        if (!myapp.Config.USE_API && studentData && !studentData.id) {
+          studentData.id = "local-" + Date.now();
+        }
         this._studentRowNumber++;
         const rowData = [
           this._studentRowNumber,
@@ -559,7 +618,32 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
       },
 
       loadStudents: function () {
-        fetch("http://localhost:3000/api/students", {
+        if (!myapp.Config.USE_API) {
+          const mock = myapp.Config.getMockStudents();
+          this._studentsData = mock.map((student) => ({
+            id: student.id,
+            studentId: student.studentId,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            program: student.program,
+            yearLevel: student.yearLevel,
+            dateOfBirth: student.dateOfBirth,
+            gender: student.gender,
+            address: student.address,
+            email: student.email,
+            personalPhone: student.personalPhone,
+            emergencyContact: student.emergencyContact,
+            emergencyContactPhone: student.emergencyContactPhone,
+            relationship: student.relationship,
+            gradeSchool: student.gradeSchool,
+            highSchool: student.highSchool,
+            college: student.college
+          }));
+          this._rebuildTableFromStudentsData();
+          return;
+        }
+
+        fetch(myapp.Config.getApiUrl("/api/students"), {
           method: "GET",
           headers: {
             "Content-Type": "application/json"
@@ -572,22 +656,17 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
             return response.json();
           })
           .then(students => {
-
-            // Reset student row number
             this._studentRowNumber = 0;
             this._studentsData = [];
 
-            // Build rows array for efficient bulk loading with pagination
-            const rows = students.map((student, index) => {
-              // Store full student data
+            students.forEach((student) => {
               this._studentsData.push({
-                id: student.id, // Store id for update/delete operations
+                id: student.id,
                 studentId: student.studentId,
                 firstName: student.firstName,
                 lastName: student.lastName,
                 program: student.program,
                 yearLevel: student.yearLevel,
-                // Store all other fields for complete update
                 dateOfBirth: student.dateOfBirth,
                 gender: student.gender,
                 address: student.address,
@@ -600,24 +679,9 @@ qx.Class.define("myapp.components.Tabs.StudentInfoTable",
                 highSchool: student.highSchool,
                 college: student.college
               });
-
-              return [
-                index + 1,
-                student.studentId || "",
-                { text: student.firstName || "", classes: "font-medium" },
-                { text: student.lastName || "", classes: "font-medium" },
-                student.program || "",
-                this._normalizeYearLevel(student.yearLevel) || ""
-              ];
             });
 
-            this._studentRowNumber = students.length;
-
-            // Use setRows for efficient bulk loading with pagination
-            this._table.setRows(rows);
-
-            // Update total rows for pagination
-            this._table.setTotalRows(rows.length);
+            this._rebuildTableFromStudentsData();
           })
           .catch(error => {
             console.error("Failed to load students from API:", error);

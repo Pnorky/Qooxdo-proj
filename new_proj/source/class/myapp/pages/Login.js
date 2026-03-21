@@ -195,8 +195,16 @@ qx.Class.define("myapp.pages.Login", {
             }
             // Disable login button during validation
             this._loginButton.setEnabled(false);
+            // Local / demo mode: no backend
+            if (!myapp.Config.USE_API) {
+                qx.event.Timer.once(() => {
+                    this.fireDataEvent("loginSuccess", { username: username.trim() });
+                    this._loginButton.setEnabled(true);
+                }, this, 80);
+                return;
+            }
             // Send login request to REST API
-            fetch("http://localhost:3000/api/auth/login", {
+            fetch(myapp.Config.getApiUrl("/api/auth/login"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

@@ -6,7 +6,7 @@
   "license": "ISC",
   "type": "commonjs",
   "scripts": {
-    "build:tailwind": "npx @tailwindcss/cli -i ../tailwind-basecoat.css -o ./source/resource/myapp/compiled.css",
+    "build:tailwind": "npx @tailwindcss/cli -i ./tailwind-basecoat.css -o ./source/resource/myapp/compiled.css",
     "build:ts": "tsc -p tsconfig.json",
     "compile": "npm run build:tailwind && npm run build:ts && qx compile",
     "serve": "npm run build:tailwind && npm run build:ts && qx serve",
