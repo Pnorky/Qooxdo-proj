@@ -1,4 +1,4 @@
-﻿/* ************************************************************************
+/* ************************************************************************
 
    Copyright: 2026
 
@@ -92,6 +92,10 @@ qx.Class.define("myapp.components.ui.Dialog", {
 
     const titleEsc = this._escapeHtml(title || "");
     const descEsc = this._escapeHtml(description || "");
+    const closeIcon = myapp.util.Lucide.svgHtml("x", {
+      size: 24,
+      className: "lucide lucide-x-icon lucide-x"
+    });
 
     this._html = new qx.ui.embed.Html(`
       <dialog id="${this._dialogId}" class="dialog" aria-labelledby="${this._titleId}" aria-describedby="${this._descriptionId}" style="margin: 0; max-width: 425px; max-height: 612px;">
@@ -108,10 +112,7 @@ qx.Class.define("myapp.components.ui.Dialog", {
             <button type="button" class="btn dialog-save-btn">Save changes</button>
           </footer>
           <button type="button" class="dialog-close-btn" aria-label="Close dialog" style="position: absolute; top: 0; right: 0; margin: 0.5rem; padding: 0.25rem; background: transparent; border: none; cursor: pointer; color: inherit;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
+            ${closeIcon}
           </button>
         </div>
       </dialog>

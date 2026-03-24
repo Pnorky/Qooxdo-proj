@@ -53,16 +53,6 @@ qx.Class.define("myapp.components.MenuBar",
       }, this);
       menubar.add(this._mobileMenuButton);
       this._styleMenuBarButton(this._mobileMenuButton);
-      this._mobileMenuButton.addListenerOnce("appear", () => {
-        const el = this._mobileMenuButton.getContentElement
-          ? this._mobileMenuButton.getContentElement().getDomElement()
-          : null;
-        if (el) {
-          el.style.fontSize = "1.25rem";
-          el.style.lineHeight = "1";
-          el.style.fontWeight = "600";
-        }
-      }, this);
 
       var navbarRow = new qx.ui.container.Composite(new qx.ui.layout.HBox(12));
       navbarRow.setAlignY("middle");
@@ -120,6 +110,20 @@ qx.Class.define("myapp.components.MenuBar",
       this._styleMenuBarButton(this._logoutButton, { isLogout: true });
       rightSlot.add(this._logoutButton);
 
+      this._lucideMainMenuSpecs = [
+        { button: windowsMenu, iconKey: "users", compactLabel: "Forms", fullLabel: "Students" },
+        { button: windowMenu, iconKey: "layout-grid", compactLabel: "Layout", fullLabel: "Window" },
+        { button: printingMenu, iconKey: "printer", compactLabel: "Print", fullLabel: "Printing" },
+        { button: demoMenu, iconKey: "sparkles", compactLabel: "Demo", fullLabel: "Demo" },
+        { button: this._logoutButton, iconKey: "log-out", compactLabel: "Logout", fullLabel: "Logout", isLogout: true }
+      ];
+
+      navbarCard.addListenerOnce("appear", () => {
+        qx.event.Timer.once(() => {
+          this._refreshLucideMenuButtons();
+        }, this, 0);
+      }, this);
+
       this.add(navbarCard);
     },
 
@@ -144,6 +148,8 @@ qx.Class.define("myapp.components.MenuBar",
       _demoMenuButton: null,
       _mobileMenuButton: null,
       _isCompactMode: false,
+      /** @type {Array<{button:qx.ui.menubar.Button,iconKey:string,compactLabel:string,fullLabel:string,isLogout?:boolean}>} */
+      _lucideMainMenuSpecs: null,
 
       _createMenuSeparator: function () {
         return new myapp.components.ui.MenuSeparator();
@@ -153,11 +159,6 @@ qx.Class.define("myapp.components.MenuBar",
         const isCompact = !!compact;
         if (this._isCompactMode === isCompact) return;
         this._isCompactMode = isCompact;
-
-        if (this._windowsMenuButton) this._windowsMenuButton.setLabel(isCompact ? "Forms" : "Students");
-        if (this._windowMenuButton) this._windowMenuButton.setLabel(isCompact ? "Layout" : "Window");
-        if (this._printingMenuButton) this._printingMenuButton.setLabel(isCompact ? "Print" : "Printing");
-        if (this._demoMenuButton) this._demoMenuButton.setLabel("Demo");
 
         if (this._mainMenuButtons) {
           this._mainMenuButtons.forEach((btn) => {
@@ -176,6 +177,8 @@ qx.Class.define("myapp.components.MenuBar",
           this._mobileMenuButton.setVisibility(isCompact ? "visible" : "excluded");
         }
 
+        this._refreshLucideMenuButtons();
+
         const menuEl = this._menuBar && this._menuBar.getContentElement
           ? this._menuBar.getContentElement().getDomElement()
           : null;
@@ -192,6 +195,78 @@ qx.Class.define("myapp.components.MenuBar",
         classes.forEach((name) => {
           if (name) element.classList.add(name);
         });
+      },
+
+      _escapeHtml: function (text) {
+        if (text == null) return "";
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      },
+
+      _applyMenuButtonTypography: function (element, isLogout) {
+        if (!element) return;
+        const labels = element.querySelectorAll("span, label, div");
+        labels.forEach((node) => {
+          node.style.whiteSpace = "nowrap";
+          node.style.overflow = "visible";
+          node.style.textOverflow = "clip";
+          node.style.fontSize = "var(--text-sm)";
+          node.style.lineHeight = "var(--text-sm--line-height)";
+          if (isLogout) {
+            node.style.textAlign = "center";
+            node.style.justifyContent = "center";
+            node.style.display = "inline-flex";
+            node.style.width = "100%";
+          }
+        });
+      },
+
+      _refreshLucideMenuButtons: function () {
+        if (this._mobileMenuButton) {
+          this._renderMobileLucideMenuButton();
+        }
+        if (this._lucideMainMenuSpecs) {
+          this._lucideMainMenuSpecs.forEach((spec) => {
+            this._renderMainMenuButtonWithLucide(spec);
+          });
+        }
+      },
+
+      _renderMobileLucideMenuButton: function () {
+        const btn = this._mobileMenuButton;
+        if (!btn) return;
+        const contentElement = btn.getContentElement();
+        const element = contentElement ? contentElement.getDomElement() : null;
+        if (!element) return;
+        const svg = myapp.util.Lucide.svgHtml("menu", { size: 20 });
+        element.innerHTML =
+          '<span class="lucide-inline-wrap" style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%">' +
+          '<span class="lucide-inline">' + svg + "</span></span>";
+        element.setAttribute("aria-label", "Open menu");
+        element.style.fontSize = "inherit";
+        element.style.lineHeight = "1";
+        element.style.fontWeight = "600";
+      },
+
+      _renderMainMenuButtonWithLucide: function (spec) {
+        if (!spec || !spec.button) return;
+        const btn = spec.button;
+        const contentElement = btn.getContentElement();
+        const element = contentElement ? contentElement.getDomElement() : null;
+        if (!element) return;
+        const isLogout = !!spec.isLogout;
+        const label = this._isCompactMode ? spec.compactLabel : spec.fullLabel;
+        const svg = myapp.util.Lucide.svgHtml(spec.iconKey, { size: 16 });
+        const esc = this._escapeHtml(label);
+        element.innerHTML =
+          '<span class="lucide-inline-wrap" style="display:inline-flex;align-items:center;gap:6px">' +
+          '<span class="lucide-inline">' + svg + "</span>" +
+          '<span>' + esc + "</span></span>";
+        element.setAttribute("aria-label", label);
+        this._applyMenuButtonTypography(element, isLogout);
       },
 
       _applyNavbarCardStyles: function (card) {
@@ -275,20 +350,7 @@ qx.Class.define("myapp.components.MenuBar",
             element.style.marginRight = "0";
           }
 
-          const labels = element.querySelectorAll("span, label, div");
-          labels.forEach((node) => {
-            node.style.whiteSpace = "nowrap";
-            node.style.overflow = "visible";
-            node.style.textOverflow = "clip";
-            node.style.fontSize = "var(--text-sm)";
-            node.style.lineHeight = "var(--text-sm--line-height)";
-            if (isLogout) {
-              node.style.textAlign = "center";
-              node.style.justifyContent = "center";
-              node.style.display = "inline-flex";
-              node.style.width = "100%";
-            }
-          });
+          this._applyMenuButtonTypography(element, isLogout);
         }, this);
 
         button.addListener("mouseover", () => {

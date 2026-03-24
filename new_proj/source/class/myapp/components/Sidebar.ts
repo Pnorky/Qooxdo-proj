@@ -83,9 +83,13 @@ qx.Class.define("myapp.components.Sidebar", {
       const section = this._card.getSection();
       section.setLayout(new qx.ui.layout.Grow());
 
+      var Lsvg = function (name, size) {
+        return myapp.util.Lucide.svgHtml(name, { size: size != null ? size : 17 });
+      };
+
       // Basecoat-style sidebar markup embedded inside the card body.
       this._sidebarNavHtml = new qx.ui.embed.Html(`
-        <aside class="qoox-sidebar" data-side="left" aria-hidden="false" style="position: static; display: block; overflow: hidden; border: 0; --sidebar: var(--card); --sidebar-foreground: var(--card-foreground); --sidebar-border: var(--border); --sidebar-accent: var(--muted); --sidebar-accent-foreground: var(--card-foreground);">
+        <aside class="qoox-sidebar" data-side="left" aria-hidden="false" style="position: static; display: block; overflow: hidden; border: 0; background: var(--card); background-color: var(--card); --sidebar: var(--card); --sidebar-foreground: var(--card-foreground); --sidebar-border: var(--border); --sidebar-accent: var(--muted); --sidebar-accent-foreground: var(--card-foreground);">
           <style>
             .qoox-sidebar .sidebar-toolbar {
               display: flex;
@@ -227,8 +231,21 @@ qx.Class.define("myapp.components.Sidebar", {
             .qoox-sidebar.is-mobile .sidebar-toggle-row {
               justify-content: flex-start;
             }
+            .qoox-sidebar.is-drawer-layer {
+              min-height: 100%;
+              background: var(--card) !important;
+              background-color: var(--card) !important;
+            }
+            .qoox-sidebar.is-drawer-layer nav {
+              background: var(--card) !important;
+              background-color: var(--card) !important;
+            }
             .qoox-sidebar.is-drawer-layer nav section.scrollbar {
               max-height: calc(100vh - 100px) !important;
+              background: var(--card) !important;
+            }
+            .qoox-sidebar.is-drawer-layer nav [role="group"] {
+              background: transparent;
             }
             @media (max-width: 900px) {
               .qoox-sidebar nav section.scrollbar {
@@ -286,37 +303,37 @@ qx.Class.define("myapp.components.Sidebar", {
               }
             }
           </style>
-          <nav aria-label="Sidebar navigation" style="position: static; inset: auto; z-index: auto; width: 100%; background: transparent; border: 0; color: var(--card-foreground); box-shadow: none; outline: none; display: block;">
+          <nav aria-label="Sidebar navigation" style="position: static; inset: auto; z-index: auto; width: 100%; background: var(--card); background-color: var(--card); border: 0; color: var(--card-foreground); box-shadow: none; outline: none; display: block;">
             <section class="scrollbar" style="max-height: calc(100vh - 170px); overflow-y: auto;">
               <div class="sidebar-toolbar">
                 <span class="sidebar-toolbar-label">Navigate</span>
                 <button class="sidebar-toggle" type="button" data-action="toggleSidebar" aria-label="Collapse sidebar" title="Collapse sidebar">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                  ${Lsvg("chevron-left", 16)}
                 </button>
               </div>
               <div role="group" aria-labelledby="nav-student-records">
                 <h3 id="nav-student-records">Student records</h3>
                 <ul>
-                  <li><a href="#" data-action="personalInfo"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-text">Personal information</span></a></li>
-                  <li><a href="#" data-action="contactInfo"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span class="nav-text">Contact information</span></a></li>
-                  <li><a href="#" data-action="academicInfo"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8"/><path d="M8 11h6"/></svg></span><span class="nav-text">Academic information</span></a></li>
-                  <li><a href="#" data-action="studentTable"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg></span><span class="nav-text">All students</span></a></li>
+                  <li><a href="#" data-action="personalInfo"><span class="nav-icon" aria-hidden="true">${Lsvg("user", 17)}</span><span class="nav-text">Personal information</span></a></li>
+                  <li><a href="#" data-action="contactInfo"><span class="nav-icon" aria-hidden="true">${Lsvg("mail", 17)}</span><span class="nav-text">Contact information</span></a></li>
+                  <li><a href="#" data-action="academicInfo"><span class="nav-icon" aria-hidden="true">${Lsvg("book-text", 17)}</span><span class="nav-text">Academic information</span></a></li>
+                  <li><a href="#" data-action="studentTable"><span class="nav-icon" aria-hidden="true">${Lsvg("table", 17)}</span><span class="nav-text">All students</span></a></li>
                 </ul>
               </div>
 
               <div role="group" aria-labelledby="nav-demos">
                 <h3 id="nav-demos">Demos</h3>
                 <ul>
-                  <li><a href="#" data-action="uiDemo"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span><span class="nav-text">UI components</span></a></li>
-                  <li><a href="#" data-action="uiTabToastDemo"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span><span class="nav-text">Tabs &amp; toasts</span></a></li>
+                  <li><a href="#" data-action="uiDemo"><span class="nav-icon" aria-hidden="true">${Lsvg("layout-grid", 17)}</span><span class="nav-text">UI components</span></a></li>
+                  <li><a href="#" data-action="uiTabToastDemo"><span class="nav-icon" aria-hidden="true">${Lsvg("message-circle", 17)}</span><span class="nav-text">Tabs &amp; toasts</span></a></li>
                 </ul>
               </div>
 
               <div role="group" aria-labelledby="nav-account">
                 <h3 id="nav-account">Account</h3>
                 <ul>
-                  <li><a href="#" data-action="toggleTheme"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span><span class="nav-text">Dark mode</span></a></li>
-                  <li><a href="#" data-action="logout"><span class="nav-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></span><span class="nav-text">Log out</span></a></li>
+                  <li><a href="#" data-action="toggleTheme"><span class="nav-icon" aria-hidden="true">${Lsvg("moon", 17)}</span><span class="nav-text">Dark mode</span></a></li>
+                  <li><a href="#" data-action="logout"><span class="nav-icon" aria-hidden="true">${Lsvg("log-out", 17)}</span><span class="nav-text">Log out</span></a></li>
                 </ul>
               </div>
             </section>
@@ -398,10 +415,8 @@ qx.Class.define("myapp.components.Sidebar", {
 
       const toggleBtn = host.querySelector(".sidebar-toggle");
       if (toggleBtn) {
-        const chevronLeft =
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
-        const chevronRight =
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+        const chevronLeft = myapp.util.Lucide.svgHtml("chevron-left", { size: 16 });
+        const chevronRight = myapp.util.Lucide.svgHtml("chevron-right", { size: 16 });
         toggleBtn.innerHTML = collapsed ? chevronRight : chevronLeft;
         toggleBtn.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
         toggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
@@ -437,11 +452,20 @@ qx.Class.define("myapp.components.Sidebar", {
           root.style.boxShadow = "";
           root.style.zIndex = "";
           root.style.pointerEvents = "";
+          root.style.backgroundColor = "";
+          root.style.background = "";
+          root.style.minHeight = "";
+          root.style.height = "";
+          this._clearDrawerPanelOpaqueFill();
         } else {
           root.style.zIndex = "3";
           root.style.transition = "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)";
           root.style.willChange = "transform";
           root.style.boxShadow = "8px 0 28px rgba(0,0,0,0.18)";
+          root.style.backgroundColor = "var(--card)";
+          root.style.background = "var(--card)";
+          root.style.minHeight = "100%";
+          root.style.height = "100%";
         }
       }
       if (!this._sidebarNavHtml || !this._sidebarNavHtml.getContentElement) return;
@@ -449,6 +473,59 @@ qx.Class.define("myapp.components.Sidebar", {
       if (!host) return;
       const aside = host.querySelector(".qoox-sidebar");
       if (aside) aside.classList.toggle("is-drawer-layer", !!active);
+
+      if (active) {
+        qx.event.Timer.once(() => {
+          this._syncDrawerPanelOpaqueFill();
+        }, this, 0);
+      }
+    },
+
+    _syncDrawerPanelOpaqueFill: function () {
+      if (!this._mobileDrawerLayer) return;
+      if (this._card) {
+        const cardDom = this._card.getContentElement ? this._card.getContentElement().getDomElement() : null;
+        if (cardDom) {
+          cardDom.style.minHeight = "100%";
+          cardDom.style.backgroundColor = "var(--card)";
+        }
+        const section = this._card.getSection ? this._card.getSection() : null;
+        const secDom = section && section.getContentElement ? section.getContentElement().getDomElement() : null;
+        if (secDom) {
+          secDom.style.flexGrow = "1";
+          secDom.style.backgroundColor = "var(--card)";
+        }
+      }
+      if (this._sidebarNavHtml && this._sidebarNavHtml.getContentElement) {
+        const htmlHost = this._sidebarNavHtml.getContentElement().getDomElement();
+        if (htmlHost) {
+          htmlHost.style.minHeight = "100%";
+          htmlHost.style.backgroundColor = "var(--card)";
+        }
+      }
+    },
+
+    _clearDrawerPanelOpaqueFill: function () {
+      if (this._card) {
+        const cardDom = this._card.getContentElement ? this._card.getContentElement().getDomElement() : null;
+        if (cardDom) {
+          cardDom.style.minHeight = "";
+          cardDom.style.backgroundColor = "";
+        }
+        const section = this._card.getSection ? this._card.getSection() : null;
+        const secDom = section && section.getContentElement ? section.getContentElement().getDomElement() : null;
+        if (secDom) {
+          secDom.style.flexGrow = "";
+          secDom.style.backgroundColor = "";
+        }
+      }
+      if (this._sidebarNavHtml && this._sidebarNavHtml.getContentElement) {
+        const htmlHost = this._sidebarNavHtml.getContentElement().getDomElement();
+        if (htmlHost) {
+          htmlHost.style.minHeight = "";
+          htmlHost.style.backgroundColor = "";
+        }
+      }
     },
 
     setMobileDrawerOpen: function (open) {

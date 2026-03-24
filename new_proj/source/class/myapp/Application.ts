@@ -246,13 +246,25 @@ qx.Class.define("myapp.Application", {
         this.__shellMobileDrawer = true;
         this.__mobileSidebarVisible = false;
         this._syncMobileDrawerVisuals();
-        qx.event.Timer.once(() => this._bindMobileBackdropClick(), this, 0);
+        qx.event.Timer.once(() => {
+          this._bindMobileBackdropClick();
+          const rowEl = this.__contentRow.getContentElement?.()?.getDomElement?.();
+          if (rowEl) {
+            rowEl.style.position = "relative";
+            rowEl.style.zIndex = "0";
+          }
+        }, this, 0);
       } else {
         if (!this.__shellMobileDrawer) return;
         this._unbindMobileBackdropClick();
         this.__bodyShell.remove(this.__drawerBackdrop);
         this.__bodyShell.remove(this.__sidebar);
         this.__drawerBackdrop.setVisibility("excluded");
+        const rowEl = this.__contentRow.getContentElement?.()?.getDomElement?.();
+        if (rowEl) {
+          rowEl.style.position = "";
+          rowEl.style.zIndex = "";
+        }
         this.__contentRow.addAt(this.__sidebar, 0);
         this.__shellMobileDrawer = false;
         this.__mobileSidebarVisible = false;

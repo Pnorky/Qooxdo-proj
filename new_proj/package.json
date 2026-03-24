@@ -7,15 +7,17 @@
   "type": "commonjs",
   "scripts": {
     "build:tailwind": "npx @tailwindcss/cli -i ./tailwind-basecoat.css -o ./source/resource/myapp/compiled.css",
+    "lucide:registry": "node scripts/lucide-registry.mjs",
     "build:ts": "tsc -p tsconfig.json",
-    "compile": "npm run build:tailwind && npm run build:ts && qx compile",
-    "serve": "npm run build:tailwind && npm run build:ts && qx serve",
+    "compile": "npm run build:tailwind && npm run lucide:registry && npm run build:ts && qx compile",
+    "serve": "npm run build:tailwind && npm run lucide:registry && npm run build:ts && qx serve",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
     "@qooxdoo/compiler": "^1.0.5",
     "@qooxdoo/framework": "^6.0.4",
     "@tailwindcss/cli": "^4.1.18",
+    "lucide": "^0.577.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
@@ -27,4 +29,3 @@
     "tailwindcss": "^4.1.18"
   }
 }
-
